@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  ShieldAlert,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
@@ -71,11 +72,13 @@ export function Sidebar({
   logoUrl,
   primaryColor,
   tenantSlug,
+  isPlatformAdmin,
 }: {
   tenantName?: string;
   logoUrl?: string;
   primaryColor?: string;
   tenantSlug?: string;
+  isPlatformAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -233,6 +236,33 @@ export function Sidebar({
             </Link>
           );
         })}
+
+        {isPlatformAdmin && (
+          <>
+            <div className="h-px bg-surface-100 my-3" />
+            <Link
+              href="/admin"
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                isActive('/admin')
+                  ? 'bg-surface-900 text-brand-500'
+                  : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
+              }`}
+            >
+              <ShieldAlert
+                className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                  isActive('/admin')
+                    ? 'text-brand-500'
+                    : 'text-surface-400 group-hover:text-surface-600'
+                }`}
+              />
+              <span className="flex-1">Platform Admin</span>
+              {isActive('/admin') && (
+                <ChevronRight className="w-4 h-4 text-brand-500" />
+              )}
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Sign Out */}
