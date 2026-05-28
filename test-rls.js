@@ -1,0 +1,36 @@
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
+
+const envPath = path.join(__dirname, 'apps/web/.env');
+const envContent = fs.readFileSync(envPath, 'utf8');
+const env = {};
+envContent.split('\n').forEach((line) => {
+  const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+  if (match) {
+    env[match[1]] = (match[2] || '').replace(/['"]/g, '').trim();
+  }
+});
+
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+async function run() {
+  try {
+    console.log('Querying schema_migrations...');
+    const { data: migrations, error: migErr } = await supabase.from('schema_migrations').select('*');
+    console.log('schema_migrations:', { migrations, migErr });
+  } catch (err) {
+    console.log('schema_migrations threw:', err.message);
+  }
+
+  try {
+    console.log('Querying public.get_policies()...');
+    const { data: rlsCheck, error: rlsErr } = await supabase.rpc('get_policies');
+    console.log('get_policies result:', { rlsCheck, rlsErr });
+  } catch (err) {
+    console.log('get_policies threw:', err.message);
+  }
+}
+
+run();
+
