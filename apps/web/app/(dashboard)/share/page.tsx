@@ -46,7 +46,9 @@ export default function SharePage() {
           setTenantSlug(tenant.slug);
           setPrimaryColor(tenant.primary_color || '#FF6B35');
 
-          const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+          const baseUrl = typeof window !== 'undefined'
+            ? window.location.origin
+            : (process.env.NEXT_PUBLIC_URL || 'http://localhost:3000');
           const storefront = `${baseUrl}/${tenant.slug}`;
           setStorefrontUrl(storefront);
         }
@@ -315,8 +317,8 @@ export default function SharePage() {
         </div>
 
         <div className="pt-6 border-t border-surface-200 w-full flex justify-between items-center text-[10px] font-bold text-surface-400 uppercase tracking-widest">
-          <span>Powered by Fafa</span>
-          <span>fafa.com.gh</span>
+          <span>Powered by Didi</span>
+          <span>didi.com.gh</span>
         </div>
       </div>
     </div>
