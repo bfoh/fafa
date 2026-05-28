@@ -12,6 +12,7 @@ import {
   DollarSign,
   Clock,
   Hourglass,
+  Download,
 } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 
@@ -97,6 +98,48 @@ export default function AdminConsole({
     } finally {
       setActionLoading(null);
     }
+  }
+
+  function exportCsv() {
+    const headers = [
+      'Name',
+      'Slug',
+      'Status',
+      'Phone',
+      'Email',
+      'City',
+      'Orders',
+      'Revenue (GHS)',
+      'Joined',
+    ];
+    const esc = (v: string | number) => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = filteredTenants.map((t) =>
+      [
+        t.name,
+        t.slug,
+        t.status,
+        t.phone,
+        t.email ?? '',
+        t.city ?? '',
+        t.orderCount,
+        t.revenue.toFixed(2),
+        new Date(t.created_at).toISOString().split('T')[0],
+      ]
+        .map(esc)
+        .join(',')
+    );
+    // Prepend BOM so Excel reads UTF-8 correctly.
+    const csv = '﻿' + [headers.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `didi-tenants-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   const filteredTenants = tenants.filter((t) => {
@@ -225,15 +268,25 @@ export default function AdminConsole({
           <h2 className="text-sm font-bold text-surface-900">
             Merchant Directory
           </h2>
-          <div className="relative w-64 flex-shrink-0">
-            <Search className="w-4 h-4 text-surface-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Filter by name or slug..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-64 flex-shrink-0">
+              <Search className="w-4 h-4 text-surface-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Filter by name or slug..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
+              />
+            </div>
+            <button
+              onClick={exportCsv}
+              disabled={filteredTenants.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-700 font-semibold text-xs hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
           </div>
         </div>
 
