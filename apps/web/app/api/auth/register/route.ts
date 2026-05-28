@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSlug } from '@/lib/utils/slug';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function POST(req: Request) {
   try {
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       tenant,
-      storefront_url: `${process.env.NEXT_PUBLIC_URL}/${slug}`,
+      storefront_url: `${getBaseUrl()}/${slug}`,
     });
   } catch (err) {
     console.error('Registration error:', err);

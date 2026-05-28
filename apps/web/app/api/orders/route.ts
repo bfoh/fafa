@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { initializeTransaction } from '@/lib/paystack/client';
 import { normalizeGhanaPhone, isValidGhanaPhone } from '@/lib/utils/phone';
 import { sendOrderNotifications } from '@/lib/notifications/send';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function POST(req: Request) {
   try {
@@ -207,7 +208,7 @@ export async function POST(req: Request) {
           amount: Math.round(total * 100), // Pesewas
           currency: 'GHS',
           reference: order.id,
-          callback_url: `${process.env.NEXT_PUBLIC_URL}/${tenantSlug}/order/${order.id}`,
+          callback_url: `${getBaseUrl()}/${tenantSlug}/order/${order.id}`,
           channels:
             paymentMethod === 'momo' ? ['mobile_money'] : ['card'],
           metadata: {

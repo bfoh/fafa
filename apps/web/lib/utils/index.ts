@@ -49,3 +49,41 @@ export function formatDateTime(date: string | Date): string {
     minute: '2-digit',
   });
 }
+
+/**
+ * Resolves the base URL dynamically:
+ * 1. process.env.NEXT_PUBLIC_URL if defined (with localhost/browser bypass check)
+ * 2. window.location.origin if in browser context
+ * 3. https://{process.env.NEXT_PUBLIC_VERCEL_URL} if running on Vercel (server context)
+ * 4. Fallback to http://localhost:3000
+ */
+export function getBaseUrl(): string {
+  // 1. If NEXT_PUBLIC_URL is explicitly set
+  if (process.env.NEXT_PUBLIC_URL) {
+    if (typeof window !== 'undefined' && window.location) {
+      const isLocalhostEnv = process.env.NEXT_PUBLIC_URL.includes('localhost') || process.env.NEXT_PUBLIC_URL.includes('127.0.0.1');
+      const isLocalhostWindow = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      // If env is default localhost but the user accessed the site on a real deployment,
+      // override with the browser's active hostname
+      if (isLocalhostEnv && !isLocalhostWindow) {
+        return window.location.origin;
+      }
+    }
+    return process.env.NEXT_PUBLIC_URL;
+  }
+
+  // 2. Browser origin fallback
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+
+  // 3. Vercel deployment URL (useful on server-side SSR / metadata)
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    const host = process.env.NEXT_PUBLIC_VERCEL_URL;
+    return host.startsWith('http') ? host : `https://${host}`;
+  }
+
+  return 'http://localhost:3000';
+}
+

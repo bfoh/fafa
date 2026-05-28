@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
 import QRCode from 'qrcode';
+import { getBaseUrl } from '@/lib/utils';
 import {
   QrCode,
   Download,
@@ -46,9 +47,7 @@ export default function SharePage() {
           setTenantSlug(tenant.slug);
           setPrimaryColor(tenant.primary_color || '#FF6B35');
 
-          const baseUrl = typeof window !== 'undefined'
-            ? window.location.origin
-            : (process.env.NEXT_PUBLIC_URL || 'http://localhost:3000');
+          const baseUrl = getBaseUrl();
           const storefront = `${baseUrl}/${tenant.slug}`;
           setStorefrontUrl(storefront);
         }
@@ -302,8 +301,8 @@ export default function SharePage() {
             Scan to View Menu & Order!
           </h2>
           <canvas ref={flyerCanvasRef} className="w-64 h-64 object-contain" />
-          <p className="text-[11px] text-surface-400 font-bold uppercase mt-3 tracking-widest">
-            fafa.com.gh/{tenantSlug}
+          <p className="text-[11px] text-surface-400 font-bold uppercase mt-3 tracking-widest text-surface-500">
+            {storefrontUrl.replace(/^https?:\/\//, '')}
           </p>
         </div>
 
