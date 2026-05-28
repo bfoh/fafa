@@ -24,6 +24,10 @@ export const metadata: Metadata = {
     'delivery',
     'Didi',
   ],
+  icons: {
+    icon: '/images/didi_favicon.png',
+    apple: '/images/didi_apple.png',
+  },
   openGraph: {
     title: 'Didi — Order Food Online in Ghana',
     description:

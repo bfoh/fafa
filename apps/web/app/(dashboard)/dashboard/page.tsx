@@ -9,6 +9,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
+import SetupChecklist from '@/components/dashboard/setup-checklist';
 
 export const metadata = {
   title: 'Dashboard',
@@ -23,6 +24,14 @@ export default async function DashboardPage() {
   let pendingCount = 0;
   let recentOrders: any[] = [];
   const stats: any[] = [];
+  let setup: {
+    tenantId: string;
+    slug: string;
+    menuDone: boolean;
+    paymentsDone: boolean;
+    brandingDone: boolean;
+    shareDone: boolean;
+  } | null = null;
 
   try {
     const supabase = await createServerClient();
@@ -33,21 +42,34 @@ export default async function DashboardPage() {
 
     if (!session) redirect('/login');
 
-    // Get tenant_id
+    // Get tenant_id + setup-relevant tenant fields
     const { data: member } = await supabase
       .from('tenant_members')
-      .select('tenant_id')
+      .select('tenant_id, tenants(slug, paystack_subaccount_code, logo_url)')
       .eq('user_id', session.user.id)
       .single();
 
     if (!member) redirect('/register');
 
     const tenantId = member.tenant_id;
+    // Embedded resource may come back as an object or a single-element array.
+    const tenantsField = member.tenants as unknown;
+    const tenant = (
+      Array.isArray(tenantsField) ? tenantsField[0] : tenantsField
+    ) as
+      | { slug: string; paystack_subaccount_code: string | null; logo_url: string | null }
+      | undefined;
     const today = new Date().toISOString().split('T')[0];
 
     // Fetch today's stats
-    const [ordersResult, revenueResult, pendingResult, recentResult] =
-      await Promise.all([
+    const [
+      ordersResult,
+      revenueResult,
+      pendingResult,
+      recentResult,
+      menuCountResult,
+      allOrdersResult,
+    ] = await Promise.all([
         // Total orders today
         supabase
           .from('orders')
@@ -77,7 +99,28 @@ export default async function DashboardPage() {
           .eq('tenant_id', tenantId)
           .order('created_at', { ascending: false })
           .limit(10),
+
+        // Menu items count (setup checklist)
+        supabase
+          .from('menu_items')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId),
+
+        // All-time orders count (setup checklist)
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId),
       ]);
+
+    setup = {
+      tenantId,
+      slug: tenant?.slug || '',
+      menuDone: (menuCountResult.count || 0) > 0,
+      paymentsDone: !!tenant?.paystack_subaccount_code,
+      brandingDone: !!tenant?.logo_url,
+      shareDone: (allOrdersResult.count || 0) > 0,
+    };
 
     totalOrders = ordersResult.count || 0;
     revenue = (revenueResult.data || []).reduce(
@@ -165,6 +208,9 @@ export default async function DashboardPage() {
           })}
         </p>
       </div>
+
+      {/* Setup checklist (hides itself once the store is fully live) */}
+      {setup && setup.slug && <SetupChecklist {...setup} />}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

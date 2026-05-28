@@ -25,7 +25,7 @@ export async function generateMetadata({
   const supabase = createAdminClient();
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, description, tagline')
+    .select('name, description, tagline, logo_url')
     .eq('slug', slug)
     .eq('status', 'active')
     .single();
@@ -36,6 +36,10 @@ export async function generateMetadata({
     title: `${tenant.name} — Order on Didi`,
     description:
       tenant.description || tenant.tagline || `Order food from ${tenant.name}`,
+    icons: {
+      icon: tenant.logo_url || '/images/didi_favicon.png',
+      apple: tenant.logo_url || '/images/didi_apple.png',
+    },
   };
 }
 
