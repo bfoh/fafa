@@ -263,9 +263,12 @@ export default function AdminConsole({
                       className="hover:bg-surface-50/50 transition-colors"
                     >
                       <td className="p-4">
-                        <p className="font-bold text-surface-900 text-sm">
+                        <Link
+                          href={`/admin/tenants/${t.id}`}
+                          className="font-bold text-surface-900 text-sm hover:text-brand-600 hover:underline"
+                        >
                           {t.name}
-                        </p>
+                        </Link>
                         {t.city && (
                           <p className="text-[10px] text-surface-450">
                             {t.city}
