@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/hooks/use-cart';
 import { formatGHS } from '@/lib/utils/currency';
 import { useParams, useRouter } from 'next/navigation';
 import { CartProvider } from '@/hooks/use-cart';
 import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -28,26 +29,125 @@ function CheckoutContent({ slug }: { slug: string }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(
-    'delivery'
-  );
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [selectedZoneId, setSelectedZoneId] = useState<string>('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<
-    'momo' | 'card' | 'cash_on_delivery'
-  >('momo');
+  const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'cash_on_delivery'>('momo');
 
-  const deliveryFee = deliveryType === 'delivery' ? 10 : 0; // TODO: fetch from tenant config
+  // Tenant config state
+  const [tenant, setTenant] = useState<{
+    id: string;
+    name: string;
+    delivery_fee: number;
+    min_order_amount: number;
+    accepts_delivery: boolean;
+    accepts_pickup: boolean;
+    accepts_pay_online: boolean;
+    accepts_pay_on_delivery: boolean;
+    primary_color: string;
+  } | null>(null);
+
+  // Delivery zones state
+  const [deliveryZones, setDeliveryZones] = useState<Array<{
+    id: string;
+    name: string;
+    fee: number;
+    estimated_minutes: number | null;
+  }>>([]);
+
+  const supabase = useMemo(() => createBrowserClient(), []);
+
+  // Fetch tenant info & active delivery zones
+  useEffect(() => {
+    async function loadTenantData() {
+      try {
+        const { data: tenantData } = await supabase
+          .from('tenants')
+          .select('id, name, slug, delivery_fee, min_order_amount, accepts_delivery, accepts_pickup, accepts_pay_online, accepts_pay_on_delivery, primary_color')
+          .eq('slug', slug)
+          .eq('status', 'active')
+          .single();
+
+        if (tenantData) {
+          const loadedTenant = {
+            id: tenantData.id,
+            name: tenantData.name,
+            delivery_fee: Number(tenantData.delivery_fee),
+            min_order_amount: Number(tenantData.min_order_amount),
+            accepts_delivery: tenantData.accepts_delivery,
+            accepts_pickup: tenantData.accepts_pickup,
+            accepts_pay_online: tenantData.accepts_pay_online,
+            accepts_pay_on_delivery: tenantData.accepts_pay_on_delivery,
+            primary_color: tenantData.primary_color || '#FF6B35',
+          };
+          setTenant(loadedTenant);
+
+          // Handle default delivery type selection based on tenant preferences
+          if (loadedTenant.accepts_delivery && !loadedTenant.accepts_pickup) {
+            setDeliveryType('delivery');
+          } else if (!loadedTenant.accepts_delivery && loadedTenant.accepts_pickup) {
+            setDeliveryType('pickup');
+          }
+
+          // Handle default payment method selection based on tenant preferences
+          const available: Array<'momo' | 'card' | 'cash_on_delivery'> = [];
+          if (loadedTenant.accepts_pay_online) {
+            available.push('momo', 'card');
+          }
+          if (loadedTenant.accepts_pay_on_delivery) {
+            available.push('cash_on_delivery');
+          }
+          if (available.length > 0) {
+            setPaymentMethod(available[0]);
+          }
+
+          const { data: zones } = await supabase
+            .from('delivery_zones')
+            .select('id, name, fee, estimated_minutes')
+            .eq('tenant_id', tenantData.id)
+            .eq('is_active', true)
+            .order('name');
+
+          if (zones) {
+            setDeliveryZones(
+              zones.map((z) => ({
+                id: z.id,
+                name: z.name,
+                fee: Number(z.fee),
+                estimated_minutes: z.estimated_minutes,
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load tenant checkout config:', err);
+      }
+    }
+    loadTenantData();
+  }, [supabase, slug]);
+
+  const selectedZone = deliveryZones.find((z) => z.id === selectedZoneId);
+  const deliveryFee =
+    deliveryType === 'delivery'
+      ? selectedZone
+        ? selectedZone.fee
+        : tenant
+        ? tenant.delivery_fee
+        : 0
+      : 0;
+
   const total = subtotal + deliveryFee;
+  const primaryColor = tenant?.primary_color || '#FF6B35';
 
   if (items.length === 0) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+      <div className="max-w-lg mx-auto px-4 py-20 text-center animate-fade-in">
         <p className="text-surface-500">Your cart is empty</p>
         <Link
           href={`/${slug}`}
-          className="inline-block mt-4 text-sm font-semibold"
-          style={{ color: 'var(--brand-primary)' }}
+          className="inline-block mt-4 text-sm font-semibold hover:underline"
+          style={{ color: primaryColor }}
         >
           ← Back to menu
         </Link>
@@ -76,6 +176,7 @@ function CheckoutContent({ slug }: { slug: string }) {
           deliveryAddress: deliveryType === 'delivery' ? address : undefined,
           deliveryNotes: notes || undefined,
           paymentMethod,
+          deliveryZoneId: deliveryType === 'delivery' && selectedZoneId ? selectedZoneId : undefined,
         }),
       });
 
@@ -110,20 +211,25 @@ function CheckoutContent({ slug }: { slug: string }) {
       label: 'Mobile Money',
       desc: 'MTN, Vodafone, AirtelTigo',
       icon: Smartphone,
+      available: tenant ? tenant.accepts_pay_online : true,
     },
     {
       value: 'card' as const,
       label: 'Card',
       desc: 'Visa, Mastercard',
       icon: CreditCard,
+      available: tenant ? tenant.accepts_pay_online : true,
     },
     {
       value: 'cash_on_delivery' as const,
       label: 'Pay on Delivery',
       desc: 'Cash when your order arrives',
       icon: Banknote,
+      available: tenant ? tenant.accepts_pay_on_delivery : true,
     },
-  ];
+  ].filter((m) => m.available);
+
+  const belowMinLimit = tenant ? subtotal < tenant.min_order_amount : false;
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 animate-fade-in">
@@ -161,7 +267,10 @@ function CheckoutContent({ slug }: { slug: string }) {
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Your full name"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              style={{
+                ['--tw-ring-color' as string]: primaryColor,
+              } as React.CSSProperties}
             />
           </div>
 
@@ -176,7 +285,10 @@ function CheckoutContent({ slug }: { slug: string }) {
               onChange={(e) => setPhone(e.target.value)}
               required
               placeholder="024 123 4567"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              style={{
+                ['--tw-ring-color' as string]: primaryColor,
+              } as React.CSSProperties}
             />
           </div>
 
@@ -190,7 +302,10 @@ function CheckoutContent({ slug }: { slug: string }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              style={{
+                ['--tw-ring-color' as string]: primaryColor,
+              } as React.CSSProperties}
             />
           </div>
         </section>
@@ -198,36 +313,65 @@ function CheckoutContent({ slug }: { slug: string }) {
         {/* Delivery type */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider">
-            Delivery
+            Delivery Option
           </h2>
 
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setDeliveryType('delivery')}
-              className={`p-3 rounded-xl border-2 text-center text-sm font-medium transition-all ${
-                deliveryType === 'delivery'
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                  : 'border-surface-200 hover:border-surface-300'
-              }`}
-            >
-              🚗 Delivery
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeliveryType('pickup')}
-              className={`p-3 rounded-xl border-2 text-center text-sm font-medium transition-all ${
-                deliveryType === 'pickup'
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                  : 'border-surface-200 hover:border-surface-300'
-              }`}
-            >
-              🏪 Pickup
-            </button>
+            {(!tenant || tenant.accepts_delivery) && (
+              <button
+                type="button"
+                onClick={() => setDeliveryType('delivery')}
+                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
+                style={{
+                  borderColor: deliveryType === 'delivery' ? primaryColor : 'var(--surface-200)',
+                  backgroundColor: deliveryType === 'delivery' ? `${primaryColor}10` : 'transparent',
+                }}
+              >
+                🚗 Delivery
+              </button>
+            )}
+            {(!tenant || tenant.accepts_pickup) && (
+              <button
+                type="button"
+                onClick={() => setDeliveryType('pickup')}
+                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
+                style={{
+                  borderColor: deliveryType === 'pickup' ? primaryColor : 'var(--surface-200)',
+                  backgroundColor: deliveryType === 'pickup' ? `${primaryColor}10` : 'transparent',
+                }}
+              >
+                🏪 Pickup
+              </button>
+            )}
           </div>
 
           {deliveryType === 'delivery' && (
             <div className="animate-fade-in space-y-3">
+              {deliveryZones.length > 0 && (
+                <div>
+                  <label htmlFor="checkout-zone" className="block text-sm font-medium text-surface-700 mb-1">
+                    Select Your Area
+                  </label>
+                  <select
+                    id="checkout-zone"
+                    value={selectedZoneId}
+                    onChange={(e) => setSelectedZoneId(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer"
+                    style={{
+                      ['--tw-ring-color' as string]: primaryColor,
+                    } as React.CSSProperties}
+                  >
+                    <option value="">Select neighborhood...</option>
+                    {deliveryZones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.name} ({formatGHS(zone.fee)} · {zone.estimated_minutes || 30} mins)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div>
                 <label htmlFor="checkout-address" className="block text-sm font-medium text-surface-700 mb-1">
                   Delivery address
@@ -237,11 +381,15 @@ function CheckoutContent({ slug }: { slug: string }) {
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required
-                  placeholder="House number, street, area..."
+                  placeholder="House number, street, landmark, area details..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all text-sm resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm resize-none"
+                  style={{
+                    ['--tw-ring-color' as string]: primaryColor,
+                  } as React.CSSProperties}
                 />
               </div>
+
               <div>
                 <label htmlFor="checkout-notes" className="block text-sm font-medium text-surface-700 mb-1">
                   Notes <span className="text-surface-400">(optional)</span>
@@ -251,8 +399,11 @@ function CheckoutContent({ slug }: { slug: string }) {
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Call when you arrive"
-                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/40 focus:border-[var(--brand-primary)] transition-all text-sm"
+                  placeholder="e.g. Call when you arrive, gate code is 1234"
+                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                  style={{
+                    ['--tw-ring-color' as string]: primaryColor,
+                  } as React.CSSProperties}
                 />
               </div>
             </div>
@@ -262,34 +413,32 @@ function CheckoutContent({ slug }: { slug: string }) {
         {/* Payment method */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider">
-            Payment
+            Payment Method
           </h2>
 
           <div className="space-y-2">
             {paymentMethods.map((method) => {
               const Icon = method.icon;
+              const isSelected = paymentMethod === method.value;
               return (
                 <button
                   key={method.value}
                   type="button"
                   onClick={() => setPaymentMethod(method.value)}
-                  className={`w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all ${
-                    paymentMethod === method.value
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                      : 'border-surface-200 hover:border-surface-300'
-                  }`}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer"
+                  style={{
+                    borderColor: isSelected ? primaryColor : 'var(--surface-200)',
+                    backgroundColor: isSelected ? `${primaryColor}10` : 'transparent',
+                  }}
                 >
                   <Icon
                     className="w-5 h-5 flex-shrink-0"
                     style={{
-                      color:
-                        paymentMethod === method.value
-                          ? 'var(--brand-primary)'
-                          : undefined,
+                      color: isSelected ? primaryColor : undefined,
                     }}
                   />
                   <div>
-                    <p className="text-sm font-medium text-surface-900">
+                    <p className="text-sm font-semibold text-surface-900">
                       {method.label}
                     </p>
                     <p className="text-xs text-surface-400">{method.desc}</p>
@@ -308,7 +457,7 @@ function CheckoutContent({ slug }: { slug: string }) {
           </div>
           {deliveryType === 'delivery' && (
             <div className="flex justify-between text-sm text-surface-600">
-              <span>Delivery fee</span>
+              <span>Delivery fee {selectedZone ? `(${selectedZone.name})` : ''}</span>
               <span>{formatGHS(deliveryFee)}</span>
             </div>
           )}
@@ -318,12 +467,19 @@ function CheckoutContent({ slug }: { slug: string }) {
           </div>
         </section>
 
+        {/* Limit warning */}
+        {belowMinLimit && tenant && (
+          <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in">
+            ⚠️ Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
+          </div>
+        )}
+
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading}
-          className="w-full py-3.5 rounded-2xl text-white font-semibold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          style={{ background: 'var(--brand-primary)' }}
+          disabled={loading || belowMinLimit}
+          className="w-full py-3.5 rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
+          style={{ background: primaryColor }}
         >
           {loading ? (
             <>

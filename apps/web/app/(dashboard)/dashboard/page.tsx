@@ -18,6 +18,12 @@ export const dynamic = 'force-dynamic';
 
 
 export default async function DashboardPage() {
+  let totalOrders = 0;
+  let revenue = 0;
+  let pendingCount = 0;
+  let recentOrders: any[] = [];
+  const stats: any[] = [];
+
   try {
     const supabase = await createServerClient();
 
@@ -27,90 +33,111 @@ export default async function DashboardPage() {
 
     if (!session) redirect('/login');
 
-  // Get tenant_id
-  const { data: member } = await supabase
-    .from('tenant_members')
-    .select('tenant_id')
-    .eq('user_id', session.user.id)
-    .single();
+    // Get tenant_id
+    const { data: member } = await supabase
+      .from('tenant_members')
+      .select('tenant_id')
+      .eq('user_id', session.user.id)
+      .single();
 
-  if (!member) redirect('/register');
+    if (!member) redirect('/register');
 
-  const tenantId = member.tenant_id;
-  const today = new Date().toISOString().split('T')[0];
+    const tenantId = member.tenant_id;
+    const today = new Date().toISOString().split('T')[0];
 
-  // Fetch today's stats
-  const [ordersResult, revenueResult, pendingResult, recentResult] =
-    await Promise.all([
-      // Total orders today
-      supabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .gte('created_at', `${today}T00:00:00`),
+    // Fetch today's stats
+    const [ordersResult, revenueResult, pendingResult, recentResult] =
+      await Promise.all([
+        // Total orders today
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .gte('created_at', `${today}T00:00:00`),
 
-      // Revenue today
-      supabase
-        .from('orders')
-        .select('total')
-        .eq('tenant_id', tenantId)
-        .eq('payment_status', 'paid')
-        .gte('created_at', `${today}T00:00:00`),
+        // Revenue today
+        supabase
+          .from('orders')
+          .select('total')
+          .eq('tenant_id', tenantId)
+          .eq('payment_status', 'paid')
+          .gte('created_at', `${today}T00:00:00`),
 
-      // Pending orders
-      supabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .in('status', ['pending', 'confirmed', 'preparing']),
+        // Pending orders
+        supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .in('status', ['pending', 'confirmed', 'preparing']),
 
-      // Recent orders
-      supabase
-        .from('orders')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false })
-        .limit(10),
-    ]);
+        // Recent orders
+        supabase
+          .from('orders')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(10),
+      ]);
 
-  const totalOrders = ordersResult.count || 0;
-  const revenue = (revenueResult.data || []).reduce(
-    (sum, o) => sum + Number(o.total || 0),
-    0
-  );
-  const pendingCount = pendingResult.count || 0;
-  const recentOrders = recentResult.data || [];
+    totalOrders = ordersResult.count || 0;
+    revenue = (revenueResult.data || []).reduce(
+      (sum, o) => sum + Number(o.total || 0),
+      0
+    );
+    pendingCount = pendingResult.count || 0;
+    recentOrders = recentResult.data || [];
 
-  const stats = [
-    {
-      label: 'Orders Today',
-      value: totalOrders.toString(),
-      icon: ShoppingBag,
-      color: 'text-brand-500',
-      bg: 'bg-brand-500/10',
-    },
-    {
-      label: 'Revenue Today',
-      value: formatGHS(revenue),
-      icon: DollarSign,
-      color: 'text-success-600',
-      bg: 'bg-success-500/10',
-    },
-    {
-      label: 'Pending',
-      value: pendingCount.toString(),
-      icon: Clock,
-      color: 'text-warning-600',
-      bg: 'bg-warning-500/10',
-    },
-    {
-      label: 'Avg. Order',
-      value: totalOrders > 0 ? formatGHS(revenue / totalOrders) : '—',
-      icon: TrendingUp,
-      color: 'text-info-600',
-      bg: 'bg-info-500/10',
-    },
-  ];
+    stats.push(
+      {
+        label: 'Orders Today',
+        value: totalOrders.toString(),
+        icon: ShoppingBag,
+        color: 'text-brand-500',
+        bg: 'bg-brand-500/10',
+      },
+      {
+        label: 'Revenue Today',
+        value: formatGHS(revenue),
+        icon: DollarSign,
+        color: 'text-success-600',
+        bg: 'bg-success-500/10',
+      },
+      {
+        label: 'Pending',
+        value: pendingCount.toString(),
+        icon: Clock,
+        color: 'text-warning-600',
+        bg: 'bg-warning-500/10',
+      },
+      {
+        label: 'Avg. Order',
+        value: totalOrders > 0 ? formatGHS(revenue / totalOrders) : '—',
+        icon: TrendingUp,
+        color: 'text-info-600',
+        bg: 'bg-info-500/10',
+      }
+    );
+  } catch (err) {
+    // Rethrow Next.js internal redirect and dynamic server errors so Next.js handles them properly
+    if (
+      err instanceof Error &&
+      (err.message.includes('NEXT_REDIRECT') ||
+        (err as any).digest?.startsWith('NEXT_REDIRECT') ||
+        (err as any).digest === 'DYNAMIC_SERVER_USAGE')
+    ) {
+      throw err;
+    }
+
+    console.error('Fatal Dashboard rendering error:', err);
+    return (
+      <div className="p-6 bg-error-500/10 rounded-2xl border border-error-500/20 text-error-600 text-sm">
+        <h2 className="text-base font-bold text-error-700">Failed to load Dashboard</h2>
+        <p className="mt-1">
+          {err instanceof Error ? err.message : 'An unexpected error occurred.'}
+        </p>
+      </div>
+    );
+  }
 
   const statusConfig: Record<string, { label: string; class: string }> = {
     pending: { label: 'Pending', class: 'badge-pending' },
@@ -234,26 +261,4 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
-  } catch (err) {
-    // Rethrow Next.js internal redirect and dynamic server errors so Next.js handles them properly
-    if (
-      err instanceof Error &&
-      (err.message.includes('NEXT_REDIRECT') ||
-        (err as any).digest?.startsWith('NEXT_REDIRECT') ||
-        (err as any).digest === 'DYNAMIC_SERVER_USAGE')
-    ) {
-      throw err;
-    }
-
-
-    console.error('Fatal Dashboard rendering error:', err);
-    return (
-      <div className="p-6 bg-error-500/10 rounded-2xl border border-error-500/20 text-error-600 text-sm">
-        <h2 className="text-base font-bold text-error-700">Failed to load Dashboard</h2>
-        <p className="mt-1">
-          {err instanceof Error ? err.message : 'An unexpected error occurred.'}
-        </p>
-      </div>
-    );
-  }
 }

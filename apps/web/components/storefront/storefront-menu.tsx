@@ -100,7 +100,7 @@ function MenuContent({
             <a
               key={cat.id}
               href={`#cat-${cat.id}`}
-              className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-surface-200 text-surface-600 bg-surface-100"
+              className="shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold transition-colors hover:bg-surface-200 text-surface-600 bg-surface-100 shadow-[inset_0_-1px_0_rgba(0,0,0,0.05)]"
             >
               {cat.name}
             </a>
@@ -163,7 +163,7 @@ function MenuContent({
                       </p>
                       <button
                         onClick={() => handleAddItem(item)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 hover:opacity-90"
+                        className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 hover:opacity-90 shadow-md min-h-[40px] cursor-pointer"
                         style={{ background: tenant.primary_color }}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -240,7 +240,8 @@ function CartDrawer({
           <h2 className="text-lg font-bold text-surface-900">Your Order</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-surface-100 transition-colors"
+            className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-surface-100 transition-colors active:scale-95 cursor-pointer"
+            aria-label="Close cart"
           >
             <X className="w-5 h-5 text-surface-500" />
           </button>
@@ -284,26 +285,28 @@ function CartDrawer({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     onClick={() =>
                       updateQuantity(item.menuItemId, item.quantity - 1)
                     }
-                    className="p-1.5 rounded-lg bg-surface-100 hover:bg-surface-200 transition-colors"
+                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-100 hover:bg-surface-200 active:scale-95 transition-all cursor-pointer"
+                    aria-label="Decrease quantity"
                   >
-                    <Minus className="w-3.5 h-3.5 text-surface-600" />
+                    <Minus className="w-4 h-4 text-surface-600" />
                   </button>
-                  <span className="w-6 text-center text-sm font-semibold text-surface-900">
+                  <span className="w-8 text-center text-sm font-extrabold text-surface-900">
                     {item.quantity}
                   </span>
                   <button
                     onClick={() =>
                       updateQuantity(item.menuItemId, item.quantity + 1)
                     }
-                    className="p-1.5 rounded-lg transition-colors text-white"
+                    className="w-11 h-11 flex items-center justify-center rounded-xl text-white active:scale-95 transition-all cursor-pointer"
                     style={{ background: tenant.primary_color }}
+                    aria-label="Increase quantity"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </div>

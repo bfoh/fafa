@@ -16,7 +16,7 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -66,11 +66,34 @@ const settingsItems = [
   },
 ];
 
-export function Sidebar({ tenantName }: { tenantName?: string }) {
+export function Sidebar({
+  tenantName,
+  logoUrl,
+  primaryColor,
+  tenantSlug,
+}: {
+  tenantName?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  tenantSlug?: string;
+}) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const supabase = createBrowserClient();
+
+  useEffect(() => {
+    if (tenantSlug) {
+      const branding = {
+        name: tenantName || '',
+        logoUrl: logoUrl || '',
+        primaryColor: primaryColor || '#FF6B35',
+        slug: tenantSlug,
+      };
+      localStorage.setItem('fafa_last_tenant', JSON.stringify(branding));
+      document.cookie = `fafa_last_tenant_slug=${tenantSlug}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, [tenantName, logoUrl, primaryColor, tenantSlug]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -88,13 +111,29 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
       {/* Logo */}
       <div className="p-5 border-b border-surface-100">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-brand-500">Fafa</h1>
-            {tenantName && (
-              <p className="text-xs text-surface-400 mt-0.5 truncate max-w-[160px]">
-                {tenantName}
-              </p>
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={tenantName || 'Logo'}
+                className="w-9 h-9 rounded-xl object-cover"
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                style={{ backgroundColor: primaryColor || '#FF6B35' }}
+              >
+                {tenantName ? tenantName.charAt(0) : 'F'}
+              </div>
             )}
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold text-surface-900 truncate max-w-[140px]">
+                {tenantName || 'Fafa'}
+              </h1>
+              <p className="text-[10px] text-surface-400 font-semibold tracking-wider uppercase mt-0.5">
+                Dashboard
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setMobileOpen(false)}
@@ -118,18 +157,36 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                 active
-                  ? 'bg-brand-500/10 text-brand-600'
+                  ? primaryColor
+                    ? ''
+                    : 'bg-brand-500/10 text-brand-600'
                   : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
               }`}
+              style={
+                active && primaryColor
+                  ? {
+                      backgroundColor: `${primaryColor}15`,
+                      color: primaryColor,
+                    }
+                  : undefined
+              }
             >
               <Icon
                 className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                  active ? 'text-brand-500' : 'text-surface-400 group-hover:text-surface-600'
+                  active
+                    ? primaryColor
+                      ? ''
+                      : 'text-brand-500'
+                    : 'text-surface-400 group-hover:text-surface-600'
                 }`}
+                style={active && primaryColor ? { color: primaryColor } : undefined}
               />
               <span className="flex-1">{item.label}</span>
               {active && (
-                <ChevronRight className="w-4 h-4 text-brand-400" />
+                <ChevronRight
+                  className={`w-4 h-4 ${primaryColor ? '' : 'text-brand-400'}`}
+                  style={active && primaryColor ? { color: primaryColor } : undefined}
+                />
               )}
             </Link>
           );
@@ -148,14 +205,29 @@ export function Sidebar({ tenantName }: { tenantName?: string }) {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                 active
-                  ? 'bg-brand-500/10 text-brand-600'
+                  ? primaryColor
+                    ? ''
+                    : 'bg-brand-500/10 text-brand-600'
                   : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
               }`}
+              style={
+                active && primaryColor
+                  ? {
+                      backgroundColor: `${primaryColor}15`,
+                      color: primaryColor,
+                    }
+                  : undefined
+              }
             >
               <Icon
                 className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                  active ? 'text-brand-500' : 'text-surface-400 group-hover:text-surface-600'
+                  active
+                    ? primaryColor
+                      ? ''
+                      : 'text-brand-500'
+                    : 'text-surface-400 group-hover:text-surface-600'
                 }`}
+                style={active && primaryColor ? { color: primaryColor } : undefined}
               />
               <span className="flex-1">{item.label}</span>
             </Link>

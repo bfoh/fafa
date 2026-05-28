@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { BrandingCache } from '@/components/storefront/branding-cache';
 
 function adjustLightness(hex: string, factor: number): string {
   // Simple brightness adjustment
@@ -71,6 +73,13 @@ export default async function StorefrontLayout({
         } as React.CSSProperties
       }
     >
+      <BrandingCache
+        slug={slug}
+        name={tenant.name}
+        logoUrl={tenant.logo_url || undefined}
+        primaryColor={primaryColor}
+      />
+
       {/* Minimal header */}
       <header
         className="sticky top-0 z-30 glass border-b border-white/20"
@@ -105,17 +114,25 @@ export default async function StorefrontLayout({
       {children}
 
       {/* Footer */}
-      <footer className="py-6 text-center">
+      <footer className="py-6 text-center space-y-2">
         <p className="text-xs text-surface-400">
           Powered by{' '}
-          <a
+          <Link
             href="/"
             className="font-semibold"
             style={{ color: primaryColor }}
           >
             Fafa
-          </a>
+          </Link>
         </p>
+        <div>
+          <Link
+            href={`/login?tenant=${slug}`}
+            className="text-[10px] text-surface-400 hover:underline transition-colors hover:text-surface-600"
+          >
+            Merchant Login
+          </Link>
+        </div>
       </footer>
     </div>
   );

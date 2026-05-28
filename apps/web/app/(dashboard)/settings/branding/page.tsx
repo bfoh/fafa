@@ -19,6 +19,9 @@ export default function BrandingSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
 
+  const [tenantName, setTenantName] = useState('');
+  const [tenantSlug, setTenantSlug] = useState('');
+
   // Form State
   const [primaryColor, setPrimaryColor] = useState('#FF6B35');
   const [secondaryColor, setSecondaryColor] = useState('#1A1A2E');
@@ -46,11 +49,13 @@ export default function BrandingSettingsPage() {
           setTenantId(member.tenant_id);
           const { data: tenant } = await supabase
             .from('tenants')
-            .select('primary_color, secondary_color, logo_url, cover_image_url')
+            .select('name, slug, primary_color, secondary_color, logo_url, cover_image_url')
             .eq('id', member.tenant_id)
             .single();
 
           if (tenant) {
+            setTenantName(tenant.name);
+            setTenantSlug(tenant.slug);
             setPrimaryColor(tenant.primary_color || '#FF6B35');
             setSecondaryColor(tenant.secondary_color || '#1A1A2E');
             setLogoUrl(tenant.logo_url || null);
@@ -114,6 +119,19 @@ export default function BrandingSettingsPage() {
         .eq('id', tenantId);
 
       if (error) throw error;
+
+      // Update local branding cache immediately
+      if (tenantSlug) {
+        const branding = {
+          name: tenantName,
+          logoUrl: finalLogoUrl || '',
+          primaryColor: primaryColor,
+          slug: tenantSlug,
+        };
+        localStorage.setItem('fafa_last_tenant', JSON.stringify(branding));
+        document.cookie = `fafa_last_tenant_slug=${tenantSlug}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+
       alert('Branding settings saved successfully!');
     } catch (err) {
       console.error('Branding update error:', err);

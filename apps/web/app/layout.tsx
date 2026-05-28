@@ -10,8 +10,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Fafa — Order Food Online in Ghana',
-    template: '%s | Fafa',
+    default: 'Didi — Order Food Online in Ghana',
+    template: '%s | Didi',
   },
   description:
     'The easiest way for restaurants in Ghana to accept and manage food orders online. Share your menu, accept payments via Mobile Money or Card, and deliver to customers.',
@@ -22,10 +22,10 @@ export const metadata: Metadata = {
     'mobile money',
     'online food',
     'delivery',
-    'Fafa',
+    'Didi',
   ],
   openGraph: {
-    title: 'Fafa — Order Food Online in Ghana',
+    title: 'Didi — Order Food Online in Ghana',
     description:
       'The easiest way for restaurants in Ghana to accept and manage food orders online.',
     locale: 'en_GH',

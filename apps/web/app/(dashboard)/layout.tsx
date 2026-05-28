@@ -20,15 +20,29 @@ export default async function DashboardLayout({
   // Fetch tenant info for sidebar
   const { data: member } = await supabase
     .from('tenant_members')
-    .select('tenant_id, role, tenants(name, slug)')
+    .select('tenant_id, role, tenants(name, slug, logo_url, primary_color)')
     .eq('user_id', session.user.id)
     .single();
 
-  const tenantName = (member?.tenants as unknown as { name: string })?.name;
+  const tenant = (member?.tenants as unknown) as {
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    primary_color: string | null;
+  } | null;
+  const tenantName = tenant?.name;
+  const logoUrl = tenant?.logo_url || undefined;
+  const primaryColor = tenant?.primary_color || undefined;
+  const tenantSlug = tenant?.slug || undefined;
 
   return (
     <div className="min-h-screen bg-surface-50">
-      <Sidebar tenantName={tenantName} />
+      <Sidebar 
+        tenantName={tenantName} 
+        logoUrl={logoUrl} 
+        primaryColor={primaryColor} 
+        tenantSlug={tenantSlug}
+      />
 
       {/* Main content area */}
       <main className="lg:pl-64 min-h-screen">

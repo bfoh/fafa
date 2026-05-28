@@ -17,6 +17,7 @@ export async function POST(req: Request) {
       deliveryAddress,
       deliveryNotes,
       paymentMethod,
+      deliveryZoneId,
     } = body;
 
     // 1. Resolve tenant
@@ -85,8 +86,26 @@ export async function POST(req: Request) {
       (sum: number, item: { line_total: number }) => sum + item.line_total,
       0
     );
-    const deliveryFee =
-      deliveryType === 'delivery' ? Number(tenant.delivery_fee) : 0;
+
+    let deliveryFee = 0;
+    if (deliveryType === 'delivery') {
+      if (deliveryZoneId) {
+        const { data: zone } = await supabase
+          .from('delivery_zones')
+          .select('fee, tenant_id, is_active')
+          .eq('id', deliveryZoneId)
+          .single();
+
+        if (zone && zone.tenant_id === tenant.id && zone.is_active) {
+          deliveryFee = Number(zone.fee);
+        } else {
+          deliveryFee = Number(tenant.delivery_fee);
+        }
+      } else {
+        deliveryFee = Number(tenant.delivery_fee);
+      }
+    }
+
     const total = subtotal + deliveryFee;
 
     // 4. Check minimum order
@@ -142,6 +161,7 @@ export async function POST(req: Request) {
         customer_name: customer.name,
         customer_phone: normalizedPhone,
         customer_email: customer.email || null,
+        delivery_zone_id: deliveryType === 'delivery' ? (deliveryZoneId || null) : null,
       })
       .select()
       .single();
