@@ -35,7 +35,7 @@ export async function sendEmail({
         Authorization: `Bearer ${process.env.BREVIO_API_KEY}`,
       },
       body: JSON.stringify({
-        from: from || 'Fafa <orders@fafa.com.gh>',
+        from: from || 'Didi <orders@didi.com.gh>',
         to,
         subject,
         html,

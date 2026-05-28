@@ -32,7 +32,7 @@ function getTemplates(
     case 'order_placed':
       return {
         customerSms: `Hi ${order.customer_name}! Your order #${order.order_number} has been received by ${tenant.name}. Total: ${amount}. You'll be notified when it's confirmed.`,
-        tenantSms: `New order #${order.order_number}! ${order.customer_name} - ${amount}. Open Fafa to confirm.`,
+        tenantSms: `New order #${order.order_number}! ${order.customer_name} - ${amount}. Open Didi to confirm.`,
         customerEmail: {
           subject: `Order #${order.order_number} received - ${tenant.name}`,
           html: `
@@ -44,7 +44,7 @@ function getTemplates(
               <p>Payment: ${order.payment_method === 'cash_on_delivery' ? 'Pay on delivery' : order.payment_method === 'momo' ? 'Mobile Money' : 'Card'}</p>
               <p>You'll receive updates as your order progresses.</p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-              <p style="color: #888; font-size: 12px;">Powered by Fafa</p>
+              <p style="color: #888; font-size: 12px;">Powered by Didi</p>
             </div>
           `,
         },
@@ -70,7 +70,7 @@ function getTemplates(
 
     case 'order_delivered':
       return {
-        customerSms: `Enjoy your meal! 🍽️ Order #${order.order_number} from ${tenant.name} has been delivered. Thank you for using Fafa!`,
+        customerSms: `Enjoy your meal! 🍽️ Order #${order.order_number} from ${tenant.name} has been delivered. Thank you for using Didi!`,
       };
 
     case 'payment_confirmed':
@@ -117,7 +117,7 @@ async function sendAndLog(params: {
     } else {
       const result = await sendEmail({
         to: params.recipient,
-        subject: params.emailSubject || 'Fafa Order Update',
+        subject: params.emailSubject || 'Didi Order Update',
         html: params.message,
       });
       success = result.success;

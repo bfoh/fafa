@@ -23,12 +23,12 @@ interface ArkeselResponse {
  * Send an SMS via Arkesel.
  * @param to - Ghana phone number (any format, will be normalized)
  * @param message - SMS body (max 160 chars for single SMS, 306 for concatenated)
- * @param sender - Sender ID, max 11 chars. Default: "Fafa"
+ * @param sender - Sender ID, max 11 chars. Default: "Didi"
  */
 export async function sendSMS({
   to,
   message,
-  sender = 'Fafa',
+  sender = 'Didi',
 }: SendSMSParams): Promise<{
   success: boolean;
   messageId?: string;

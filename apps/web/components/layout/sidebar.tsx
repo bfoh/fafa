@@ -128,7 +128,7 @@ export function Sidebar({
             )}
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-surface-900 truncate max-w-[140px]">
-                {tenantName || 'Fafa'}
+                {tenantName || 'Didi'}
               </h1>
               <p className="text-[10px] text-surface-400 font-semibold tracking-wider uppercase mt-0.5">
                 Dashboard

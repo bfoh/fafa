@@ -33,7 +33,7 @@ export async function generateMetadata({
   if (!tenant) return { title: 'Not Found' };
 
   return {
-    title: `${tenant.name} — Order on Fafa`,
+    title: `${tenant.name} — Order on Didi`,
     description:
       tenant.description || tenant.tagline || `Order food from ${tenant.name}`,
   };
@@ -122,7 +122,7 @@ export default async function StorefrontLayout({
             className="font-semibold"
             style={{ color: primaryColor }}
           >
-            Fafa
+            Didi
           </Link>
         </p>
         <div>

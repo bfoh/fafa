@@ -120,11 +120,11 @@ export default function LoginPage() {
               </div>
             )}
             <h1 className="text-2xl font-bold text-surface-900">{branding.name}</h1>
-            <p className="text-xs text-surface-400 mt-0.5">Powered by Fafa</p>
+            <p className="text-xs text-surface-400 mt-0.5">Powered by Didi</p>
           </div>
         ) : (
           <div>
-            <h1 className="text-3xl font-bold text-brand-500">Fafa</h1>
+            <h1 className="text-3xl font-bold text-brand-500">Didi</h1>
             <p className="text-surface-500 mt-1">Food Ordering Made Simple</p>
           </div>
         )}
@@ -289,7 +289,7 @@ export default function LoginPage() {
           }}
           className="text-xs text-surface-400 hover:text-surface-600 underline mt-4 block mx-auto text-center cursor-pointer"
         >
-          Not your restaurant? Sign in to Fafa
+          Not your restaurant? Sign in to Didi
         </button>
       )}
 

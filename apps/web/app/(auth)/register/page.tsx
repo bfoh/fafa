@@ -101,7 +101,7 @@ export default function RegisterPage() {
     <div>
       {/* Mobile branding */}
       <div className="lg:hidden mb-8 text-center">
-        <h1 className="text-3xl font-bold text-brand-500">Fafa</h1>
+        <h1 className="text-3xl font-bold text-brand-500">Didi</h1>
         <p className="text-surface-500 mt-1">Food Ordering Made Simple</p>
       </div>
 

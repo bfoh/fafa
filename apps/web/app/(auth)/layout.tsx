@@ -81,7 +81,7 @@ export default async function AuthLayout({
             </div>
           ) : (
             <div>
-              <h1 className="text-4xl font-bold tracking-tight">Fafa</h1>
+              <h1 className="text-4xl font-bold tracking-tight">Didi</h1>
               <p className="text-brand-100 mt-1 text-lg">
                 Food Ordering Made Simple
               </p>
@@ -135,7 +135,7 @@ export default async function AuthLayout({
           <p className="text-sm text-white/60">
             {tenant ? (
               <>
-                Powered by <span className="font-semibold text-white">Fafa</span>
+                Powered by <span className="font-semibold text-white">Didi</span>
               </>
             ) : (
               'Trusted by restaurants across Ghana 🇬🇭'

@@ -80,7 +80,7 @@ export default function ForgotPasswordPage() {
     <div>
       <div className="lg:hidden mb-8 text-center">
         <h1 className="text-3xl font-bold" style={{ color: primaryColor }}>
-          {branding ? branding.name : 'Fafa'}
+          {branding ? branding.name : 'Didi'}
         </h1>
       </div>
 

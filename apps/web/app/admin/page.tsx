@@ -139,7 +139,7 @@ export default function PlatformAdminPage() {
             <span className="bg-surface-900 text-brand-500 text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wider">
               SUPER-ADMIN
             </span>
-            <h1 className="text-2xl font-bold text-surface-900">Fafa Platform Admin</h1>
+            <h1 className="text-2xl font-bold text-surface-900">Didi Platform Admin</h1>
           </div>
           <p className="text-surface-500 text-sm mt-1">
             Monitor and manage restaurant onboarded tenants, control statuses, and inspect metrics.
