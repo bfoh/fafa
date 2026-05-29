@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Bricolage_Grotesque } from 'next/font/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 import HeroSearch from '@/components/marketplace/hero-search';
@@ -122,12 +123,21 @@ export default async function HomePage({
         {/* Header */}
         <header className="sticky top-0 z-30 border-b border-white/10 bg-black/20 backdrop-blur-2xl">
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
-            <span
-              className="text-2xl font-extrabold bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              Didi
-            </span>
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image
+                src="/images/didi_favicon.png"
+                alt="Didi"
+                width={34}
+                height={34}
+                className="rounded-xl ring-1 ring-white/15"
+              />
+              <span
+                className="text-2xl font-extrabold bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Didi
+              </span>
+            </Link>
             <nav className="flex items-center gap-3 text-sm">
               <Link
                 href="/for-restaurants"
@@ -211,6 +221,41 @@ export default async function HomePage({
             </Link>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="border-t border-white/10 bg-black/20 backdrop-blur-xl">
+          <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <Image
+                src="/images/didi_favicon.png"
+                alt="Didi"
+                width={30}
+                height={30}
+                className="rounded-lg ring-1 ring-white/15"
+              />
+              <span
+                className="text-lg font-extrabold bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                Didi
+              </span>
+              <span className="text-xs text-white/35 ml-1">
+                Ghana&apos;s kitchens, delivered
+              </span>
+            </div>
+            <div className="flex items-center gap-5 text-xs text-white/50">
+              <Link href="/for-restaurants" className="hover:text-white transition-colors">
+                For restaurants
+              </Link>
+              <Link href="/login" className="hover:text-white transition-colors">
+                Sign in
+              </Link>
+              <span className="text-white/30">
+                © {new Date().getFullYear()} Didi
+              </span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
