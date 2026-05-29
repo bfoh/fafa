@@ -5,8 +5,17 @@ import { getBaseUrl } from '@/lib/utils';
 
 export async function POST(req: Request) {
   try {
-    const { email, phone, password, restaurantName, description, city } =
-      await req.json();
+    const {
+      email,
+      phone,
+      password,
+      restaurantName,
+      description,
+      city,
+      cuisines,
+      locationLat,
+      locationLng,
+    } = await req.json();
 
     const supabase = createAdminClient();
 
@@ -54,6 +63,9 @@ export async function POST(req: Request) {
         phone,
         email,
         city: city || null,
+        cuisines: Array.isArray(cuisines) ? cuisines : [],
+        location_lat: typeof locationLat === 'number' ? locationLat : null,
+        location_lng: typeof locationLng === 'number' ? locationLng : null,
         status: 'active',
       })
       .select()

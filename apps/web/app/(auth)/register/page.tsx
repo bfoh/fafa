@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { CUISINES } from '@/lib/marketplace/cuisines';
+import { CITY_COORDS } from '@/lib/marketplace/geo';
+
+const LocationPicker = dynamic(
+  () => import('@/components/onboarding/location-picker'),
+  { ssr: false }
+);
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -19,6 +27,8 @@ export default function RegisterPage() {
   const [restaurantName, setRestaurantName] = useState('');
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('');
+  const [cuisines, setCuisines] = useState<string[]>([]);
+  const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +63,9 @@ export default function RegisterPage() {
           restaurantName,
           description,
           city,
+          cuisines,
+          locationLat: loc?.lat ?? null,
+          locationLng: loc?.lng ?? null,
         }),
       });
 
@@ -260,6 +273,57 @@ export default function RegisterPage() {
                 <option value="Koforidua">Koforidua</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1.5">
+                What food do you serve?{' '}
+                <span className="text-surface-400">(pick a few)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CUISINES.map((c) => {
+                  const on = cuisines.includes(c.slug);
+                  return (
+                    <button
+                      key={c.slug}
+                      type="button"
+                      onClick={() =>
+                        setCuisines((prev) =>
+                          on
+                            ? prev.filter((s) => s !== c.slug)
+                            : [...prev, c.slug]
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                        on
+                          ? 'bg-brand-500 text-white border-brand-500'
+                          : 'bg-white text-surface-600 border-surface-200'
+                      }`}
+                    >
+                      {c.emoji} {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-surface-700 mb-1.5">
+                Pin your location{' '}
+                <span className="text-surface-400">
+                  (helps nearby customers find you)
+                </span>
+              </label>
+              <LocationPicker
+                center={city && CITY_COORDS[city] ? CITY_COORDS[city] : undefined}
+                value={loc}
+                onChange={(lat, lng) => setLoc({ lat, lng })}
+              />
+              {loc && (
+                <p className="text-[11px] text-success-600 mt-1">
+                  Location set ✓
+                </p>
+              )}
             </div>
           </div>
         )}
