@@ -4,7 +4,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import HeroSearch from '@/components/marketplace/hero-search';
 import CuisineChips from '@/components/marketplace/cuisine-chips';
 import KitchenGrid from '@/components/marketplace/kitchen-grid';
-import type { KitchenResult } from '@/components/marketplace/kitchen-card';
+import type {
+  KitchenResult,
+  MenuPreview,
+} from '@/components/marketplace/kitchen-card';
 
 const display = Bricolage_Grotesque({
   subsets: ['latin'],
@@ -57,6 +60,39 @@ export default async function HomePage({
   } catch (err) {
     console.error('Marketplace load failed:', err);
     kitchens = [];
+  }
+
+  // Attach up to 3 dishes per kitchen (one batched query, grouped in-app).
+  if (kitchens.length > 0) {
+    try {
+      const supabase = createAdminClient();
+      const { data: items } = await supabase
+        .from('menu_items')
+        .select('tenant_id, name, price, image_url, is_featured, sort_order')
+        .in(
+          'tenant_id',
+          kitchens.map((k) => k.id)
+        )
+        .eq('is_available', true)
+        .order('is_featured', { ascending: false })
+        .order('sort_order', { ascending: true });
+
+      const byTenant = new Map<string, MenuPreview[]>();
+      for (const it of items || []) {
+        const arr = byTenant.get(it.tenant_id) || [];
+        if (arr.length < 3) {
+          arr.push({
+            name: it.name,
+            price: Number(it.price),
+            image_url: it.image_url,
+          });
+          byTenant.set(it.tenant_id, arr);
+        }
+      }
+      kitchens = kitchens.map((k) => ({ ...k, items: byTenant.get(k.id) || [] }));
+    } catch (err) {
+      console.error('Dish preview load failed:', err);
+    }
   }
 
   const nearActive = lat != null && lng != null;
