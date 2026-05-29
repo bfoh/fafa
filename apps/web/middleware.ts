@@ -24,6 +24,10 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient(req, res);
   const { pathname } = req.nextUrl;
 
+  // Expose the path to server components (auth layout uses it to force Didi
+  // branding on /register).
+  res.headers.set('x-pathname', pathname);
+
   // Refresh session (important for Supabase auth)
   const {
     data: { session },

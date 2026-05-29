@@ -1,152 +1,181 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import Image from 'next/image';
+import { Bricolage_Grotesque } from 'next/font/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-function adjustLightness(hex: string, factor: number): string {
-  // Simple brightness adjustment
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+const display = Bricolage_Grotesque({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--font-display',
+});
 
-  const adjust = (c: number) =>
-    Math.min(255, Math.round(c + (255 - c) * factor));
-
-  return `rgb(${adjust(r)}, ${adjust(g)}, ${adjust(b)})`;
-}
+const FEATURES = [
+  {
+    icon: '📋',
+    title: 'Share your menu',
+    body: 'Customers scan your QR or tap your link',
+  },
+  {
+    icon: '💳',
+    title: 'Accept payments',
+    body: 'Mobile Money, Card, or Cash on Delivery',
+  },
+  {
+    icon: '📦',
+    title: 'Manage orders',
+    body: 'Real-time dashboard with instant alerts',
+  },
+];
 
 export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const hdrs = await headers();
+  const path = hdrs.get('x-pathname') || '';
+  const isRegister = path.endsWith('/register');
+
   const cookieStore = await cookies();
   const lastTenantSlug = cookieStore.get('fafa_last_tenant_slug')?.value;
 
-  let tenant = null;
-  if (lastTenantSlug) {
+  // Register always wears the Didi brand. Login wears the returning tenant's
+  // brand when we know who they are (set after their first dashboard visit).
+  let tenant: {
+    name: string;
+    logo_url: string | null;
+    tagline: string | null;
+    primary_color: string | null;
+  } | null = null;
+
+  if (!isRegister && lastTenantSlug) {
     const supabase = createAdminClient();
     const { data } = await supabase
       .from('tenants')
-      .select('name, logo_url, tagline, primary_color, secondary_color')
+      .select('name, logo_url, tagline, primary_color')
       .eq('slug', lastTenantSlug)
       .eq('status', 'active')
       .single();
-    if (data) {
-      tenant = data;
-    }
+    if (data) tenant = data;
   }
 
-  const primaryColor = tenant?.primary_color || '#FF6B35';
-  const tenantName = tenant?.name;
-  const logoUrl = tenant?.logo_url;
-  const tagline = tenant?.tagline || 'Food Ordering Made Simple';
+  const accent = tenant?.primary_color || '#FF6B35';
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel — branding */}
+    <div
+      className={`${display.variable} relative min-h-screen flex text-white`}
+      style={{
+        backgroundColor: '#0b0910',
+        backgroundImage: [
+          `radial-gradient(60% 50% at 25% 0%, ${accent}38, transparent 70%)`,
+          'radial-gradient(45% 40% at 100% 100%, rgba(255,150,90,0.12), transparent 70%)',
+          'radial-gradient(50% 45% at 0% 80%, rgba(120,72,255,0.10), transparent 70%)',
+        ].join(','),
+      }}
+    >
+      {/* Grain */}
       <div
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
+        className="pointer-events-none fixed inset-0 opacity-[0.04] mix-blend-overlay"
         style={{
-          background: tenant
-            ? `linear-gradient(135deg, ${primaryColor}, ${adjustLightness(primaryColor, -0.2)}, ${adjustLightness(primaryColor, -0.4)})`
-            : undefined,
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
         }}
-      >
-        {!tenant && (
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800" />
-        )}
-        <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10" />
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+      />
+
+      {/* Left — brand panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <div
+          className="absolute -left-24 -top-24 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-40"
+          style={{ background: accent }}
+        />
+        <div className="relative z-10 flex flex-col justify-between p-14 w-full">
+          {/* Brand mark */}
           {tenant ? (
-            <div className="flex items-center gap-4 animate-fade-in">
-              {logoUrl ? (
+            <div className="flex items-center gap-4">
+              {tenant.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={logoUrl}
-                  alt={tenantName}
-                  className="w-16 h-16 rounded-2xl object-cover shadow-md"
+                  src={tenant.logo_url}
+                  alt={tenant.name}
+                  className="w-16 h-16 rounded-2xl object-cover ring-1 ring-white/20 shadow-xl"
                 />
               ) : (
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-md"
-                  style={{ backgroundColor: primaryColor }}
+                  className="w-16 h-16 rounded-2xl grid place-items-center text-white font-bold text-2xl shadow-xl"
+                  style={{ backgroundColor: accent }}
                 >
-                  {tenantName.charAt(0)}
+                  {tenant.name.charAt(0)}
                 </div>
               )}
               <div>
-                <h1 className="text-3xl font-bold tracking-tight leading-tight">
-                  {tenantName}
+                <h1
+                  className="text-3xl font-extrabold tracking-tight"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {tenant.name}
                 </h1>
-                <p className="text-white/80 mt-1 text-sm">{tagline}</p>
+                <p className="text-white/55 mt-1 text-sm">
+                  {tenant.tagline || 'Food Ordering Made Simple'}
+                </p>
               </div>
             </div>
           ) : (
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight">Didi</h1>
-              <p className="text-brand-100 mt-1 text-lg">
-                Food Ordering Made Simple
-              </p>
+            <div className="flex items-center gap-3.5">
+              <Image
+                src="/images/didi_favicon.png"
+                alt="Didi"
+                width={56}
+                height={56}
+                className="rounded-2xl ring-1 ring-white/15 shadow-xl"
+              />
+              <div>
+                <h1
+                  className="text-4xl font-extrabold tracking-tight bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  Didi
+                </h1>
+                <p className="text-white/55 mt-0.5">Food Ordering Made Simple</p>
+              </div>
             </div>
           )}
 
-          <div className="space-y-8">
-            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
-                  📋
+          {/* Feature cards */}
+          <div className="space-y-3">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-xl px-4 py-3.5"
+              >
+                <div className="w-11 h-11 rounded-xl grid place-items-center text-xl bg-white/8 border border-white/10">
+                  {f.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold">Share Your Menu</h3>
-                  <p className="text-sm text-white/80">
-                    Customers scan your QR code or click your link
-                  </p>
+                  <h3 className="font-semibold text-white">{f.title}</h3>
+                  <p className="text-sm text-white/55">{f.body}</p>
                 </div>
               </div>
-            </div>
-
-            <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
-                  💳
-                </div>
-                <div>
-                  <h3 className="font-semibold">Accept Payments</h3>
-                  <p className="text-sm text-white/80">
-                    Mobile Money, Card, or Cash on Delivery
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
-                  📦
-                </div>
-                <div>
-                  <h3 className="font-semibold">Manage Orders</h3>
-                  <p className="text-sm text-white/80">
-                    Real-time dashboard with instant notifications
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-white/45">
             {tenant ? (
               <>
-                Powered by <span className="font-semibold text-white">Didi</span>
+                Powered by{' '}
+                <span className="font-semibold text-white">Didi</span>
               </>
             ) : (
-              'Trusted by restaurants across Ghana 🇬🇭'
+              'Trusted by kitchens across Ghana 🇬🇭'
             )}
           </p>
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-surface-50">
-        <div className="w-full max-w-md animate-fade-in">{children}</div>
+      {/* Right — form */}
+      <div className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.05] backdrop-blur-2xl shadow-[0_24px_70px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-9">
+          {children}
+        </div>
       </div>
     </div>
   );

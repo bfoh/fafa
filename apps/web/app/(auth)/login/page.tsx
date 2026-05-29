@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase/client';
 
@@ -10,9 +11,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const [branding, setBranding] = useState<{
     name: string;
@@ -25,7 +23,6 @@ export default function LoginPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
-    // First, load from localStorage if it exists
     const cached = localStorage.getItem('fafa_last_tenant');
     let cachedSlug = '';
     if (cached) {
@@ -40,7 +37,6 @@ export default function LoginPage() {
       }
     }
 
-    // Now inspect URL search parameters safely without triggering Next.js dynamic routing bail-out warnings
     const params = new URLSearchParams(window.location.search);
     const tenantParam = params.get('tenant');
     const slugToFetch = tenantParam || cachedSlug;
@@ -96,79 +92,66 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  const primaryColor = branding?.primaryColor || '#FF6B35';
-
+  const accent = branding?.primaryColor || '#FF6B35';
+  const inputClass =
+    'w-full px-4 py-3 rounded-xl border border-white/12 bg-white/[0.05] text-white placeholder:text-white/35 focus:outline-none focus:bg-white/[0.08] transition-all';
 
   return (
     <div>
-      {/* Mobile branding */}
-      <div className="lg:hidden mb-8 text-center animate-fade-in">
+      {/* Mobile / in-card brand mark */}
+      <div className="mb-7 flex flex-col items-center text-center lg:items-start lg:text-left">
         {branding ? (
-          <div className="flex flex-col items-center">
+          <>
             {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={branding.logoUrl}
                 alt={branding.name}
-                className="w-16 h-16 rounded-2xl object-cover shadow-sm mb-3"
+                className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/20 mb-3"
               />
             ) : (
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-sm mb-3"
-                style={{ backgroundColor: primaryColor }}
+                className="w-14 h-14 rounded-2xl grid place-items-center text-white font-bold text-xl mb-3"
+                style={{ backgroundColor: accent }}
               >
                 {branding.name.charAt(0)}
               </div>
             )}
-            <h1 className="text-2xl font-bold text-surface-900">{branding.name}</h1>
-            <p className="text-xs text-surface-400 mt-0.5">Powered by Didi</p>
-          </div>
-        ) : (
-          <div>
-            <h1 className="text-3xl font-bold text-brand-500">Didi</h1>
-            <p className="text-surface-500 mt-1">Food Ordering Made Simple</p>
-          </div>
-        )}
-      </div>
-
-      <div className="animate-fade-in">
-        {branding ? (
-          <div className="text-center lg:text-left">
-            <div className="hidden lg:block mb-4">
-              {branding.logoUrl ? (
-                <img
-                  src={branding.logoUrl}
-                  alt={branding.name}
-                  className="w-16 h-16 rounded-2xl object-cover shadow-sm"
-                />
-              ) : (
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-sm"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {branding.name.charAt(0)}
-                </div>
-              )}
-            </div>
-            <h2 className="text-2xl font-bold text-surface-900 leading-tight">
+            <h2
+              className="text-2xl font-extrabold text-white leading-tight"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
               Welcome back to {branding.name}
             </h2>
-            <p className="text-surface-500 mt-1">
+            <p className="text-white/50 mt-1 text-sm">
               Sign in to manage your kitchen
             </p>
-          </div>
+          </>
         ) : (
-          <div>
-            <h2 className="text-2xl font-bold text-surface-900">Welcome back</h2>
-            <p className="text-surface-500 mt-1">
-              Sign in to manage your restaurant
+          <>
+            <Image
+              src="/images/didi_favicon.png"
+              alt="Didi"
+              width={48}
+              height={48}
+              className="rounded-2xl ring-1 ring-white/15 mb-3"
+            />
+            <h2
+              className="text-2xl font-extrabold text-white"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Welcome back
+            </h2>
+            <p className="text-white/50 mt-1 text-sm">
+              Sign in to manage your kitchen
             </p>
-          </div>
+          </>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-sm animate-fade-in">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-400/25 text-rose-200 text-sm">
             {error}
           </div>
         )}
@@ -176,7 +159,7 @@ export default function LoginPage() {
         <div>
           <label
             htmlFor="login-email"
-            className="block text-sm font-medium text-surface-700 mb-1.5"
+            className="block text-sm font-medium text-white/70 mb-1.5"
           >
             Email address
           </label>
@@ -185,19 +168,9 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setEmailFocused(true)}
-            onBlur={() => setEmailFocused(false)}
             required
             placeholder="you@restaurant.com"
-            className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none transition-all"
-            style={
-              emailFocused
-                ? {
-                    borderColor: primaryColor,
-                    boxShadow: `0 0 0 2px ${primaryColor}55`,
-                  }
-                : undefined
-            }
+            className={inputClass}
           />
         </div>
 
@@ -205,14 +178,14 @@ export default function LoginPage() {
           <div className="flex items-center justify-between mb-1.5">
             <label
               htmlFor="login-password"
-              className="block text-sm font-medium text-surface-700"
+              className="block text-sm font-medium text-white/70"
             >
               Password
             </label>
             <Link
               href="/forgot-password"
               className="text-sm transition-colors hover:opacity-80"
-              style={{ color: primaryColor }}
+              style={{ color: accent }}
             >
               Forgot password?
             </Link>
@@ -222,30 +195,19 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
             required
             placeholder="••••••••"
-            className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none transition-all"
-            style={
-              passwordFocused
-                ? {
-                    borderColor: primaryColor,
-                    boxShadow: `0 0 0 2px ${primaryColor}55`,
-                  }
-                : undefined
-            }
+            className={inputClass}
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 rounded-xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:opacity-90 cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:brightness-110 cursor-pointer shadow-[0_10px_30px_-10px_rgba(255,107,53,0.8)]"
           style={{
-            backgroundColor: primaryColor,
-            ['--tw-ring-color' as string]: primaryColor,
-          } as React.CSSProperties}
+            backgroundImage: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+          }}
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -287,18 +249,18 @@ export default function LoginPage() {
               'fafa_last_tenant_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             router.replace('/login');
           }}
-          className="text-xs text-surface-400 hover:text-surface-600 underline mt-4 block mx-auto text-center cursor-pointer"
+          className="text-xs text-white/40 hover:text-white/70 underline mt-4 block mx-auto text-center cursor-pointer"
         >
-          Not your restaurant? Sign in to Didi
+          Not your kitchen? Sign in to Didi
         </button>
       )}
 
-      <p className="mt-6 text-center text-sm text-surface-500">
+      <p className="mt-6 text-center text-sm text-white/50">
         Don&apos;t have an account?{' '}
         <Link
           href="/register"
           className="font-semibold transition-colors hover:opacity-85"
-          style={{ color: primaryColor }}
+          style={{ color: accent }}
         >
           Create one free
         </Link>

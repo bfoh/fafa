@@ -6,7 +6,6 @@ import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [emailFocused, setEmailFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -58,11 +57,11 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <div className="text-center animate-fade-in">
-        <div className="w-16 h-16 bg-success-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-400/25 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-3xl">📧</span>
         </div>
-        <h2 className="text-2xl font-bold text-surface-900">Check your email</h2>
-        <p className="text-surface-500 mt-2">
+        <h2 className="text-2xl font-extrabold text-white">Check your email</h2>
+        <p className="text-white/55 mt-2">
           We&apos;ve sent a password reset link to <strong>{email}</strong>
         </p>
         <Link
@@ -78,26 +77,25 @@ export default function ForgotPasswordPage() {
 
   return (
     <div>
-      <div className="lg:hidden mb-8 text-center">
-        <h1 className="text-3xl font-bold" style={{ color: primaryColor }}>
-          {branding ? branding.name : 'Didi'}
-        </h1>
-      </div>
-
-      <h2 className="text-2xl font-bold text-surface-900">Reset password</h2>
-      <p className="text-surface-500 mt-1">
+      <h2
+        className="text-2xl font-extrabold text-white"
+        style={{ fontFamily: 'var(--font-display)' }}
+      >
+        Reset password
+      </h2>
+      <p className="text-white/50 mt-1 text-sm">
         Enter your email and we&apos;ll send you a reset link
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         {error && (
-          <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-sm animate-fade-in">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-400/25 text-rose-200 text-sm animate-fade-in">
             {error}
           </div>
         )}
 
         <div>
-          <label htmlFor="forgot-email" className="block text-sm font-medium text-surface-700 mb-1.5">
+          <label htmlFor="forgot-email" className="block text-sm font-medium text-white/70 mb-1.5">
             Email address
           </label>
           <input
@@ -105,35 +103,25 @@ export default function ForgotPasswordPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setEmailFocused(true)}
-            onBlur={() => setEmailFocused(false)}
             required
             placeholder="you@restaurant.com"
-            className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all"
-            style={
-              emailFocused
-                ? {
-                    borderColor: primaryColor,
-                    boxShadow: `0 0 0 2px ${primaryColor}55`,
-                  }
-                : undefined
-            }
+            className="w-full px-4 py-3 rounded-xl border border-white/12 bg-white/[0.05] text-white placeholder:text-white/35 focus:outline-none focus:bg-white/[0.08] transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:opacity-90 cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] hover:brightness-110 cursor-pointer shadow-[0_10px_30px_-10px_rgba(255,107,53,0.8)]"
           style={{
-            backgroundColor: primaryColor,
+            backgroundImage: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}cc)`,
           }}
         >
           {loading ? 'Sending...' : 'Send Reset Link'}
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-surface-500">
+      <p className="mt-6 text-center text-sm text-white/50">
         Remember your password?{' '}
         <Link
           href="/login"
