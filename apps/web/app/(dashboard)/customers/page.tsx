@@ -156,7 +156,43 @@ export default function CustomersPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-surface-100">
+            {sortedAndFilteredCustomers.map((cust) => (
+              <div key={cust.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-surface-900 text-sm truncate">{cust.name}</p>
+                    <a
+                      href={`tel:${cust.phone}`}
+                      className="text-xs text-brand-500 font-semibold flex items-center gap-1 mt-0.5"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-surface-400" />
+                      {cust.phone}
+                    </a>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-extrabold text-sm text-brand-500">{formatGHS(cust.total_spent)}</p>
+                    <p className="text-[11px] text-surface-500">{cust.total_orders} orders</p>
+                  </div>
+                </div>
+                {cust.address && (
+                  <p className="text-[11px] text-surface-500 flex items-start gap-1 mt-2">
+                    <MapPin className="w-3.5 h-3.5 text-surface-400 shrink-0 mt-0.5" />
+                    <span className="truncate">{cust.address}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-surface-400 flex items-center gap-1.5 mt-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {cust.last_order_at ? formatDateTime(cust.last_order_at) : 'Never ordered'}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-surface-50 border-b border-surface-150 text-[10px] font-bold text-surface-500 uppercase select-none">
@@ -252,6 +288,7 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

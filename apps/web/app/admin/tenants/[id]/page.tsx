@@ -321,7 +321,33 @@ export default async function TenantDetailPage({
               No orders yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile cards */}
+            <div className="sm:hidden divide-y divide-surface-100">
+              {recentOrders.map((o) => (
+                <div key={o.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-surface-900">{o.customer_name}</p>
+                      <p className="font-mono text-[10px] text-surface-500">{o.order_number}</p>
+                    </div>
+                    <p className="font-bold shrink-0">{formatGHS(Number(o.total))}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${o.payment_status === 'paid' ? 'bg-success-500/10 text-success-700' : 'bg-surface-200 text-surface-600'}`}>
+                      {o.payment_status}
+                    </span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${orderStatusStyles[o.status] || 'bg-surface-200 text-surface-600'}`}>
+                      {o.status}
+                    </span>
+                    <span className="text-[10px] text-surface-400 ml-auto">{timeAgo(o.created_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-100 border-b border-surface-200 text-[10px] font-bold text-surface-500 uppercase select-none">
@@ -374,6 +400,7 @@ export default async function TenantDetailPage({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       </div>

@@ -296,7 +296,53 @@ export default function AdminConsole({
               No merchant tenants found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-surface-100">
+              {filteredTenants.map((t) => (
+                <div key={t.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      href={`/admin/tenants/${t.id}`}
+                      className="font-bold text-surface-900 text-sm hover:text-brand-600"
+                    >
+                      {t.name}
+                    </Link>
+                    <span
+                      className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase shrink-0 ${statusStyles[t.status]}`}
+                    >
+                      {t.status}
+                    </span>
+                  </div>
+                  <p className="font-mono text-[10px] text-surface-500 mt-0.5">/{t.slug}</p>
+                  <div className="flex items-center gap-3 text-[11px] text-surface-600 mt-2">
+                    <span>{t.orderCount} orders</span>
+                    <span className="font-semibold">{formatGHS(t.revenue)}</span>
+                    <span className="text-surface-400 truncate">{t.phone}</span>
+                  </div>
+                  <button
+                    onClick={() => handleToggleStatus(t.id, t.status)}
+                    disabled={actionLoading === t.id}
+                    className={`mt-3 w-full py-2 rounded-xl font-bold text-[11px] transition-all active:scale-95 disabled:opacity-50 ${
+                      t.status === 'active'
+                        ? 'bg-error-600 text-white'
+                        : 'bg-success-600 text-white'
+                    }`}
+                  >
+                    {actionLoading === t.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
+                    ) : t.status === 'active' ? (
+                      'Suspend'
+                    ) : (
+                      'Activate'
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-100 border-b border-surface-200 text-[10px] font-bold text-surface-500 uppercase select-none">
@@ -385,6 +431,7 @@ export default function AdminConsole({
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       </div>

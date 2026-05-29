@@ -271,7 +271,49 @@ export default function PaymentsPage() {
             No transactions found matching your filters.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-surface-100">
+            {filteredPayments.map((payment) => {
+              const method = methodConfig[payment.method] || { label: payment.method, icon: CreditCard, bg: 'bg-surface-100 text-surface-600' };
+              const MethodIcon = method.icon;
+              const status = statusConfig[payment.status] || { label: payment.status, class: 'bg-surface-100 text-surface-600', icon: AlertCircle };
+              const StatusIcon = status.icon;
+              return (
+                <div key={payment.id} className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-surface-900 text-sm">
+                        {payment.orders?.order_number || '—'}
+                      </p>
+                      <p className="text-xs text-surface-500 truncate">
+                        {payment.orders?.customer_name || 'Guest'}
+                      </p>
+                    </div>
+                    <p className="font-extrabold text-sm text-surface-900 shrink-0">
+                      {formatGHS(Number(payment.amount))}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${method.bg}`}>
+                      <MethodIcon className="w-3.5 h-3.5" />
+                      {method.label}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${status.class}`}>
+                      <StatusIcon className="w-3.5 h-3.5" />
+                      {status.label}
+                    </span>
+                    <span className="text-[10px] text-surface-400 ml-auto">
+                      {formatDateTime(payment.created_at)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs text-surface-700">
               <thead className="bg-surface-50 text-[10px] font-bold text-surface-500 uppercase border-b border-surface-150">
                 <tr>
@@ -326,6 +368,7 @@ export default function PaymentsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>
