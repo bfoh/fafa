@@ -3,6 +3,14 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { CUISINES } from '@/lib/marketplace/cuisines';
+import { CITY_COORDS } from '@/lib/marketplace/geo';
+
+const LocationPicker = dynamic(
+  () => import('@/components/onboarding/location-picker'),
+  { ssr: false }
+);
 
 export default function ProfileSettingsPage() {
   const supabase = createBrowserClient();
@@ -23,6 +31,8 @@ export default function ProfileSettingsPage() {
   // Notification Preferences
   const [notifySms, setNotifySms] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
+  const [cuisines, setCuisines] = useState<string[]>([]);
+  const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     async function loadTenant() {
@@ -55,6 +65,13 @@ export default function ProfileSettingsPage() {
             setEmail(tenant.email || '');
             setNotifySms(tenant.notify_sms ?? true);
             setNotifyEmail(tenant.notify_email ?? true);
+            setCuisines(Array.isArray(tenant.cuisines) ? tenant.cuisines : []);
+            if (tenant.location_lat != null && tenant.location_lng != null) {
+              setLoc({
+                lat: Number(tenant.location_lat),
+                lng: Number(tenant.location_lng),
+              });
+            }
           }
         }
       } catch (err) {
@@ -85,6 +102,9 @@ export default function ProfileSettingsPage() {
           email: email.trim() || null,
           notify_sms: notifySms,
           notify_email: notifyEmail,
+          cuisines,
+          location_lat: loc?.lat ?? null,
+          location_lng: loc?.lng ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', tenantId);
@@ -213,6 +233,54 @@ export default function ProfileSettingsPage() {
             rows={3}
             className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs resize-none"
           />
+        </div>
+
+        {/* Cuisines + location */}
+        <div className="border-t border-surface-100 pt-5 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+              Cuisines
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CUISINES.map((c) => {
+                const on = cuisines.includes(c.slug);
+                return (
+                  <button
+                    key={c.slug}
+                    type="button"
+                    onClick={() =>
+                      setCuisines((prev) =>
+                        on
+                          ? prev.filter((s) => s !== c.slug)
+                          : [...prev, c.slug]
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                      on
+                        ? 'bg-brand-500 text-white border-brand-500'
+                        : 'bg-white text-surface-600 border-surface-200'
+                    }`}
+                  >
+                    {c.emoji} {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+              Map Location
+            </label>
+            <LocationPicker
+              center={city && CITY_COORDS[city] ? CITY_COORDS[city] : undefined}
+              value={loc}
+              onChange={(lat, lng) => setLoc({ lat, lng })}
+            />
+            {loc && (
+              <p className="text-[11px] text-success-600 mt-1">Location set ✓</p>
+            )}
+          </div>
         </div>
 
         {/* Notifications config */}
