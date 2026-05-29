@@ -16,6 +16,7 @@ const KNOWN_PATHS = new Set([
   'favicon.ico',
   'sounds',
   'images',
+  'for-restaurants',
 ]);
 
 export async function middleware(req: NextRequest) {
