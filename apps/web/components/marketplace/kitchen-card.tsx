@@ -39,71 +39,73 @@ export default function KitchenCard({ k }: { k: KitchenResult }) {
       href={`/${k.slug}`}
       className="group relative flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-400/40 hover:bg-white/[0.08] hover:shadow-[0_24px_60px_-14px_rgba(255,107,53,0.34)]"
     >
-      {/* Hero */}
-      <div className="relative h-44 overflow-hidden">
-        {heroImg ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={heroImg}
-            alt=""
-            className="w-full h-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-110"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-brand-500 via-[#d6552a] to-[#5e2412]" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30" />
+      {/* Hero (image clipped) + logo straddling the seam (not clipped) */}
+      <div className="relative">
+        <div className="relative h-44 overflow-hidden rounded-t-[26px]">
+          {heroImg ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={heroImg}
+              alt=""
+              className="w-full h-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-110"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-brand-500 via-[#d6552a] to-[#5e2412]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/30" />
 
-        {/* Open / closed */}
-        <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-black/45 backdrop-blur-md border border-white/15 text-white">
-          <span className={k.open_now ? 'text-emerald-400' : 'text-rose-400'}>●</span>
-          {k.open_now ? 'Open now' : 'Closed'}
-        </span>
-
-        {/* Distance */}
-        {distance && (
-          <span className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/45 backdrop-blur-md border border-white/15 text-white">
-            {distance}
+          {/* Open / closed */}
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-black/45 backdrop-blur-md border border-white/15 text-white">
+            <span className={k.open_now ? 'text-emerald-400' : 'text-rose-400'}>●</span>
+            {k.open_now ? 'Open now' : 'Closed'}
           </span>
-        )}
 
-        {/* Cuisine tags */}
-        {tags.length > 0 && (
-          <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/15 backdrop-blur-md border border-white/20 text-white"
-              >
-                {CUISINE_LABEL[t] || t}
-              </span>
-            ))}
-            {extraTags > 0 && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/15 backdrop-blur-md border border-white/20 text-white">
-                +{extraTags}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+          {/* Distance */}
+          {distance && (
+            <span className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/45 backdrop-blur-md border border-white/15 text-white">
+              {distance}
+            </span>
+          )}
+        </div>
 
-      {/* Logo */}
-      <div className="absolute left-5 top-[152px] z-10 w-14 h-14 rounded-2xl border-2 border-white/25 bg-brand-500 overflow-hidden flex items-center justify-center text-white font-extrabold text-lg shadow-xl">
-        {k.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={k.logo_url} alt="" className="w-full h-full object-cover" />
-        ) : (
-          k.name.charAt(0)
-        )}
+        {/* Logo — half over the photo, half over the body */}
+        <div className="absolute -bottom-7 left-5 z-10 w-14 h-14 rounded-2xl border-2 border-white/30 bg-brand-500 overflow-hidden flex items-center justify-center text-white font-extrabold text-lg shadow-[0_8px_24px_-6px_rgba(0,0,0,0.7)]">
+          {k.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={k.logo_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            k.name.charAt(0)
+          )}
+        </div>
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 pt-9 px-5 pb-5">
+      <div className="flex flex-col flex-1 pt-10 px-5 pb-5">
         <h3 className="font-bold text-[16px] text-white truncate group-hover:text-brand-300 transition-colors">
           {k.name}
         </h3>
         <p className="text-xs text-white/45 mt-0.5 truncate">
           {k.city || 'Kitchen'}
         </p>
+
+        {/* Cuisine tags */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2.5">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/8 border border-white/12 text-white/75"
+              >
+                {CUISINE_LABEL[t] || t}
+              </span>
+            ))}
+            {extraTags > 0 && (
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/8 border border-white/12 text-white/75">
+                +{extraTags}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Dish preview */}
         {dishes.length > 0 && (
