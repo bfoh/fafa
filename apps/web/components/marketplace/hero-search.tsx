@@ -42,19 +42,24 @@ export default function HeroSearch() {
   return (
     <form
       onSubmit={submit}
-      className="flex max-w-xl mx-auto bg-white border border-surface-200 rounded-full shadow-lg overflow-hidden"
+      className="flex max-w-xl mx-auto items-center gap-1.5 p-1.5 bg-white/[0.07] border border-white/15 rounded-full backdrop-blur-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)]"
     >
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search jollof, waakye, pizza, a kitchen…"
-        className="flex-1 px-5 py-3.5 text-sm outline-none bg-transparent text-surface-900 placeholder:text-surface-400"
-      />
+      <div className="flex items-center flex-1 pl-4">
+        <Search className="w-4 h-4 text-white/40 shrink-0" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search jollof, waakye, pizza, a kitchen…"
+          className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent text-white placeholder:text-white/40"
+        />
+      </div>
       <button
         type="button"
         onClick={useMyLocation}
-        className={`flex items-center gap-1.5 px-4 text-xs font-bold border-l border-surface-100 ${
-          nearActive ? 'text-success-600' : 'text-brand-500'
+        className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-bold transition-colors ${
+          nearActive
+            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30'
+            : 'text-white/80 hover:bg-white/10'
         }`}
       >
         {locating ? (
@@ -67,7 +72,7 @@ export default function HeroSearch() {
       <button
         type="submit"
         disabled={isPending}
-        className="bg-brand-500 hover:bg-brand-600 text-white px-5 flex items-center font-bold text-sm disabled:opacity-60"
+        className="grid place-items-center w-11 h-11 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white shrink-0 shadow-[0_6px_20px_-6px_rgba(255,107,53,0.8)] hover:brightness-110 disabled:opacity-60 transition-all"
       >
         {isPending ? (
           <Loader2 className="w-4 h-4 animate-spin" />
