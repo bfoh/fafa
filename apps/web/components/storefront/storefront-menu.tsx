@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { CartProvider, useCart } from '@/hooks/use-cart';
 import { formatGHS } from '@/lib/utils/currency';
-import { Plus, Minus, ShoppingBag, X, ArrowRight } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, X, ArrowRight, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { loadLastOrder, type LastOrder } from '@/lib/utils/customer-prefs';
 
 interface PriceTier {
   label: string;
@@ -107,7 +108,24 @@ function MenuContent({
   const [cartOpen, setCartOpen] = useState(false);
   const [activeChopBarItem, setActiveChopBarItem] = useState<MenuItemData | null>(null);
   const [categories, setCategories] = useState(initialCategories);
+  const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
   const supabase = createBrowserClient();
+
+  // Pull this device's last order for one-tap reorder.
+  useEffect(() => {
+    setLastOrder(loadLastOrder(tenant.slug));
+  }, [tenant.slug]);
+
+  // Items from the last order that still exist and are available now.
+  const availableIds = new Set(
+    categories.flatMap((c) => c.menu_items).filter((m) => m.is_available).map((m) => m.id)
+  );
+  const reorderItems = (lastOrder?.items || []).filter((it) => availableIds.has(it.menuItemId));
+
+  function handleReorder() {
+    reorderItems.forEach((it) => addItem(it));
+    if (reorderItems.length) setCartOpen(true);
+  }
 
   // Real-time subscription for menu changes
   useEffect(() => {
@@ -190,6 +208,30 @@ function MenuContent({
           ))}
         </div>
       </div>
+
+      {/* Order again */}
+      {reorderItems.length > 0 && (
+        <div className="px-4 pt-4">
+          <div className="rounded-2xl border border-surface-200 bg-white p-4 shadow-sm animate-fade-in">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-extrabold text-surface-400 uppercase tracking-wider">Order again</p>
+                <p className="text-sm font-semibold text-surface-800 truncate mt-0.5">
+                  {reorderItems.map((it) => `${it.quantity}× ${it.name}`).join(', ')}
+                </p>
+              </div>
+              <button
+                onClick={handleReorder}
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-xs font-semibold active:scale-95 transition-transform"
+                style={{ background: tenant.primary_color }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reorder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Menu items */}
       <div className="px-4 pt-4 space-y-6">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useCart } from '@/hooks/use-cart';
+import { saveCustomer, loadCustomer, saveLastOrder } from '@/lib/utils/customer-prefs';
 import { formatGHS } from '@/lib/utils/currency';
 import { useParams, useRouter } from 'next/navigation';
 import { CartProvider } from '@/hooks/use-cart';
@@ -34,6 +35,16 @@ function CheckoutContent({ slug }: { slug: string }) {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'cash_on_delivery'>('momo');
+
+  // Prefill from this device's saved details (returning customer).
+  useEffect(() => {
+    const saved = loadCustomer();
+    if (saved) {
+      setName((v) => v || saved.name || '');
+      setPhone((v) => v || saved.phone || '');
+      setAddress((v) => v || saved.address || '');
+    }
+  }, []);
 
   // Tenant config state
   const [tenant, setTenant] = useState<{
@@ -186,6 +197,12 @@ function CheckoutContent({ slug }: { slug: string }) {
         setError(data.error || 'Failed to place order');
         setLoading(false);
         return;
+      }
+
+      // Remember this device's details + last order for prefill & reorder.
+      saveCustomer({ name, phone, address: deliveryType === 'delivery' ? address : undefined });
+      if (data.order?.order_number) {
+        saveLastOrder(slug, data.order.order_number, items);
       }
 
       // Clear cart
