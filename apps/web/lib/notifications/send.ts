@@ -6,6 +6,7 @@
 
 import { sendSMS } from '@/lib/arkesel/client';
 import { sendEmail } from '@/lib/brevio/client';
+import { sendWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatGHS } from '@/lib/utils/currency';
 import type { Tenant, Order, NotificationEvent } from '@fafa/types';
@@ -92,8 +93,8 @@ function getTemplates(
 async function sendAndLog(params: {
   tenantId: string;
   orderId: string;
-  channel: 'sms' | 'email';
-  provider: 'arkesel' | 'brevio';
+  channel: 'sms' | 'email' | 'whatsapp';
+  provider: 'arkesel' | 'brevio' | 'twilio';
   recipient: string;
   template: string;
   message: string;
@@ -111,6 +112,16 @@ async function sendAndLog(params: {
         to: params.recipient,
         message: params.message,
       });
+      success = result.success;
+      providerRef = result.messageId;
+      errorMessage = result.error;
+    } else if (params.channel === 'whatsapp') {
+      const result = await sendWhatsApp({
+        to: params.recipient,
+        message: params.message,
+      });
+      // Skipped (unconfigured) — don't log a phantom failure.
+      if (result.skipped) return;
       success = result.success;
       providerRef = result.messageId;
       errorMessage = result.error;
@@ -164,6 +175,21 @@ export async function sendOrderNotifications(
         provider: 'arkesel',
         recipient: order.customer_phone,
         template: event,
+        message: templates.customerSms,
+      })
+    );
+  }
+
+  // 1b. WhatsApp to customer (same status copy) — when enabled & configured.
+  if (templates.customerSms && tenant.notify_whatsapp && isWhatsAppConfigured() && order.customer_phone) {
+    notifications.push(
+      sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'whatsapp',
+        provider: 'twilio',
+        recipient: order.customer_phone,
+        template: `${event}_whatsapp`,
         message: templates.customerSms,
       })
     );

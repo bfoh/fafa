@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatGHS } from '@/lib/utils/currency';
+import { waLink } from '@/lib/utils/whatsapp';
 import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2 } from 'lucide-react';
 
 interface OrderItem {
@@ -98,7 +99,7 @@ export function OrderTracker({
   initialOrder: TrackedOrder;
   initialHistory: HistoryEntry[];
   slug: string;
-  tenant: { name: string; phone: string | null; primary_color: string };
+  tenant: { name: string; phone: string | null; whatsapp?: string | null; primary_color: string };
 }) {
   const [order, setOrder] = useState<TrackedOrder>(initialOrder);
   const [history, setHistory] = useState<HistoryEntry[]>(initialHistory);
@@ -472,16 +473,29 @@ export function OrderTracker({
       </div>
 
       {/* ── Contact + back ── */}
-      {tenant.phone && (
-        <div className="mt-6 text-center">
-          <a
-            href={`tel:${tenant.phone}`}
-            className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
-            style={{ color: accent }}
-          >
-            <Phone className="w-4 h-4" />
-            Contact {tenant.name}
-          </a>
+      {(tenant.phone || tenant.whatsapp) && (
+        <div className="mt-6 flex items-center justify-center gap-2.5">
+          {tenant.whatsapp && (
+            <a
+              href={waLink(tenant.whatsapp, `Hi ${tenant.name}, about my order #${order.order_number}:`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#25D366] text-white text-sm font-semibold active:scale-95 transition-transform"
+            >
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
+            </a>
+          )}
+          {tenant.phone && (
+            <a
+              href={`tel:${tenant.phone}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-surface-200 text-sm font-semibold transition-colors hover:bg-surface-50"
+              style={{ color: accent }}
+            >
+              <Phone className="w-4 h-4" />
+              Call
+            </a>
+          )}
         </div>
       )}
 

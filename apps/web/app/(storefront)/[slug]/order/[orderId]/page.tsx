@@ -34,7 +34,7 @@ export default async function OrderConfirmationPage({
   // Tenant branding / contact
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('name, phone, primary_color')
+    .select('name, phone, whatsapp, primary_color')
     .eq('slug', slug)
     .single();
 
@@ -46,6 +46,7 @@ export default async function OrderConfirmationPage({
       tenant={{
         name: tenant?.name || 'this restaurant',
         phone: tenant?.phone || null,
+        whatsapp: tenant?.whatsapp || null,
         primary_color: tenant?.primary_color || '#FF6B35',
       }}
     />

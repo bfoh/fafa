@@ -2,7 +2,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 import { BrandingCache } from '@/components/storefront/branding-cache';
+import { waLink } from '@/lib/utils/whatsapp';
 
 function adjustLightness(hex: string, factor: number): string {
   // Simple brightness adjustment
@@ -104,14 +106,27 @@ export default async function StorefrontLayout({
               {tenant.name.charAt(0)}
             </div>
           )}
-          <div>
-            <h1 className="font-semibold text-white text-sm">
+          <div className="min-w-0">
+            <h1 className="font-semibold text-white text-sm truncate">
               {tenant.name}
             </h1>
             {tenant.tagline && (
-              <p className="text-[11px] text-white/60">{tenant.tagline}</p>
+              <p className="text-[11px] text-white/60 truncate">{tenant.tagline}</p>
             )}
           </div>
+
+          {tenant.whatsapp && (
+            <a
+              href={waLink(tenant.whatsapp, `Hi ${tenant.name}! 👋`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#25D366] text-white text-xs font-bold active:scale-95 transition-transform"
+              aria-label="Chat on WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+              WhatsApp
+            </a>
+          )}
         </div>
       </header>
 
