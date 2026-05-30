@@ -1,0 +1,495 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { formatGHS } from '@/lib/utils/currency';
+import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2 } from 'lucide-react';
+
+interface OrderItem {
+  id: string;
+  item_name: string;
+  quantity: number;
+  line_total: number;
+  options_json?: Array<{ name: string; price_modifier?: number; priceModifier?: number }>;
+}
+
+export interface TrackedOrder {
+  id: string;
+  order_number: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  delivery_type: string;
+  delivery_address: string | null;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  estimated_ready_at: string | null;
+  confirmed_at: string | null;
+  ready_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  order_items: OrderItem[];
+}
+
+export interface HistoryEntry {
+  to_status: string;
+  created_at: string;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: 'customer' | 'restaurant';
+  body: string;
+  created_at: string;
+}
+
+interface Stage {
+  key: string;
+  label: string;
+  desc: string;
+  emoji: string;
+}
+
+const TERMINAL = new Set(['delivered', 'cancelled']);
+
+function getStages(deliveryType: string): Stage[] {
+  const pickup = deliveryType === 'pickup';
+  return [
+    { key: 'pending', label: 'Order placed', desc: 'We’ve received your order.', emoji: '🧾' },
+    { key: 'confirmed', label: 'Confirmed', desc: 'The kitchen accepted your order.', emoji: '✅' },
+    { key: 'preparing', label: 'Preparing your food', desc: 'Your meal is being cooked.', emoji: '👨‍🍳' },
+    {
+      key: 'ready',
+      label: pickup ? 'Ready for pickup' : 'Ready',
+      desc: pickup ? 'Come grab it while it’s hot!' : 'Packed and waiting for the courier.',
+      emoji: '📦',
+    },
+    ...(pickup
+      ? []
+      : [{ key: 'out_for_delivery', label: 'On the way', desc: 'The courier is heading to you.', emoji: '🛵' }]),
+    {
+      key: 'delivered',
+      label: pickup ? 'Picked up' : 'Delivered',
+      desc: 'Enjoy your meal! 🎉',
+      emoji: '🎉',
+    },
+  ];
+}
+
+function fmtTime(iso?: string | null): string {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+export function OrderTracker({
+  initialOrder,
+  initialHistory,
+  slug,
+  tenant,
+}: {
+  initialOrder: TrackedOrder;
+  initialHistory: HistoryEntry[];
+  slug: string;
+  tenant: { name: string; phone: string | null; primary_color: string };
+}) {
+  const [order, setOrder] = useState<TrackedOrder>(initialOrder);
+  const [history, setHistory] = useState<HistoryEntry[]>(initialHistory);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const accent = tenant.primary_color || '#FF6B35';
+
+  // Live polling — stops once the order reaches a terminal state.
+  useEffect(() => {
+    if (TERMINAL.has(order.status)) return;
+
+    let active = true;
+    async function poll() {
+      try {
+        const res = await fetch(`/api/orders/${order.id}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && data.order) {
+          setOrder(data.order as TrackedOrder);
+          setHistory((data.history as HistoryEntry[]) || []);
+        }
+      } catch {
+        /* network blip — try again next tick */
+      }
+    }
+
+    const interval = setInterval(poll, 8000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [order.id, order.status]);
+
+  // Live chat polling.
+  useEffect(() => {
+    let active = true;
+    async function loadMessages() {
+      try {
+        const res = await fetch(`/api/orders/${order.id}/messages`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active) setMessages((data.messages as ChatMessage[]) || []);
+      } catch {
+        /* retry next tick */
+      }
+    }
+    loadMessages();
+    const interval = setInterval(loadMessages, 10000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadMessages();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [order.id]);
+
+  // Keep the thread scrolled to the newest message.
+  useEffect(() => {
+    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages.length]);
+
+  async function sendMessage() {
+    const text = draft.trim();
+    if (!text || sending) return;
+    setSending(true);
+    const optimistic: ChatMessage = {
+      id: `tmp-${Date.now()}`,
+      sender: 'customer',
+      body: text,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((m) => [...m, optimistic]);
+    setDraft('');
+    try {
+      const res = await fetch(`/api/orders/${order.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: text }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((m) => m.map((x) => (x.id === optimistic.id ? (data.message as ChatMessage) : x)));
+      } else {
+        setMessages((m) => m.filter((x) => x.id !== optimistic.id));
+        setDraft(text);
+      }
+    } catch {
+      setMessages((m) => m.filter((x) => x.id !== optimistic.id));
+      setDraft(text);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const isCancelled = order.status === 'cancelled';
+  const isDelivered = order.status === 'delivered';
+  const isLive = !TERMINAL.has(order.status);
+  const stages = getStages(order.delivery_type);
+  const currentIndex = stages.findIndex((s) => s.key === order.status);
+
+  const stageTime = (key: string): string => {
+    const h = history.find((x) => x.to_status === key);
+    if (h) return fmtTime(h.created_at);
+    if (key === 'pending') return fmtTime(order.created_at);
+    if (key === 'confirmed') return fmtTime(order.confirmed_at);
+    if (key === 'ready') return fmtTime(order.ready_at);
+    if (key === 'delivered') return fmtTime(order.delivered_at);
+    return '';
+  };
+
+  const isPaid = order.payment_status === 'paid';
+  const isCashOnDelivery = order.payment_method === 'cash_on_delivery';
+
+  // ETA — only while still in progress and we have an estimate.
+  const eta = (() => {
+    if (!order.estimated_ready_at || isDelivered || isCancelled) return null;
+    const t = new Date(order.estimated_ready_at).getTime();
+    if (Number.isNaN(t)) return null;
+    const mins = Math.round((t - Date.now()) / 60000);
+    if (mins > 1) return `Estimated ready in ~${mins} min`;
+    if (mins >= -2) return 'Should be ready any moment';
+    return null;
+  })();
+
+  return (
+    <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] animate-fade-in">
+      {/* ── Live status hero ── */}
+      <div className="text-center mb-6">
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl relative"
+          style={{ background: isCancelled ? 'rgb(239 68 68 / 0.1)' : `${accent}15` }}
+        >
+          {isCancelled ? '❌' : stages[Math.max(0, currentIndex)]?.emoji ?? '🧾'}
+          {isLive && (
+            <span
+              className="absolute inset-0 rounded-full animate-ping opacity-30"
+              style={{ background: accent }}
+            />
+          )}
+        </div>
+        <h1 className="text-xl font-bold text-surface-900">
+          {isCancelled ? 'Order cancelled' : stages[Math.max(0, currentIndex)]?.label ?? 'Order placed'}
+        </h1>
+        <p className="text-surface-500 mt-2 text-sm">
+          {isCancelled
+            ? order.cancellation_reason || 'This order has been cancelled.'
+            : stages[Math.max(0, currentIndex)]?.desc}
+        </p>
+
+        {isLive && (
+          <div className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full bg-success-500/10">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-success-600" />
+            </span>
+            <span className="text-[11px] font-bold text-success-700 uppercase tracking-wide">Live tracking</span>
+          </div>
+        )}
+        {eta && <p className="text-xs font-semibold mt-2" style={{ color: accent }}>{eta}</p>}
+      </div>
+
+      {/* ── Timeline ── */}
+      {!isCancelled && (
+        <div className="bg-white rounded-2xl border border-surface-100 shadow-sm p-5 mb-5">
+          <ol className="relative">
+            {stages.map((stage, i) => {
+              const done = i < currentIndex;
+              const current = i === currentIndex;
+              const time = stageTime(stage.key);
+              const isLast = i === stages.length - 1;
+              return (
+                <li key={stage.key} className="relative flex gap-4 pb-6 last:pb-0">
+                  {/* Connector line */}
+                  {!isLast && (
+                    <span
+                      className="absolute left-[15px] top-8 bottom-0 w-0.5"
+                      style={{ background: done ? accent : 'var(--color-surface-200)' }}
+                    />
+                  )}
+                  {/* Node */}
+                  <div className="relative z-10 shrink-0">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
+                        done || current ? 'text-white' : 'bg-surface-100 text-surface-400'
+                      }`}
+                      style={done || current ? { background: accent } : undefined}
+                    >
+                      {done ? (
+                        <CheckCircle className="w-4 h-4" />
+                      ) : current ? (
+                        <span className="text-[15px] leading-none">{stage.emoji}</span>
+                      ) : (
+                        <span className="text-[15px] leading-none opacity-50 grayscale">{stage.emoji}</span>
+                      )}
+                    </div>
+                    {current && (
+                      <span
+                        className="absolute inset-0 rounded-full animate-ping opacity-40"
+                        style={{ background: accent }}
+                      />
+                    )}
+                  </div>
+                  {/* Label */}
+                  <div className="flex-1 min-w-0 pt-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`text-sm font-bold ${done || current ? 'text-surface-900' : 'text-surface-400'}`}>
+                        {stage.label}
+                      </p>
+                      {time && (done || current) && (
+                        <span className="text-[11px] text-surface-400 font-medium shrink-0">{time}</span>
+                      )}
+                    </div>
+                    {current && <p className="text-xs text-surface-500 mt-0.5">{stage.desc}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+
+      {/* ── Chat with the restaurant ── */}
+      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden mb-5">
+        <div className="px-5 py-3 border-b border-surface-100 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4" style={{ color: accent }} />
+          <h2 className="text-sm font-bold text-surface-900">Message {tenant.name}</h2>
+        </div>
+
+        <div ref={threadRef} className="max-h-64 overflow-y-auto px-4 py-4 space-y-2.5 scrollbar-thin overscroll-contain-y">
+          {messages.length === 0 ? (
+            <p className="text-center text-xs text-surface-400 py-6">
+              Need to tweak your order or ask a question?<br />Send {tenant.name} a message — they’ll reply here.
+            </p>
+          ) : (
+            messages.map((m) => {
+              const mine = m.sender === 'customer';
+              return (
+                <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-sm ${
+                      mine ? 'text-white rounded-br-md' : 'bg-surface-100 text-surface-800 rounded-bl-md'
+                    }`}
+                    style={mine ? { background: accent } : undefined}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                    <p className={`text-[10px] mt-0.5 ${mine ? 'text-white/70' : 'text-surface-400'}`}>
+                      {fmtTime(m.created_at)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="border-t border-surface-100 p-3 flex items-end gap-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            rows={1}
+            placeholder="Type a message…"
+            className="flex-1 resize-none px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm max-h-28"
+          />
+          <button
+            type="button"
+            onClick={sendMessage}
+            disabled={!draft.trim() || sending}
+            className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: accent }}
+            aria-label="Send message"
+          >
+            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Order details ── */}
+      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-surface-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-surface-400">Order Number</p>
+              <p className="font-bold text-surface-900 text-lg">{order.order_number}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-surface-400">Total</p>
+              <p className="font-bold text-lg" style={{ color: accent }}>
+                {formatGHS(Number(order.total))}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5 space-y-3">
+          {order.order_items?.map((item) => (
+            <div key={item.id} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-surface-700 font-semibold">
+                  {item.quantity}× {item.item_name}
+                </span>
+                <span className="text-surface-500 font-medium">{formatGHS(Number(item.line_total))}</span>
+              </div>
+              {item.options_json && item.options_json.length > 0 && (
+                <div className="pl-4 text-xs text-surface-400 space-y-0.5">
+                  {item.options_json.map((opt, oidx) => (
+                    <div key={oidx} className="flex justify-between">
+                      <span>+ {opt.name}</span>
+                      <span>
+                        {Number(opt.price_modifier || opt.priceModifier || 0) > 0
+                          ? `+${formatGHS(Number(opt.price_modifier || opt.priceModifier || 0))}`
+                          : 'Free'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="border-t border-surface-100 pt-3 space-y-1">
+            <div className="flex justify-between text-sm text-surface-500">
+              <span>Subtotal</span>
+              <span>{formatGHS(Number(order.subtotal))}</span>
+            </div>
+            {Number(order.delivery_fee) > 0 && (
+              <div className="flex justify-between text-sm text-surface-500">
+                <span>Delivery</span>
+                <span>{formatGHS(Number(order.delivery_fee))}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-5 border-t border-surface-100">
+          <div className="flex items-center gap-2">
+            {isPaid ? (
+              <CheckCircle className="w-5 h-5 text-success-600" />
+            ) : (
+              <Clock className="w-5 h-5 text-warning-600" />
+            )}
+            <span className="text-sm font-medium text-surface-700">
+              {isPaid
+                ? `Paid via ${order.payment_method === 'momo' ? 'Mobile Money' : order.payment_method === 'card' ? 'Card' : 'Cash'}`
+                : isCashOnDelivery
+                ? 'Pay on delivery'
+                : 'Payment pending'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 mt-2 text-sm text-surface-500">
+            <span>📍 {order.delivery_type === 'pickup' ? 'Pickup' : 'Delivery'}</span>
+            {order.delivery_address && <span className="truncate">· {order.delivery_address}</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Contact + back ── */}
+      {tenant.phone && (
+        <div className="mt-6 text-center">
+          <a
+            href={`tel:${tenant.phone}`}
+            className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
+            style={{ color: accent }}
+          >
+            <Phone className="w-4 h-4" />
+            Contact {tenant.name}
+          </a>
+        </div>
+      )}
+
+      <div className="mt-4 text-center">
+        <Link href={`/${slug}`} className="text-sm text-surface-400 hover:text-surface-600 transition-colors">
+          ← Order more from {tenant.name}
+        </Link>
+      </div>
+    </div>
+  );
+}

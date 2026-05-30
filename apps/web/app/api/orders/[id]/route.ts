@@ -1,7 +1,51 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import type { OrderStatus, PaymentStatus } from '@fafa/types';
+
+/* ── Public order tracking ──────────────────────────────────
+   Lets the customer's browser poll live status without auth.
+   The order id is an unguessable UUID, and we return only the
+   fields needed to render the tracker (no internal/PII beyond
+   what the customer themselves submitted). Uses the admin client
+   so it works for anonymous visitors despite RLS. */
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = createAdminClient();
+
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        id, order_number, status, payment_status, payment_method,
+        delivery_type, delivery_address, subtotal, delivery_fee, total,
+        estimated_ready_at, confirmed_at, ready_at, delivered_at,
+        cancelled_at, cancellation_reason, created_at, updated_at,
+        order_items ( id, item_name, quantity, line_total, options_json )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    const { data: history } = await supabase
+      .from('order_status_history')
+      .select('to_status, created_at')
+      .eq('order_id', id)
+      .order('created_at', { ascending: true });
+
+    return NextResponse.json({ order, history: history || [] });
+  } catch (err) {
+    console.error('Failed to load order tracking:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 export async function PATCH(
   req: Request,
