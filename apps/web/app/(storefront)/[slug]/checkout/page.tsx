@@ -232,7 +232,7 @@ function CheckoutContent({ slug }: { slug: string }) {
   const belowMinLimit = tenant ? subtotal < tenant.min_order_amount : false;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 animate-fade-in">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-fade-in">
       <Link
         href={`/${slug}`}
         className="inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700 mb-6 transition-colors"
@@ -478,7 +478,7 @@ function CheckoutContent({ slug }: { slug: string }) {
         <button
           type="submit"
           disabled={loading || belowMinLimit}
-          className="w-full py-3.5 rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
+          className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
           style={{ background: primaryColor }}
         >
           {loading ? (

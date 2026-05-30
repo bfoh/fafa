@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/layout/sidebar';
+import { MobileNav } from '@/components/layout/mobile-nav';
 import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getResolvedTenantId } from '@/lib/admin/guard';
@@ -43,7 +44,16 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-surface-50">
+      {/* Desktop sidebar */}
       <Sidebar
+        tenantName={tenantName}
+        logoUrl={logoUrl}
+        primaryColor={primaryColor}
+        tenantSlug={tenantSlug}
+      />
+
+      {/* Mobile top bar + bottom tab navigation */}
+      <MobileNav
         tenantName={tenantName}
         logoUrl={logoUrl}
         primaryColor={primaryColor}
@@ -55,7 +65,8 @@ export default async function DashboardLayout({
         {isImpersonating && tenantName && (
           <ImpersonationBanner tenantName={tenantName} />
         )}
-        <div className="p-4 lg:p-8 pt-16 lg:pt-8 flex-1">
+        {/* Top padding clears the mobile app bar (h-14 + notch); bottom padding clears the tab bar (h-16 + home indicator). */}
+        <div className="px-4 lg:px-8 pt-[calc(3.5rem+env(safe-area-inset-top))] lg:pt-8 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 flex-1">
           {children}
         </div>
       </main>

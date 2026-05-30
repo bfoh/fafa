@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -35,6 +35,24 @@ export const metadata: Metadata = {
     locale: 'en_GH',
     type: 'website',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Didi',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // Let content extend under the notch / home indicator so we can pad with safe-area insets.
+  viewportFit: 'cover',
+  // Avoid locking zoom entirely (accessibility); just prevent the iOS focus auto-zoom via 16px inputs.
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0D0D0F' },
+  ],
 };
 
 export default function RootLayout({

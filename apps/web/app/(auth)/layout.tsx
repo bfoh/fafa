@@ -172,7 +172,7 @@ export default async function AuthLayout({
       </div>
 
       {/* Right — form */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div className="relative z-10 flex-1 flex items-center justify-center overflow-y-auto px-6 lg:px-12 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.05] backdrop-blur-2xl shadow-[0_24px_70px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-9">
           {children}
         </div>

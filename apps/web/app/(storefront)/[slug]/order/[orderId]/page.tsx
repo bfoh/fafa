@@ -49,7 +49,7 @@ export default async function OrderConfirmationPage({
   const statusInfo = statusMessages[order.status] || statusMessages.pending;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 animate-fade-in">
+    <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] animate-fade-in">
       {/* Status */}
       <div className="text-center mb-8">
         <div

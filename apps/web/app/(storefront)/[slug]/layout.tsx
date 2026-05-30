@@ -86,7 +86,7 @@ export default async function StorefrontLayout({
 
       {/* Minimal header */}
       <header
-        className="sticky top-0 z-30 glass border-b border-white/20"
+        className="sticky top-0 z-30 glass border-b border-white/20 pt-safe"
         style={{ background: `${secondaryColor}ee` }}
       >
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">

@@ -175,15 +175,15 @@ function MenuContent({
   };
 
   return (
-    <div className="pb-24">
+    <div className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Category tabs */}
-      <div className="sticky top-[57px] z-20 bg-surface-50 border-b border-surface-100">
-        <div className="flex gap-1 px-4 py-2 overflow-x-auto scrollbar-thin">
+      <div className="sticky top-[calc(57px+env(safe-area-inset-top))] z-20 bg-surface-50/95 backdrop-blur border-b border-surface-100">
+        <div className="flex gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar snap-rail">
           {categories.map((cat) => (
             <a
               key={cat.id}
               href={`#cat-${cat.id}`}
-              className="shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold transition-colors hover:bg-surface-200 text-surface-600 bg-surface-100 shadow-[inset_0_-1px_0_rgba(0,0,0,0.05)]"
+              className="snap-start-item shrink-0 px-5 py-2.5 min-h-[40px] flex items-center rounded-full text-sm font-bold transition-colors active:scale-95 text-surface-600 bg-surface-100 hover:bg-surface-200"
             >
               {cat.name}
             </a>
@@ -269,16 +269,16 @@ function MenuContent({
 
       {/* Floating cart bar */}
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 p-4">
+        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-surface-50 via-surface-50/90 to-transparent animate-slide-up">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => setCartOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-white font-semibold shadow-xl transition-all active:scale-[0.98] hover:opacity-95"
+              className="w-full flex items-center justify-between px-5 py-4 min-h-[56px] rounded-2xl text-white font-semibold shadow-xl transition-all active:scale-[0.98] hover:opacity-95"
               style={{ background: tenant.primary_color }}
             >
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
-                <span className="bg-white/20 px-2 py-0.5 rounded-lg text-sm">
+                <span className="bg-white/20 px-2 py-0.5 rounded-lg text-sm font-bold">
                   {itemCount}
                 </span>
               </div>
@@ -339,14 +339,14 @@ function CartDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-slide-up">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col animate-slide-up">
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 rounded-full bg-surface-300" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-surface-100">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-surface-100 shrink-0">
           <h2 className="text-lg font-bold text-surface-900">Your Order</h2>
           <button
             onClick={onClose}
@@ -358,7 +358,7 @@ function CartDrawer({
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin overscroll-contain-y">
           {items.map((item) => {
             const optionsTotal = item.options.reduce(
               (s, o) => s + o.priceModifier,
@@ -441,7 +441,7 @@ function CartDrawer({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-surface-100 px-5 py-4 space-y-3">
+        <div className="border-t border-surface-100 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-surface-500 text-sm">Subtotal</span>
             <span className="font-bold text-surface-900">
@@ -682,14 +682,14 @@ function ChopBarCustomizer({
         onClick={onClose}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col animate-slide-up">
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 rounded-full bg-surface-300" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-surface-100">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-surface-100 shrink-0">
           <div>
             <h2 className="text-base font-extrabold text-surface-900">Configure Your Bowl</h2>
             <p className="text-[11px] text-surface-400 mt-0.5">Customize your {item.name} precisely</p>
@@ -703,7 +703,7 @@ function ChopBarCustomizer({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 scrollbar-thin overscroll-contain-y">
           {/* Section 1: Base quantity */}
           <div className="space-y-2 bg-surface-50 p-3 rounded-2xl border border-surface-100">
             <div className="flex justify-between items-center">
@@ -1018,7 +1018,7 @@ function ChopBarCustomizer({
         </div>
 
         {/* Footer with Total and Submit */}
-        <div className="border-t border-surface-100 p-5 space-y-3 bg-surface-50/50">
+        <div className="border-t border-surface-100 px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] space-y-3 bg-surface-50/50 shrink-0">
           <div className="flex justify-between items-center">
             <span className="text-sm font-semibold text-surface-500">Bowl Total:</span>
             <span className="text-lg font-black text-surface-950">{formatGHS(totalBowlPrice)}</span>
@@ -1027,7 +1027,7 @@ function ChopBarCustomizer({
           <button
             onClick={handleSubmit}
             disabled={isBasePriceInvalid || totalBowlPrice <= 0 || hasValidationErrors}
-            className="w-full py-3.5 rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
+            className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
             style={{ background: tenant.primary_color }}
           >
             Add Bowl to Order — {formatGHS(totalBowlPrice)}

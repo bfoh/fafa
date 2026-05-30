@@ -12,11 +12,9 @@ import {
   QrCode,
   Settings,
   LogOut,
-  Menu,
-  X,
   ChevronRight,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -78,7 +76,6 @@ export function Sidebar({
   tenantSlug?: string;
 }) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const supabase = createBrowserClient();
 
@@ -135,12 +132,6 @@ export function Sidebar({
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1 rounded-lg hover:bg-surface-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-surface-500" />
-          </button>
         </div>
       </div>
 
@@ -154,7 +145,6 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                 active
                   ? primaryColor
@@ -202,7 +192,6 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                 active
                   ? primaryColor
@@ -250,37 +239,9 @@ export function Sidebar({
   );
 
   return (
-    <>
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 rounded-xl bg-white shadow-md border border-surface-200 hover:bg-surface-50 transition-colors"
-        aria-label="Open menu"
-      >
-        <Menu className="w-5 h-5 text-surface-700" />
-      </button>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/30 z-40 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Mobile sidebar */}
-      <aside
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl transform transition-transform duration-200 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {sidebarContent}
-      </aside>
-
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-surface-100">
-        {sidebarContent}
-      </aside>
-    </>
+    /* Desktop sidebar only — mobile navigation is handled by <MobileNav />. */
+    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-surface-100">
+      {sidebarContent}
+    </aside>
   );
 }

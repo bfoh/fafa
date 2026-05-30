@@ -121,7 +121,7 @@ export default async function HomePage({
 
       <div className="relative z-10">
         {/* Header */}
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/20 backdrop-blur-2xl">
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/20 backdrop-blur-2xl pt-safe">
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <Image

@@ -1330,7 +1330,7 @@ export default function MenuPage() {
               </div>
             </form>
 
-            <div className="border-t border-surface-100 p-6 flex gap-3">
+            <div className="border-t border-surface-100 px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex gap-3">
               <button
                 type="button"
                 onClick={() => setItemModalOpen(false)}
