@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { formatGHS } from '@/lib/utils/currency';
 import { StorefrontMenu } from '@/components/storefront/storefront-menu';
 
+export const dynamic = 'force-dynamic';
+
 export default async function StorefrontPage({
   params,
 }: {
@@ -31,9 +33,7 @@ export default async function StorefrontPage({
       menu_items (
         *,
         menu_item_options (
-          id,
-          name,
-          price_modifier
+          *
         )
       )
     `)
@@ -66,6 +66,9 @@ export default async function StorefrontPage({
           id: string;
           name: string;
           price_modifier: number;
+          option_type?: string;
+          sub_options?: string | null;
+          min_quantity?: number;
         }>;
       }>) || [])
         .filter((item) => item.is_available)

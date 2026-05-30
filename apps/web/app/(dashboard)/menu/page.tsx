@@ -16,8 +16,13 @@ import {
   Search,
   Eye,
   EyeOff,
+  ChevronDown,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
+
+/* ─── Types ─────────────────────────────────────────────── */
+
+type OptionType = 'soup' | 'protein' | 'extra';
 
 interface MenuCategory {
   id: string;
@@ -29,6 +34,9 @@ interface MenuItemOption {
   id?: string;
   name: string;
   price_modifier: number;
+  option_type: OptionType;
+  sub_options?: string | null;
+  min_quantity?: number;
 }
 
 interface MenuItem {
@@ -43,6 +51,31 @@ interface MenuItem {
   is_chop_bar?: boolean;
   menu_item_options: MenuItemOption[];
 }
+
+/* ─── Option-type metadata ──────────────────────────────── */
+
+const OPTION_TYPE_META: Record<OptionType, { label: string; emoji: string; color: string; bg: string }> = {
+  soup:    { label: 'Soup',    emoji: '🍲', color: 'text-amber-700',   bg: 'bg-amber-50 border-amber-200'   },
+  protein: { label: 'Protein', emoji: '🥩', color: 'text-rose-700',    bg: 'bg-rose-50 border-rose-200'     },
+  extra:   { label: 'Extra',   emoji: '🥚', color: 'text-indigo-700',  bg: 'bg-indigo-50 border-indigo-200' },
+};
+
+/* ─── Chop Bar default options ──────────────────────────── */
+
+const CHOP_BAR_DEFAULTS: MenuItemOption[] = [
+  { name: 'Light Soup',       price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
+  { name: 'Abunabunu Soup',   price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
+  { name: 'Peanut Soup',      price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
+  { name: 'Palm Nut Soup',    price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
+  { name: 'Goat Meat',        price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
+  { name: 'Beef',             price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
+  { name: 'Chicken',          price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
+  { name: 'Fish',             price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: 'Tilapia, Salmon, Catfish' },
+  { name: 'Wele',             price_modifier: 5, option_type: 'extra',   min_quantity: 0 },
+  { name: 'Egg',              price_modifier: 5, option_type: 'extra',   min_quantity: 0 },
+];
+
+/* ─── Component ─────────────────────────────────────────── */
 
 export default function MenuPage() {
   const supabase = createBrowserClient();
@@ -73,11 +106,22 @@ export default function MenuPage() {
   const [itemImageFile, setItemImageFile] = useState<File | null>(null);
   const [itemImageUrl, setItemImageUrl] = useState<string | null>(null);
   const [itemOptions, setItemOptions] = useState<MenuItemOption[]>([]);
-  const [newItemOptionName, setNewItemOptionName] = useState('');
-  const [newItemOptionPrice, setNewItemOptionPrice] = useState('');
   const [itemFormLoading, setItemFormLoading] = useState(false);
   const [itemIsChopBar, setItemIsChopBar] = useState(false);
+
+  // New option form
+  const [newOptName, setNewOptName] = useState('');
+  const [newOptPrice, setNewOptPrice] = useState('');
+  const [newOptType, setNewOptType] = useState<OptionType>('extra');
+  const [newOptSubOptions, setNewOptSubOptions] = useState('');
+  const [newOptMinQty, setNewOptMinQty] = useState('');
+
+  // DB feature detection
   const [dbHasChopBarColumn, setDbHasChopBarColumn] = useState(false);
+  const [dbHasOptionTypeColumn, setDbHasOptionTypeColumn] = useState(false);
+
+  // Collapsible sections in the option editor
+  const [expandedSection, setExpandedSection] = useState<OptionType | 'all'>('all');
 
   useEffect(() => {
     async function loadSessionAndData() {
@@ -113,9 +157,7 @@ export default function MenuPage() {
         .select(`
           *,
           menu_item_options (
-            id,
-            name,
-            price_modifier
+            *
           )
         `)
         .eq('tenant_id', tId)
@@ -134,12 +176,28 @@ export default function MenuPage() {
         setDbHasChopBarColumn(!testErr);
       }
 
+      // Detect if option_type exists in database schema
+      let hasOptionType = false;
+      if (items && items.length > 0 && items[0].menu_item_options && items[0].menu_item_options.length > 0) {
+        hasOptionType = 'option_type' in items[0].menu_item_options[0];
+      } else {
+        const { error: testErr } = await supabase
+          .from('menu_item_options')
+          .select('option_type')
+          .limit(1);
+        hasOptionType = !testErr;
+      }
+      setDbHasOptionTypeColumn(hasOptionType);
+
       const formattedItems = (items || []).map((item: any) => ({
         ...item,
         price: Number(item.price),
         menu_item_options: (item.menu_item_options || []).map((opt: any) => ({
           ...opt,
           price_modifier: Number(opt.price_modifier),
+          option_type: opt.option_type || 'extra',
+          sub_options: opt.sub_options || null,
+          min_quantity: Number(opt.min_quantity) || 0,
         })),
       }));
 
@@ -247,9 +305,9 @@ export default function MenuPage() {
     setItemImageFile(null);
     setItemImageUrl(null);
     setItemOptions([]);
-    setNewItemOptionName('');
-    setNewItemOptionPrice('');
+    resetNewOptionForm();
     setItemIsChopBar(false);
+    setExpandedSection('all');
     setItemModalOpen(true);
   }
 
@@ -265,22 +323,36 @@ export default function MenuPage() {
     setItemImageFile(null);
     setItemImageUrl(item.image_url);
     setItemOptions(item.menu_item_options || []);
-    setNewItemOptionName('');
-    setNewItemOptionPrice('');
+    resetNewOptionForm();
     setItemIsChopBar(item.is_chop_bar ?? false);
+    setExpandedSection('all');
     setItemModalOpen(true);
+  }
+
+  function resetNewOptionForm() {
+    setNewOptName('');
+    setNewOptPrice('');
+    setNewOptType('extra');
+    setNewOptSubOptions('');
+    setNewOptMinQty('');
   }
 
   // Adds an option to the local options array in the form
   function addLocalOption() {
-    if (!newItemOptionName.trim()) return;
-    const price = parseFloat(newItemOptionPrice) || 0;
+    if (!newOptName.trim()) return;
+    const price = parseFloat(newOptPrice) || 0;
+    const minQty = parseFloat(newOptMinQty) || 0;
     setItemOptions((prev) => [
       ...prev,
-      { name: newItemOptionName.trim(), price_modifier: price },
+      {
+        name: newOptName.trim(),
+        price_modifier: price,
+        option_type: newOptType,
+        sub_options: newOptSubOptions.trim() || null,
+        min_quantity: minQty,
+      },
     ]);
-    setNewItemOptionName('');
-    setNewItemOptionPrice('');
+    resetNewOptionForm();
   }
 
   // Removes an option from the local options array in the form
@@ -289,20 +361,9 @@ export default function MenuPage() {
   }
 
   function loadChopBarDefaults() {
-    const defaults = [
-      { name: 'Light Soup', price_modifier: 0 },
-      { name: 'Abunabunu Soup', price_modifier: 0 },
-      { name: 'Peanut Soup', price_modifier: 0 },
-      { name: 'Goat Meat', price_modifier: 0 },
-      { name: 'Beef', price_modifier: 0 },
-      { name: 'Chicken', price_modifier: 0 },
-      { name: 'Fish', price_modifier: 0 },
-      { name: 'Wele', price_modifier: 5 },
-      { name: 'Egg', price_modifier: 5 },
-    ];
     setItemOptions((prev) => {
       const existingNames = new Set(prev.map((o) => o.name.toLowerCase()));
-      const toAdd = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
+      const toAdd = CHOP_BAR_DEFAULTS.filter((d) => !existingNames.has(d.name.toLowerCase()));
       return [...prev, ...toAdd];
     });
   }
@@ -383,11 +444,20 @@ export default function MenuPage() {
 
       // 2. Insert item options if any
       if (itemOptions.length > 0 && itemId) {
-        const optionsPayload = itemOptions.map((opt) => ({
-          menu_item_id: itemId,
-          name: opt.name,
-          price_modifier: opt.price_modifier,
-        }));
+        const optionsPayload = itemOptions.map((opt) => {
+          const payload: any = {
+            menu_item_id: itemId,
+            name: opt.name,
+            price_modifier: opt.price_modifier,
+          };
+          // Always try to save option_type and min_quantity if the DB supports it
+          if (dbHasOptionTypeColumn) {
+            payload.option_type = opt.option_type || 'extra';
+            payload.min_quantity = opt.min_quantity || 0;
+          }
+          payload.sub_options = opt.sub_options || null;
+          return payload;
+        });
 
         const { error: optErr } = await supabase
           .from('menu_item_options')
@@ -433,6 +503,11 @@ export default function MenuPage() {
         item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
+
+  // Helpers to group options by type
+  const soupOptions   = itemOptions.filter((o) => o.option_type === 'soup');
+  const proteinOptions = itemOptions.filter((o) => o.option_type === 'protein');
+  const extraOptions  = itemOptions.filter((o) => o.option_type === 'extra');
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -595,6 +670,23 @@ export default function MenuPage() {
                       <p className="text-sm font-bold text-brand-500 mt-1">
                         {formatGHS(item.price)}
                       </p>
+                      {/* Show option count badge */}
+                      {item.menu_item_options.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 flex-wrap">
+                          {(() => {
+                            const s = item.menu_item_options.filter(o => o.option_type === 'soup').length;
+                            const p = item.menu_item_options.filter(o => o.option_type === 'protein').length;
+                            const e = item.menu_item_options.filter(o => o.option_type === 'extra' || !o.option_type).length;
+                            return (
+                              <>
+                                {s > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">🍲 {s} soup{s > 1 ? 's' : ''}</span>}
+                                {p > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">🥩 {p} protein{p > 1 ? 's' : ''}</span>}
+                                {e > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">🥚 {e} extra{e > 1 ? 's' : ''}</span>}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -732,18 +824,23 @@ export default function MenuPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
-                    Price (GH₵)
+                    {itemIsChopBar ? 'Minimum Price (GH₵)' : 'Price (GH₵)'}
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     required
-                    placeholder="45.00"
+                    placeholder={itemIsChopBar ? "Min e.g. 20" : "45.00"}
                     value={itemPrice}
                     onChange={(e) => setItemPrice(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                   />
+                  {itemIsChopBar && (
+                    <p className="text-[10px] text-surface-400 mt-1">
+                      This is the minimum amount a customer must order for this item.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -845,74 +942,146 @@ export default function MenuPage() {
                 )}
               </div>
 
-              {/* Extras/Add-ons Option Manager */}
-              <div className="border-t border-surface-100 pt-5 space-y-3">
+              {/* ════════════════════════════════════════════════
+                  OPTIONS MANAGER — Categorized sections
+                  ════════════════════════════════════════════════ */}
+              <div className="border-t border-surface-100 pt-5 space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-sm font-bold text-surface-800">
-                      {itemIsChopBar ? 'Chop Bar Options (Soups, Meats, Extras)' : 'Add-ons & Extras'}
+                      {itemIsChopBar ? 'Chop Bar Options' : 'Add-ons & Extras'}
                     </h3>
                     <p className="text-xs text-surface-400 mt-0.5">
                       {itemIsChopBar
-                        ? 'For Chop Bar items, enter price modifier as 0 for items where the customer enters custom amounts (e.g., GH₵ 20 of Goat Meat). Set a price > 0 for fixed add-ons (e.g., Egg for GH₵ 5).'
-                        : 'Options for customers to customize their meal (e.g. Extra egg, +GH₵ 3.00)'}
+                        ? 'Add soups, proteins (with fish types), and extras. Set minimum order amounts for each option.'
+                        : 'Add customizations for this dish (e.g. Extra egg +GH₵ 3).'}
                     </p>
                   </div>
                   {itemIsChopBar && (
                     <button
                       type="button"
                       onClick={loadChopBarDefaults}
-                      className="px-2.5 py-1.5 bg-brand-500/10 text-brand-600 hover:bg-brand-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                      className="px-2.5 py-1.5 bg-brand-500/10 text-brand-600 hover:bg-brand-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer shrink-0"
                     >
                       ✨ Load Defaults
                     </button>
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder={itemIsChopBar ? "Option (e.g. Goat Meat)" : "Option name (e.g. Extra Egg)"}
-                    value={newItemOptionName}
-                    onChange={(e) => setNewItemOptionName(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-xs"
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder={itemIsChopBar ? "Price (0 for custom)" : "Price modifier"}
-                    value={newItemOptionPrice}
-                    onChange={(e) => setNewItemOptionPrice(e.target.value)}
-                    className="w-24 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={addLocalOption}
-                    className="px-3 py-2 bg-surface-900 text-white hover:bg-surface-800 rounded-xl text-xs font-semibold transition-colors"
-                  >
-                    Add Option
-                  </button>
+                {/* ── Add new option form ── */}
+                <div className="bg-surface-50 border border-surface-100 rounded-2xl p-3.5 space-y-3">
+                  <p className="text-[10px] font-extrabold text-surface-400 uppercase tracking-widest">Add New Option</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Option name (e.g. Fish, Egg)"
+                      value={newOptName}
+                      onChange={(e) => setNewOptName(e.target.value)}
+                      className="col-span-2 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-xs"
+                    />
+                    <select
+                      value={newOptType}
+                      onChange={(e) => setNewOptType(e.target.value as OptionType)}
+                      className="px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs font-semibold"
+                    >
+                      <option value="soup">🍲 Soup Type</option>
+                      <option value="protein">🥩 Protein / Meat</option>
+                      <option value="extra">🥚 Extra / Add-on</option>
+                    </select>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder={newOptType === 'soup' ? 'Price (0 = included)' : 'Price modifier (GH₵)'}
+                      value={newOptPrice}
+                      onChange={(e) => setNewOptPrice(e.target.value)}
+                      className="px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                    />
+                  </div>
+                  {/* Conditional fields based on option type */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {newOptType === 'protein' && (
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Sub-types (e.g. Tilapia, Salmon, Catfish)"
+                          value={newOptSubOptions}
+                          onChange={(e) => setNewOptSubOptions(e.target.value)}
+                          className="col-span-2 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Min amount (GH₵) e.g. 10"
+                          value={newOptMinQty}
+                          onChange={(e) => setNewOptMinQty(e.target.value)}
+                          className="col-span-2 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                        />
+                      </>
+                    )}
+                    {newOptType === 'extra' && (
+                      <input
+                        type="text"
+                        placeholder="Sub-types (optional, comma-separated)"
+                        value={newOptSubOptions}
+                        onChange={(e) => setNewOptSubOptions(e.target.value)}
+                        className="col-span-2 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={addLocalOption}
+                      disabled={!newOptName.trim()}
+                      className="px-4 py-2 bg-surface-900 text-white hover:bg-surface-800 rounded-xl text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      + Add Option
+                    </button>
+                  </div>
                 </div>
 
+                {/* ── Configured options list (grouped by type) ── */}
                 {itemOptions.length > 0 && (
-                  <div className="bg-surface-50 border border-surface-100 rounded-xl p-3 divide-y divide-surface-100">
-                    {itemOptions.map((opt, index) => (
-                      <div key={index} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
-                        <span className="text-xs font-medium text-surface-800">{opt.name}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-brand-500">
-                            +{formatGHS(opt.price_modifier)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeLocalOption(index)}
-                            className="text-surface-400 hover:text-error-600 transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    {/* Soups */}
+                    {soupOptions.length > 0 && (
+                      <OptionGroupCard
+                        title="Soup Types"
+                        emoji="🍲"
+                        colorClasses="bg-amber-50 border-amber-200 text-amber-800"
+                        badgeClasses="bg-amber-100 text-amber-700"
+                        options={soupOptions}
+                        allOptions={itemOptions}
+                        onRemove={(idx) => removeLocalOption(itemOptions.indexOf(soupOptions[idx]))}
+                      />
+                    )}
+
+                    {/* Proteins */}
+                    {proteinOptions.length > 0 && (
+                      <OptionGroupCard
+                        title="Proteins & Meats"
+                        emoji="🥩"
+                        colorClasses="bg-rose-50 border-rose-200 text-rose-800"
+                        badgeClasses="bg-rose-100 text-rose-700"
+                        options={proteinOptions}
+                        allOptions={itemOptions}
+                        onRemove={(idx) => removeLocalOption(itemOptions.indexOf(proteinOptions[idx]))}
+                      />
+                    )}
+
+                    {/* Extras */}
+                    {extraOptions.length > 0 && (
+                      <OptionGroupCard
+                        title="Add-ons & Extras"
+                        emoji="🥚"
+                        colorClasses="bg-indigo-50 border-indigo-200 text-indigo-800"
+                        badgeClasses="bg-indigo-100 text-indigo-700"
+                        options={extraOptions}
+                        allOptions={itemOptions}
+                        onRemove={(idx) => removeLocalOption(itemOptions.indexOf(extraOptions[idx]))}
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -945,6 +1114,72 @@ export default function MenuPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Reusable option group display card ─────────────────── */
+
+function OptionGroupCard({
+  title,
+  emoji,
+  colorClasses,
+  badgeClasses,
+  options,
+  allOptions,
+  onRemove,
+}: {
+  title: string;
+  emoji: string;
+  colorClasses: string;
+  badgeClasses: string;
+  options: MenuItemOption[];
+  allOptions: MenuItemOption[];
+  onRemove: (localIndex: number) => void;
+}) {
+  return (
+    <div className={`border rounded-xl overflow-hidden ${colorClasses}`}>
+      <div className="px-3 py-2 flex items-center justify-between">
+        <span className="text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+          {emoji} {title}
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeClasses}`}>
+            {options.length}
+          </span>
+        </span>
+      </div>
+      <div className="bg-white divide-y divide-surface-100">
+        {options.map((opt, idx) => (
+          <div key={idx} className="flex items-center justify-between px-3 py-2.5">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-surface-800 truncate">{opt.name}</span>
+              <div className="flex gap-2 mt-0.5 flex-wrap">
+                {opt.sub_options && (
+                  <span className="text-[10px] text-surface-400 font-medium">
+                    Types: {opt.sub_options}
+                  </span>
+                )}
+                {(opt.min_quantity ?? 0) > 0 && (
+                  <span className="text-[10px] text-brand-500 font-bold">
+                    Min: {formatGHS(opt.min_quantity ?? 0)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span className="text-xs font-bold text-brand-500">
+                {opt.price_modifier > 0 ? `+${formatGHS(opt.price_modifier)}` : 'Included'}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRemove(idx)}
+                className="text-surface-400 hover:text-error-600 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
