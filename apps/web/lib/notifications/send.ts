@@ -210,3 +210,87 @@ export async function sendOrderNotifications(
 
   await Promise.allSettled(notifications);
 }
+
+/**
+ * Notify the other party about a new chat message on an order.
+ * Throttled: skips the SMS/email if one was already sent for the same
+ * order + direction within the last 2 minutes (avoids spamming during
+ * rapid back-and-forth). The in-app thread still updates instantly.
+ */
+export async function sendOrderMessageNotification(params: {
+  order: {
+    id: string;
+    order_number: string;
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string | null;
+    tenant_id: string;
+  };
+  tenant: { id: string; name: string; phone: string; primary_color?: string; notify_sms?: boolean; notify_email?: boolean };
+  direction: 'to_customer' | 'to_restaurant';
+  preview: string;
+}) {
+  const { order, tenant, direction, preview } = params;
+  const supabase = createAdminClient();
+  const template = direction === 'to_customer' ? 'order_message_to_customer' : 'order_message_to_restaurant';
+
+  // Throttle: one notification per direction per order every 2 minutes.
+  const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const { count } = await supabase
+    .from('notification_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('order_id', order.id)
+    .eq('template', template)
+    .gte('created_at', twoMinAgo);
+
+  if ((count ?? 0) > 0) return;
+
+  const short = preview.length > 90 ? `${preview.slice(0, 87)}…` : preview;
+
+  if (direction === 'to_restaurant') {
+    if (tenant.notify_sms !== false && tenant.phone) {
+      await sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'sms',
+        provider: 'arkesel',
+        recipient: tenant.phone,
+        template,
+        message: `New message on order #${order.order_number} from ${order.customer_name}: "${short}" — open Didi to reply.`,
+      });
+    }
+  } else {
+    if (order.customer_phone) {
+      await sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'sms',
+        provider: 'arkesel',
+        recipient: order.customer_phone,
+        template,
+        message: `${tenant.name} replied to your order #${order.order_number}: "${short}". Open your order page to view and reply.`,
+      });
+    }
+    if (order.customer_email && tenant.notify_email) {
+      await sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'email',
+        provider: 'brevio',
+        recipient: order.customer_email,
+        template,
+        emailSubject: `New message about your order #${order.order_number} — ${tenant.name}`,
+        message: `
+          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+            <h2 style="color: ${tenant.primary_color || '#FF6B35'}">${tenant.name} sent you a message</h2>
+            <p>About your order <strong>#${order.order_number}</strong>:</p>
+            <blockquote style="border-left: 3px solid ${tenant.primary_color || '#FF6B35'}; margin: 0; padding: 8px 14px; color: #333;">${short}</blockquote>
+            <p>Open your order page to view and reply.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #888; font-size: 12px;">Powered by Didi</p>
+          </div>
+        `,
+      });
+    }
+  }
+}

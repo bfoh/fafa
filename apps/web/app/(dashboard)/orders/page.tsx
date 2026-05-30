@@ -24,6 +24,8 @@ import {
   Bell,
   Search,
   X,
+  Send,
+  MessageSquare,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 import Link from 'next/link';
@@ -64,6 +66,13 @@ interface StatusHistory {
   created_at: string;
 }
 
+interface ChatMessage {
+  id: string;
+  sender: 'customer' | 'restaurant';
+  body: string;
+  created_at: string;
+}
+
 export default function OrdersPage() {
   const supabase = createBrowserClient();
   const [loading, setLoading] = useState(true);
@@ -78,6 +87,13 @@ export default function OrdersPage() {
   // Filters & Search
   const [activeTab, setActiveTab] = useState<string>('active'); // active, pending, ready, completed, cancelled, all
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Chat
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [msgDraft, setMsgDraft] = useState('');
+  const [msgSending, setMsgSending] = useState(false);
+  const [unreadByOrder, setUnreadByOrder] = useState<Record<string, number>>({});
+  const msgThreadRef = useRef<HTMLDivElement>(null);
 
   // Action states
   const [actionLoading, setActionLoading] = useState(false);
@@ -151,6 +167,7 @@ export default function OrdersPage() {
       if (formatted.length > 0) {
         setSelectedOrder(formatted[0]);
         fetchOrderDetails(formatted[0].id);
+        loadOwnerMessages(formatted[0].id);
       }
     } catch (err) {
       console.error('Error fetching orders:', err);
@@ -252,8 +269,117 @@ export default function OrdersPage() {
   // Handle clicking an order in the master list
   function handleSelectOrder(order: Order) {
     setSelectedOrder(order);
+    setMessages([]);
     fetchOrderDetails(order.id);
+    loadOwnerMessages(order.id);
   }
+
+  // ─── Customer chat (owner side) ───────────────────────────
+  async function loadOwnerMessages(orderId: string) {
+    try {
+      const { data } = await supabase
+        .from('order_messages')
+        .select('id, sender, body, created_at')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true });
+      setMessages((data as ChatMessage[]) || []);
+      // Mark the customer's messages as read.
+      await supabase
+        .from('order_messages')
+        .update({ read_by_restaurant_at: new Date().toISOString() })
+        .eq('order_id', orderId)
+        .eq('sender', 'customer')
+        .is('read_by_restaurant_at', null);
+      setUnreadByOrder((prev) => ({ ...prev, [orderId]: 0 }));
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
+  }
+
+  async function loadUnread(tId: string) {
+    try {
+      const { data } = await supabase
+        .from('order_messages')
+        .select('order_id')
+        .eq('tenant_id', tId)
+        .eq('sender', 'customer')
+        .is('read_by_restaurant_at', null);
+      const counts: Record<string, number> = {};
+      (data || []).forEach((r: { order_id: string }) => {
+        counts[r.order_id] = (counts[r.order_id] || 0) + 1;
+      });
+      setUnreadByOrder(counts);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function sendOwnerMessage() {
+    const text = msgDraft.trim();
+    if (!text || msgSending || !selectedOrder) return;
+    setMsgSending(true);
+    const optimistic: ChatMessage = {
+      id: `tmp-${Date.now()}`,
+      sender: 'restaurant',
+      body: text,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((m) => [...m, optimistic]);
+    setMsgDraft('');
+    try {
+      const res = await fetch(`/api/orders/${selectedOrder.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: text }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((m) => m.map((x) => (x.id === optimistic.id ? (data.message as ChatMessage) : x)));
+      } else {
+        setMessages((m) => m.filter((x) => x.id !== optimistic.id));
+        setMsgDraft(text);
+      }
+    } catch {
+      setMessages((m) => m.filter((x) => x.id !== optimistic.id));
+      setMsgDraft(text);
+    } finally {
+      setMsgSending(false);
+    }
+  }
+
+  // Poll the selected order's chat thread.
+  useEffect(() => {
+    if (!selectedOrder) return;
+    const id = selectedOrder.id;
+    const iv = setInterval(async () => {
+      const { data } = await supabase
+        .from('order_messages')
+        .select('id, sender, body, created_at')
+        .eq('order_id', id)
+        .order('created_at', { ascending: true });
+      if (data) setMessages(data as ChatMessage[]);
+      await supabase
+        .from('order_messages')
+        .update({ read_by_restaurant_at: new Date().toISOString() })
+        .eq('order_id', id)
+        .eq('sender', 'customer')
+        .is('read_by_restaurant_at', null);
+    }, 8000);
+    return () => clearInterval(iv);
+  }, [selectedOrder?.id]);
+
+  // Poll unread message counts across all orders (for the badges).
+  useEffect(() => {
+    if (!tenantId) return;
+    loadUnread(tenantId);
+    const iv = setInterval(() => loadUnread(tenantId), 15000);
+    return () => clearInterval(iv);
+  }, [tenantId]);
+
+  // Keep the chat thread scrolled to the newest message.
+  useEffect(() => {
+    msgThreadRef.current?.scrollTo({ top: msgThreadRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages.length]);
 
   // Patch order status helper
   async function updateOrderStatus(
@@ -459,6 +585,12 @@ export default function OrdersPage() {
                         <span className="text-[10px] text-surface-400">
                           {timeAgo(order.created_at)}
                         </span>
+                        {(unreadByOrder[order.id] ?? 0) > 0 && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-500 text-white text-[9px] font-bold">
+                            <MessageSquare className="w-2.5 h-2.5" />
+                            {unreadByOrder[order.id]}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs font-semibold text-surface-700 truncate mt-1">
                         {order.customer_name}
@@ -763,6 +895,66 @@ export default function OrdersPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Customer chat */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5" /> Chat with Customer
+                  </h4>
+                  <div className="border border-surface-150 rounded-2xl overflow-hidden">
+                    <div ref={msgThreadRef} className="max-h-64 overflow-y-auto p-3 space-y-2 bg-surface-50/40 scrollbar-thin">
+                      {messages.length === 0 ? (
+                        <p className="text-center text-[11px] text-surface-400 py-6">
+                          No messages yet. If the customer reaches out, reply here.
+                        </p>
+                      ) : (
+                        messages.map((m) => {
+                          const mine = m.sender === 'restaurant';
+                          return (
+                            <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                              <div
+                                className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                                  mine
+                                    ? 'bg-brand-500 text-white rounded-br-md'
+                                    : 'bg-white border border-surface-150 text-surface-800 rounded-bl-md'
+                                }`}
+                              >
+                                <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                                <p className={`text-[10px] mt-0.5 ${mine ? 'text-white/70' : 'text-surface-400'}`}>
+                                  {new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    <div className="border-t border-surface-150 p-2.5 flex items-end gap-2 bg-white">
+                      <textarea
+                        value={msgDraft}
+                        onChange={(e) => setMsgDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendOwnerMessage();
+                          }
+                        }}
+                        rows={1}
+                        placeholder="Reply to customer…"
+                        className="flex-1 resize-none px-3 py-2 rounded-xl border border-surface-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
+                      />
+                      <button
+                        type="button"
+                        onClick={sendOwnerMessage}
+                        disabled={!msgDraft.trim() || msgSending}
+                        className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-brand-500 hover:bg-brand-600 text-white transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                        aria-label="Send message"
+                      >
+                        {msgSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
