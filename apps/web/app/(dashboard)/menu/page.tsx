@@ -108,8 +108,10 @@ const OPTION_TYPE_ORDER: OptionType[] = ['soup', 'protein', 'extra'];
    (priced extras like Wele +5 / Egg +5 are intentionally extras). */
 
 const KNOWN_SOUPS = new Set([
-  'light soup', 'abunabunu soup', 'peanut soup', 'palm nut soup',
-  'groundnut soup', 'okro soup', 'okra soup', 'green green', 'nkrakra',
+  'light soup', 'abunabunu soup', 'abunabunu', 'wrewre', 'peanut soup', 'palm nut soup',
+  'groundnut soup', 'okro soup', 'okra soup', 'okro stew', 'green green',
+  'green-green (alefu)', 'green-green', 'alefu', 'ayoyo soup', 'ayoyo',
+  'dawadawa soup', 'nkrakra', 'goat light soup', 'chicken light soup', 'dry fish soup',
 ]);
 const KNOWN_PROTEINS = new Set([
   'goat meat', 'beef', 'chicken', 'fish', 'mutton', 'turkey',
@@ -159,6 +161,7 @@ function parseTiers(raw: unknown): PriceTier[] {
 const SOUP_CATALOG: string[] = [
   'Light Soup', 'Abunabunu', 'Wrewre', 'Goat Light Soup', 'Chicken Light Soup',
   'Dry Fish Soup', 'Palm Nut Soup', 'Groundnut Soup',
+  'Okro Soup', 'Okro Stew', 'Ayoyo Soup', 'Green-Green (Alefu)', 'Dawadawa Soup',
 ];
 
 interface ProteinPreset { name: string; tiers: PriceTier[]; }
@@ -182,9 +185,9 @@ const PROTEIN_CATALOG: ProteinPreset[] = [
 
 const EXTRA_CATALOG: { name: string; price: number }[] = [
   { name: 'Wele', price: 5 }, { name: 'Egg', price: 5 }, { name: 'Gari', price: 5 },
-  { name: 'Shito', price: 5 }, { name: 'Avocado', price: 10 }, { name: 'Extra Soup', price: 10 },
-  { name: 'Boiled Plantain', price: 10 }, { name: 'Vegetable Salad', price: 10 },
-  { name: 'Kontomire', price: 10 }, { name: 'Boiled Yam', price: 10 },
+  { name: 'Shito', price: 5 }, { name: 'Pepper & Shito', price: 5 }, { name: 'Avocado', price: 10 },
+  { name: 'Extra Soup', price: 10 }, { name: 'Boiled Plantain', price: 10 },
+  { name: 'Vegetable Salad', price: 10 }, { name: 'Kontomire', price: 10 }, { name: 'Boiled Yam', price: 10 },
 ];
 
 /* Build a fresh default option from a catalog entry. */
@@ -196,6 +199,74 @@ function proteinOption(preset: ProteinPreset): MenuItemOption {
 }
 function extraOption(name: string, price: number): MenuItemOption {
   return { name, price_modifier: price, option_type: 'extra', min_quantity: 0, sub_options: null, price_tiers: null };
+}
+
+/* ─── Dish presets ──────────────────────────────────────────
+   Each Ghanaian swallow pairs with its own soups/companions.
+   "Load defaults for <dish>" seeds the right soups + proteins +
+   extras so owners don't start from scratch. Proteins resolve to
+   the shared catalog (with tier prices) when known, else generic. */
+
+const GENERIC_PROTEIN_TIERS = [20, 30, 50];
+
+function resolveProtein(name: string): MenuItemOption {
+  const preset = PROTEIN_CATALOG.find((p) => p.name.toLowerCase() === name.toLowerCase());
+  return preset
+    ? proteinOption(preset)
+    : proteinOption({ name, tiers: makeTiers(GENERIC_PROTEIN_TIERS) });
+}
+
+interface DishPreset {
+  key: string;
+  label: string;
+  emoji: string;
+  soups: string[];
+  proteins: string[];
+  extras: { name: string; price: number }[];
+}
+
+const DISH_PRESETS: DishPreset[] = [
+  {
+    key: 'fufu',
+    label: 'Fufu',
+    emoji: '🍚',
+    soups: ['Light Soup', 'Palm Nut Soup', 'Groundnut Soup', 'Abunabunu', 'Goat Light Soup', 'Chicken Light Soup', 'Dry Fish Soup'],
+    proteins: ['Goat Meat', 'Beef', 'Fresh Chicken', 'Fresh Tilapia', 'Dry Fish'],
+    extras: [{ name: 'Wele', price: 5 }, { name: 'Egg', price: 5 }, { name: 'Shito', price: 5 }],
+  },
+  {
+    key: 'omo_tuo',
+    label: 'Omo Tuo',
+    emoji: '🍙',
+    soups: ['Groundnut Soup', 'Palm Nut Soup', 'Light Soup', 'Abunabunu'],
+    proteins: ['Goat Meat', 'Beef', 'Fresh Chicken'],
+    extras: [{ name: 'Wele', price: 5 }, { name: 'Egg', price: 5 }],
+  },
+  {
+    key: 'banku',
+    label: 'Banku',
+    emoji: '🥣',
+    soups: ['Okro Soup', 'Okro Stew'],
+    proteins: ['Fresh Tilapia', 'Catfish', 'Fresh Chicken', 'Fried Fish'],
+    extras: [{ name: 'Pepper & Shito', price: 5 }, { name: 'Shito', price: 5 }, { name: 'Egg', price: 5 }],
+  },
+  {
+    key: 'tz',
+    label: 'Tuo Zaafi',
+    emoji: '🍲',
+    soups: ['Ayoyo Soup', 'Green-Green (Alefu)', 'Dawadawa Soup'],
+    proteins: ['Beef', 'Goat Meat', 'Fresh Chicken'],
+    extras: [{ name: 'Wele', price: 5 }, { name: 'Egg', price: 5 }],
+  },
+];
+
+/* Build the full option list for a dish preset. */
+function dishPresetOptions(preset: DishPreset): MenuItemOption[] {
+  return [
+    ...preset.soups.map(soupOption),
+    ...preset.proteins.map(resolveProtein),
+    ...preset.extras.map((e) => extraOption(e.name, e.price)),
+  ];
 }
 
 /* ─── Component ─────────────────────────────────────────── */
@@ -247,6 +318,7 @@ export default function MenuPage() {
   // Option editor UI state
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [dishPickerOpen, setDishPickerOpen] = useState(false);
 
   useEffect(() => {
     async function loadSessionAndData() {
@@ -433,6 +505,7 @@ export default function MenuPage() {
     setItemIsChopBar(false);
     setEditingIdx(null);
     setShowPreview(false);
+    setDishPickerOpen(false);
     setItemModalOpen(true);
   }
 
@@ -452,6 +525,7 @@ export default function MenuPage() {
     setItemIsChopBar(item.is_chop_bar ?? false);
     setEditingIdx(null);
     setShowPreview(false);
+    setDishPickerOpen(false);
     setItemModalOpen(true);
   }
 
@@ -502,20 +576,14 @@ export default function MenuPage() {
     );
   }
 
-  function loadChopBarDefaults() {
-    const defaults: MenuItemOption[] = [
-      ...['Light Soup', 'Abunabunu', 'Palm Nut Soup', 'Groundnut Soup'].map(soupOption),
-      proteinOption(PROTEIN_CATALOG[0]), // Dry Fish
-      proteinOption(PROTEIN_CATALOG.find((p) => p.name === 'Fresh Tilapia')!),
-      proteinOption(PROTEIN_CATALOG.find((p) => p.name === 'Fresh Chicken')!),
-      extraOption('Wele', 5),
-      extraOption('Egg', 5),
-    ];
+  function loadDishDefaults(preset: DishPreset) {
+    const defaults = dishPresetOptions(preset);
     setItemOptions((prev) => {
-      const existingNames = new Set(prev.map((o) => o.name.toLowerCase()));
-      const toAdd = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
+      const existing = new Set(prev.map((o) => `${o.name.toLowerCase()}|${o.option_type}`));
+      const toAdd = defaults.filter((d) => !existing.has(`${d.name.toLowerCase()}|${d.option_type}`));
       return [...prev, ...toAdd];
     });
+    setDishPickerOpen(false);
   }
 
   // Adds a single catalog entry (tap-to-add chip grid)
@@ -1111,14 +1179,40 @@ export default function MenuPage() {
                   {itemIsChopBar && (
                     <button
                       type="button"
-                      onClick={loadChopBarDefaults}
+                      onClick={() => setDishPickerOpen((v) => !v)}
                       className="px-3 py-1.5 bg-brand-500/10 text-brand-600 hover:bg-brand-500/20 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1"
                     >
                       <Sparkles className="w-3 h-3" />
                       Load Defaults
+                      <ChevronDown className={`w-3 h-3 transition-transform ${dishPickerOpen ? 'rotate-180' : ''}`} />
                     </button>
                   )}
                 </div>
+
+                {/* ── Dish preset picker ── */}
+                {itemIsChopBar && dishPickerOpen && (
+                  <div className="bg-brand-500/5 border border-brand-200 rounded-2xl p-3.5 space-y-2.5 animate-fade-in">
+                    <p className="text-[11px] font-bold text-surface-600">
+                      Load the right soups, proteins &amp; extras for your dish:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {DISH_PRESETS.map((dish) => (
+                        <button
+                          key={dish.key}
+                          type="button"
+                          onClick={() => loadDishDefaults(dish)}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-surface-200 hover:border-brand-300 hover:bg-brand-500/5 text-surface-700 hover:text-brand-600 text-sm font-bold transition-all active:scale-95"
+                        >
+                          <span className="text-lg leading-none">{dish.emoji}</span>
+                          {dish.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-surface-400">
+                      Adds to your current list — existing options are kept. You can edit prices after.
+                    </p>
+                  </div>
+                )}
 
                 {/* ── Add new option ── */}
                 {(() => {
