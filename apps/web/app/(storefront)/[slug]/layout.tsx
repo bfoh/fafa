@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Star } from 'lucide-react';
 import { BrandingCache } from '@/components/storefront/branding-cache';
 import { waLink } from '@/lib/utils/whatsapp';
 
@@ -110,9 +110,18 @@ export default async function StorefrontLayout({
             <h1 className="font-semibold text-white text-sm truncate">
               {tenant.name}
             </h1>
-            {tenant.tagline && (
-              <p className="text-[11px] text-white/60 truncate">{tenant.tagline}</p>
-            )}
+            <div className="flex items-center gap-1.5">
+              {Number(tenant.rating_count) > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-amber-300">
+                  <Star className="w-3 h-3 fill-amber-300" />
+                  {Number(tenant.rating_avg).toFixed(1)}
+                  <span className="text-white/45 font-normal">({tenant.rating_count})</span>
+                </span>
+              )}
+              {tenant.tagline && (
+                <p className="text-[11px] text-white/60 truncate">{tenant.tagline}</p>
+              )}
+            </div>
           </div>
 
           {tenant.whatsapp && (

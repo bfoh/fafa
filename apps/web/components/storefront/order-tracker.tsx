@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatGHS } from '@/lib/utils/currency';
 import { waLink } from '@/lib/utils/whatsapp';
-import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -109,6 +109,12 @@ export function OrderTracker({
   const threadRef = useRef<HTMLDivElement>(null);
   const accent = tenant.primary_color || '#FF6B35';
 
+  // Reviews
+  const [review, setReview] = useState<{ rating: number; comment: string | null } | null>(null);
+  const [stars, setStars] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
   // Live polling — stops once the order reaches a terminal state.
   useEffect(() => {
     if (TERMINAL.has(order.status)) return;
@@ -204,6 +210,45 @@ export function OrderTracker({
     }
   }
 
+  // Load an existing review once the order is delivered.
+  useEffect(() => {
+    if (order.status !== 'delivered') return;
+    let active = true;
+    fetch(`/api/orders/${order.id}/review`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (active && d?.review) {
+          setReview(d.review);
+          setStars(d.review.rating);
+          setReviewComment(d.review.comment || '');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [order.id, order.status]);
+
+  async function submitReview() {
+    if (!stars || reviewSubmitting) return;
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: stars, comment: reviewComment }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setReview(d.review);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
   const isCancelled = order.status === 'cancelled';
   const isDelivered = order.status === 'delivered';
   const isLive = !TERMINAL.has(order.status);
@@ -270,6 +315,51 @@ export function OrderTracker({
         )}
         {eta && <p className="text-xs font-semibold mt-2" style={{ color: accent }}>{eta}</p>}
       </div>
+
+      {/* ── Rate your order (after delivery) ── */}
+      {isDelivered && (
+        <div className="bg-white rounded-2xl border border-surface-100 shadow-sm p-5 mb-5 text-center">
+          <h2 className="text-sm font-bold text-surface-900">
+            {review ? 'Your rating' : 'Rate your order'}
+          </h2>
+          <p className="text-xs text-surface-400 mt-0.5">How was your meal from {tenant.name}?</p>
+          <div className="flex justify-center gap-1.5 my-3">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setStars(n)}
+                className="active:scale-90 transition-transform"
+                aria-label={`${n} star${n > 1 ? 's' : ''}`}
+              >
+                <Star
+                  className="w-8 h-8"
+                  style={{ color: n <= stars ? accent : 'var(--color-surface-300)' }}
+                  fill={n <= stars ? accent : 'none'}
+                />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            rows={2}
+            placeholder="Add a comment (optional)"
+            className="w-full resize-none px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+          />
+          <button
+            type="button"
+            onClick={submitReview}
+            disabled={!stars || reviewSubmitting}
+            className="mt-3 w-full py-3 rounded-xl text-white font-semibold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ background: accent }}
+          >
+            {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {review ? 'Update rating' : 'Submit rating'}
+          </button>
+          {review && <p className="text-xs text-success-600 font-semibold mt-2">Thanks for your feedback! 🙏</p>}
+        </div>
+      )}
 
       {/* ── Timeline ── */}
       {!isCancelled && (

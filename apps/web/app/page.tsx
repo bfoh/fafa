@@ -91,7 +91,22 @@ export default async function HomePage({
           byTenant.set(it.tenant_id, arr);
         }
       }
-      kitchens = kitchens.map((k) => ({ ...k, items: byTenant.get(k.id) || [] }));
+
+      // Ratings (denormalized on tenants) — batch fetch and attach.
+      const { data: ratings } = await supabase
+        .from('tenants')
+        .select('id, rating_avg, rating_count')
+        .in('id', kitchens.map((k) => k.id));
+      const ratingById = new Map(
+        (ratings || []).map((r) => [r.id, { avg: Number(r.rating_avg) || 0, count: Number(r.rating_count) || 0 }])
+      );
+
+      kitchens = kitchens.map((k) => ({
+        ...k,
+        items: byTenant.get(k.id) || [],
+        rating_avg: ratingById.get(k.id)?.avg ?? 0,
+        rating_count: ratingById.get(k.id)?.count ?? 0,
+      }));
     } catch (err) {
       console.error('Dish preview load failed:', err);
     }

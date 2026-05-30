@@ -26,6 +26,7 @@ import {
   X,
   Send,
   MessageSquare,
+  Star,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 import Link from 'next/link';
@@ -82,6 +83,7 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderItems, setSelectedOrderItems] = useState<OrderItem[]>([]);
   const [selectedOrderHistory, setSelectedOrderHistory] = useState<StatusHistory[]>([]);
+  const [selectedOrderReview, setSelectedOrderReview] = useState<{ rating: number; comment: string | null } | null>(null);
   const [itemsLoading, setItemsLoading] = useState(false);
 
   // Filters & Search
@@ -259,6 +261,14 @@ export default function OrdersPage() {
 
       if (histErr) throw histErr;
       setSelectedOrderHistory(hist || []);
+
+      // 3. Fetch review (if the customer left one)
+      const { data: rev } = await supabase
+        .from('reviews')
+        .select('rating, comment')
+        .eq('order_id', orderId)
+        .maybeSingle();
+      setSelectedOrderReview(rev || null);
     } catch (err) {
       console.error('Error fetching order details:', err);
     } finally {
@@ -896,6 +906,31 @@ export default function OrdersPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Customer review */}
+                {selectedOrderReview && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5" /> Customer Review
+                    </h4>
+                    <div className="border border-surface-150 rounded-2xl p-4">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className="w-4 h-4"
+                            style={{ color: n <= selectedOrderReview.rating ? '#F59E0B' : 'var(--color-surface-300)' }}
+                            fill={n <= selectedOrderReview.rating ? '#F59E0B' : 'none'}
+                          />
+                        ))}
+                        <span className="ml-1 text-sm font-bold text-surface-800">{selectedOrderReview.rating}.0</span>
+                      </div>
+                      {selectedOrderReview.comment && (
+                        <p className="text-sm text-surface-600 mt-2 italic">“{selectedOrderReview.comment}”</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Customer chat */}
                 <div className="space-y-3">

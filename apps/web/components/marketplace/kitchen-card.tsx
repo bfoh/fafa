@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Star } from 'lucide-react';
 import { CUISINE_LABEL } from '@/lib/marketplace/cuisines';
 import { formatDistance } from '@/lib/marketplace/geo';
 import { formatGHS } from '@/lib/utils/currency';
@@ -25,6 +26,8 @@ export interface KitchenResult {
   item_count: number;
   open_now: boolean;
   distance_km: number | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
   items?: MenuPreview[];
 }
 
@@ -85,9 +88,16 @@ export default function KitchenCard({ k }: { k: KitchenResult }) {
         <h3 className="font-bold text-[16px] text-white truncate group-hover:text-brand-300 transition-colors">
           {k.name}
         </h3>
-        <p className="text-xs text-white/45 mt-0.5 truncate">
-          {k.city || 'Kitchen'}
-        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          {(k.rating_count ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-300">
+              <Star className="w-3.5 h-3.5 fill-amber-300" />
+              {Number(k.rating_avg).toFixed(1)}
+              <span className="text-white/40 font-normal">({k.rating_count})</span>
+            </span>
+          )}
+          <p className="text-xs text-white/45 truncate">{k.city || 'Kitchen'}</p>
+        </div>
 
         {/* Cuisine tags */}
         {tags.length > 0 && (
