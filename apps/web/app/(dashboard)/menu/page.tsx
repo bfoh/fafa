@@ -288,6 +288,25 @@ export default function MenuPage() {
     setItemOptions((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function loadChopBarDefaults() {
+    const defaults = [
+      { name: 'Light Soup', price_modifier: 0 },
+      { name: 'Abunabunu Soup', price_modifier: 0 },
+      { name: 'Peanut Soup', price_modifier: 0 },
+      { name: 'Goat Meat', price_modifier: 0 },
+      { name: 'Beef', price_modifier: 0 },
+      { name: 'Chicken', price_modifier: 0 },
+      { name: 'Fish', price_modifier: 0 },
+      { name: 'Wele', price_modifier: 5 },
+      { name: 'Egg', price_modifier: 5 },
+    ];
+    setItemOptions((prev) => {
+      const existingNames = new Set(prev.map((o) => o.name.toLowerCase()));
+      const toAdd = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
+      return [...prev, ...toAdd];
+    });
+  }
+
   // Handles Item Add/Edit submit
   async function handleItemSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -828,17 +847,32 @@ export default function MenuPage() {
 
               {/* Extras/Add-ons Option Manager */}
               <div className="border-t border-surface-100 pt-5 space-y-3">
-                <div>
-                  <h3 className="text-sm font-bold text-surface-800">Add-ons & Extras</h3>
-                  <p className="text-xs text-surface-400 mt-0.5">
-                    Options for customers to customize their meal (e.g. Extra egg, +GH₵ 3.00)
-                  </p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-surface-800">
+                      {itemIsChopBar ? 'Chop Bar Options (Soups, Meats, Extras)' : 'Add-ons & Extras'}
+                    </h3>
+                    <p className="text-xs text-surface-400 mt-0.5">
+                      {itemIsChopBar
+                        ? 'For Chop Bar items, enter price modifier as 0 for items where the customer enters custom amounts (e.g., GH₵ 20 of Goat Meat). Set a price > 0 for fixed add-ons (e.g., Egg for GH₵ 5).'
+                        : 'Options for customers to customize their meal (e.g. Extra egg, +GH₵ 3.00)'}
+                    </p>
+                  </div>
+                  {itemIsChopBar && (
+                    <button
+                      type="button"
+                      onClick={loadChopBarDefaults}
+                      className="px-2.5 py-1.5 bg-brand-500/10 text-brand-600 hover:bg-brand-500/20 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                    >
+                      ✨ Load Defaults
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Option name (e.g. Extra Egg)"
+                    placeholder={itemIsChopBar ? "Option (e.g. Goat Meat)" : "Option name (e.g. Extra Egg)"}
                     value={newItemOptionName}
                     onChange={(e) => setNewItemOptionName(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-xs"
@@ -846,7 +880,7 @@ export default function MenuPage() {
                   <input
                     type="number"
                     step="0.01"
-                    placeholder="Price modifier"
+                    placeholder={itemIsChopBar ? "Price (0 for custom)" : "Price modifier"}
                     value={newItemOptionPrice}
                     onChange={(e) => setNewItemOptionPrice(e.target.value)}
                     className="w-24 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-xs"

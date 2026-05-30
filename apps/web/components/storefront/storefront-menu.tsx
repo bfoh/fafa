@@ -414,7 +414,11 @@ function ChopBarCustomizer({
 
   useEffect(() => {
     const initial: Record<string, { checked: boolean; amount: number }> = {};
-    (item.menu_item_options || []).forEach((opt) => {
+    const opts = (item.menu_item_options || []).map(opt => ({
+      ...opt,
+      price_modifier: Number(opt.price_modifier),
+    }));
+    opts.forEach((opt) => {
       const isSoup = opt.price_modifier === 0 && (
         opt.name.toLowerCase().includes('soup') ||
         opt.name.toLowerCase().includes('abunabunu') ||
@@ -424,13 +428,16 @@ function ChopBarCustomizer({
       
       initial[opt.id] = {
         checked: false,
-        amount: isSoup ? 0 : (opt.price_modifier > 0 ? Number(opt.price_modifier) : 50),
+        amount: isSoup ? 0 : (opt.price_modifier > 0 ? opt.price_modifier : 50),
       };
     });
     setOptionsState(initial);
   }, [item]);
 
-  const options = item.menu_item_options || [];
+  const options = (item.menu_item_options || []).map(opt => ({
+    ...opt,
+    price_modifier: Number(opt.price_modifier),
+  }));
 
   const soups = options.filter(opt => 
     opt.price_modifier === 0 && (
