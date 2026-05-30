@@ -90,14 +90,31 @@ export default async function OrderConfirmationPage({
             item_name: string;
             quantity: number;
             line_total: number;
+            options_json?: Array<{ name: string; price_modifier?: number; priceModifier?: number }>;
           }>)?.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm">
-              <span className="text-surface-700">
-                {item.quantity}× {item.item_name}
-              </span>
-              <span className="text-surface-500 font-medium">
-                {formatGHS(Number(item.line_total))}
-              </span>
+            <div key={item.id} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-surface-700 font-semibold animate-fade-in">
+                  {item.quantity}× {item.item_name}
+                </span>
+                <span className="text-surface-500 font-medium">
+                  {formatGHS(Number(item.line_total))}
+                </span>
+              </div>
+              {item.options_json && item.options_json.length > 0 && (
+                <div className="pl-4 text-xs text-surface-400 space-y-0.5 animate-fade-in">
+                  {item.options_json.map((opt, oidx) => (
+                    <div key={oidx} className="flex justify-between">
+                      <span>+ {opt.name}</span>
+                      <span>
+                        {Number(opt.price_modifier || opt.priceModifier || 0) > 0
+                          ? `+${formatGHS(Number(opt.price_modifier || opt.priceModifier || 0))}`
+                          : 'Free'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 

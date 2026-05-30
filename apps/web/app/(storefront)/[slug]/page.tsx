@@ -29,14 +29,7 @@ export default async function StorefrontPage({
       name,
       sort_order,
       menu_items (
-        id,
-        name,
-        description,
-        price,
-        image_url,
-        is_available,
-        is_featured,
-        sort_order,
+        *,
         menu_item_options (
           id,
           name,
@@ -68,6 +61,7 @@ export default async function StorefrontPage({
         is_available: boolean;
         is_featured: boolean;
         sort_order: number;
+        is_chop_bar?: boolean;
         menu_item_options: Array<{
           id: string;
           name: string;

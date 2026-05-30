@@ -39,6 +39,7 @@ interface MenuItem {
   image_url: string | null;
   is_available: boolean;
   is_featured: boolean;
+  is_chop_bar?: boolean;
   menu_item_options: MenuItemOption[];
 }
 
@@ -74,6 +75,8 @@ export default function MenuPage() {
   const [newItemOptionName, setNewItemOptionName] = useState('');
   const [newItemOptionPrice, setNewItemOptionPrice] = useState('');
   const [itemFormLoading, setItemFormLoading] = useState(false);
+  const [itemIsChopBar, setItemIsChopBar] = useState(false);
+  const [dbHasChopBarColumn, setDbHasChopBarColumn] = useState(false);
 
   useEffect(() => {
     async function loadSessionAndData() {
@@ -120,14 +123,7 @@ export default function MenuPage() {
       const { data: items, error: itemsErr } = await supabase
         .from('menu_items')
         .select(`
-          id,
-          category_id,
-          name,
-          description,
-          price,
-          image_url,
-          is_available,
-          is_featured,
+          *,
           menu_item_options (
             id,
             name,
@@ -138,6 +134,17 @@ export default function MenuPage() {
         .order('sort_order', { ascending: true });
 
       if (itemsErr) throw itemsErr;
+
+      // Detect if is_chop_bar exists in database schema
+      if (items && items.length > 0) {
+        setDbHasChopBarColumn('is_chop_bar' in items[0]);
+      } else {
+        const { error: testErr } = await supabase
+          .from('menu_items')
+          .select('is_chop_bar')
+          .limit(1);
+        setDbHasChopBarColumn(!testErr);
+      }
 
       const formattedItems = (items || []).map((item: any) => ({
         ...item,
@@ -254,6 +261,7 @@ export default function MenuPage() {
     setItemOptions([]);
     setNewItemOptionName('');
     setNewItemOptionPrice('');
+    setItemIsChopBar(false);
     setItemModalOpen(true);
   }
 
@@ -271,6 +279,7 @@ export default function MenuPage() {
     setItemOptions(item.menu_item_options || []);
     setNewItemOptionName('');
     setNewItemOptionPrice('');
+    setItemIsChopBar(item.is_chop_bar ?? false);
     setItemModalOpen(true);
   }
 
@@ -322,7 +331,7 @@ export default function MenuPage() {
         finalImageUrl = publicUrl;
       }
 
-      const itemPayload = {
+      const itemPayload: any = {
         tenant_id: tenantId,
         category_id: itemCategoryId || null,
         name: itemName.trim(),
@@ -332,6 +341,10 @@ export default function MenuPage() {
         is_available: itemAvailable,
         is_featured: itemFeatured,
       };
+
+      if (dbHasChopBarColumn) {
+        itemPayload.is_chop_bar = itemIsChopBar;
+      }
 
       let itemId = selectedItem?.id;
 
@@ -556,11 +569,18 @@ export default function MenuPage() {
                         <h3 className="font-semibold text-surface-950 text-sm truncate">
                           {item.name}
                         </h3>
-                        {item.is_featured && (
-                          <span className="bg-brand-500/10 text-brand-600 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                            POPULAR
-                          </span>
-                        )}
+                        <div className="flex gap-1 shrink-0">
+                          {item.is_chop_bar && (
+                            <span className="bg-success-500/10 text-success-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              CHOP BAR
+                            </span>
+                          )}
+                          {item.is_featured && (
+                            <span className="bg-brand-500/10 text-brand-600 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              POPULAR
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-xs text-surface-500 line-clamp-2 mt-0.5">
                         {item.description || 'No description provided.'}
@@ -784,7 +804,7 @@ export default function MenuPage() {
               </div>
 
               {/* Toggles */}
-              <div className="flex gap-6">
+              <div className="flex flex-wrap gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -804,6 +824,18 @@ export default function MenuPage() {
                   />
                   <span className="text-sm font-semibold text-surface-700">In Stock</span>
                 </label>
+
+                {dbHasChopBarColumn && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={itemIsChopBar}
+                      onChange={(e) => setItemIsChopBar(e.target.checked)}
+                      className="w-4 h-4 rounded text-brand-500 focus:ring-brand-500/40 border-surface-300"
+                    />
+                    <span className="text-sm font-semibold text-surface-700">Chop Bar Style</span>
+                  </label>
+                )}
               </div>
 
               {/* Extras/Add-ons Option Manager */}

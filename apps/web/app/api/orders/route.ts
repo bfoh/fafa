@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     );
     const { data: menuItems } = await supabase
       .from('menu_items')
-      .select('id, name, price, is_available')
+      .select('*')
       .in('id', menuItemIds)
       .eq('tenant_id', tenant.id);
 
@@ -63,19 +63,25 @@ export async function POST(req: Request) {
 
     // Build order items with server-verified prices
     const orderItems = items.map(
-      (item: { menuItemId: string; quantity: number; options: Array<{ name: string; priceModifier: number }> }) => {
+      (item: { menuItemId: string; quantity: number; price?: number; options: Array<{ name: string; priceModifier: number }> }) => {
         const menuItem = menuItems.find((m) => m.id === item.menuItemId)!;
+        const isChopBar = (menuItem as any).is_chop_bar ?? false;
+        
+        // If it's a chop bar style item, we use the custom base price from the client.
+        // Otherwise we use the fixed price from the DB.
+        const basePrice = isChopBar ? (Number(item.price) || 0) : Number(menuItem.price);
+
         const optionsTotal = (item.options || []).reduce(
           (s: number, o: { priceModifier: number }) => s + o.priceModifier,
           0
         );
         const lineTotal =
-          (Number(menuItem.price) + optionsTotal) * item.quantity;
+          (basePrice + optionsTotal) * item.quantity;
 
         return {
           menu_item_id: menuItem.id,
           item_name: menuItem.name,
-          unit_price: Number(menuItem.price),
+          unit_price: basePrice,
           quantity: item.quantity,
           options_json: item.options || [],
           line_total: lineTotal,
