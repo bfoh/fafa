@@ -110,7 +110,7 @@ export function OrderTracker({
   const accent = tenant.primary_color || '#FF6B35';
 
   // Reviews
-  const [review, setReview] = useState<{ rating: number; comment: string | null } | null>(null);
+  const [review, setReview] = useState<{ rating: number; comment: string | null; owner_reply?: string | null } | null>(null);
   const [stars, setStars] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -358,6 +358,14 @@ export function OrderTracker({
             {review ? 'Update rating' : 'Submit rating'}
           </button>
           {review && <p className="text-xs text-success-600 font-semibold mt-2">Thanks for your feedback! 🙏</p>}
+          {review?.owner_reply && (
+            <div className="mt-3 text-left rounded-xl bg-surface-50 border border-surface-100 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accent }}>
+                {tenant.name} replied
+              </p>
+              <p className="text-sm text-surface-700 mt-0.5">{review.owner_reply}</p>
+            </div>
+          )}
         </div>
       )}
 

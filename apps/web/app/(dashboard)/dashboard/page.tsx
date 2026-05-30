@@ -7,6 +7,7 @@ import {
   DollarSign,
   Clock,
   TrendingUp,
+  Star,
 } from 'lucide-react';
 import Link from 'next/link';
 import SetupChecklist from '@/components/dashboard/setup-checklist';
@@ -24,6 +25,9 @@ export default async function DashboardPage() {
   let revenue = 0;
   let pendingCount = 0;
   let recentOrders: any[] = [];
+  let recentReviews: any[] = [];
+  let ratingAvg = 0;
+  let ratingCount = 0;
   const stats: any[] = [];
   let setup: {
     tenantId: string;
@@ -56,7 +60,7 @@ export default async function DashboardPage() {
     // Get setup-relevant tenant fields directly
     const { data: tenant } = await supabase
       .from('tenants')
-      .select('slug, paystack_subaccount_code, logo_url')
+      .select('slug, paystack_subaccount_code, logo_url, rating_avg, rating_count')
       .eq('id', tenantId)
       .single();
 
@@ -70,6 +74,7 @@ export default async function DashboardPage() {
       recentResult,
       menuCountResult,
       allOrdersResult,
+      reviewsResult,
     ] = await Promise.all([
         // Total orders today
         supabase
@@ -112,6 +117,14 @@ export default async function DashboardPage() {
           .from('orders')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId),
+
+        // Recent reviews
+        supabase
+          .from('reviews')
+          .select('id, rating, comment, customer_name, owner_reply, created_at')
+          .eq('tenant_id', tenantId)
+          .order('created_at', { ascending: false })
+          .limit(5),
       ]);
 
     setup = {
@@ -130,6 +143,9 @@ export default async function DashboardPage() {
     );
     pendingCount = pendingResult.count || 0;
     recentOrders = recentResult.data || [];
+    recentReviews = reviewsResult.data || [];
+    ratingAvg = Number(tenant?.rating_avg) || 0;
+    ratingCount = Number(tenant?.rating_count) || 0;
 
     stats.push(
       {
@@ -303,6 +319,57 @@ export default async function DashboardPage() {
                 </Link>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Reviews */}
+      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm">
+        <div className="flex items-center justify-between p-5 border-b border-surface-100">
+          <h2 className="text-lg font-semibold text-surface-900 flex items-center gap-2">
+            Customer Reviews
+            {ratingCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-sm font-bold text-amber-500">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                {ratingAvg.toFixed(1)}
+                <span className="text-surface-400 font-normal">({ratingCount})</span>
+              </span>
+            )}
+          </h2>
+        </div>
+
+        {recentReviews.length === 0 ? (
+          <div className="p-10 text-center">
+            <Star className="w-10 h-10 text-surface-200 mx-auto mb-2" />
+            <p className="text-surface-500 font-medium">No reviews yet</p>
+            <p className="text-sm text-surface-400 mt-1">Reviews appear after customers rate a delivered order.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-surface-100">
+            {recentReviews.map((rev) => (
+              <div key={rev.id} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className="w-3.5 h-3.5"
+                        style={{ color: n <= rev.rating ? '#F59E0B' : 'var(--color-surface-300)' }}
+                        fill={n <= rev.rating ? '#F59E0B' : 'none'}
+                      />
+                    ))}
+                    <span className="ml-1.5 text-xs font-semibold text-surface-600">{rev.customer_name || 'Customer'}</span>
+                  </div>
+                  <span className="text-[11px] text-surface-400">{timeAgo(rev.created_at)}</span>
+                </div>
+                {rev.comment && <p className="text-sm text-surface-600 mt-1.5">{rev.comment}</p>}
+                {rev.owner_reply && (
+                  <p className="text-xs text-surface-500 mt-1.5 pl-3 border-l-2 border-brand-200">
+                    <span className="font-bold text-brand-600">You replied: </span>{rev.owner_reply}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

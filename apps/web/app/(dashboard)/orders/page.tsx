@@ -83,7 +83,9 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedOrderItems, setSelectedOrderItems] = useState<OrderItem[]>([]);
   const [selectedOrderHistory, setSelectedOrderHistory] = useState<StatusHistory[]>([]);
-  const [selectedOrderReview, setSelectedOrderReview] = useState<{ rating: number; comment: string | null } | null>(null);
+  const [selectedOrderReview, setSelectedOrderReview] = useState<{ rating: number; comment: string | null; owner_reply: string | null } | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const [replySending, setReplySending] = useState(false);
   const [itemsLoading, setItemsLoading] = useState(false);
 
   // Filters & Search
@@ -265,10 +267,11 @@ export default function OrdersPage() {
       // 3. Fetch review (if the customer left one)
       const { data: rev } = await supabase
         .from('reviews')
-        .select('rating, comment')
+        .select('rating, comment, owner_reply')
         .eq('order_id', orderId)
         .maybeSingle();
       setSelectedOrderReview(rev || null);
+      setReplyDraft('');
     } catch (err) {
       console.error('Error fetching order details:', err);
     } finally {
@@ -354,6 +357,28 @@ export default function OrdersPage() {
       setMsgDraft(text);
     } finally {
       setMsgSending(false);
+    }
+  }
+
+  async function sendReply() {
+    const text = replyDraft.trim();
+    if (!text || replySending || !selectedOrder) return;
+    setReplySending(true);
+    try {
+      const res = await fetch(`/api/orders/${selectedOrder.id}/review`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply: text }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setSelectedOrderReview((r) => (r ? { ...r, owner_reply: d.review.owner_reply } : r));
+        setReplyDraft('');
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setReplySending(false);
     }
   }
 
@@ -927,6 +952,31 @@ export default function OrdersPage() {
                       </div>
                       {selectedOrderReview.comment && (
                         <p className="text-sm text-surface-600 mt-2 italic">“{selectedOrderReview.comment}”</p>
+                      )}
+
+                      {selectedOrderReview.owner_reply ? (
+                        <div className="mt-3 pl-3 border-l-2 border-brand-200 bg-brand-500/[0.03] rounded-r-lg py-2 pr-2">
+                          <p className="text-[10px] font-bold text-brand-600 uppercase tracking-wider">Your reply</p>
+                          <p className="text-sm text-surface-700 mt-0.5">{selectedOrderReview.owner_reply}</p>
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex items-end gap-2">
+                          <textarea
+                            value={replyDraft}
+                            onChange={(e) => setReplyDraft(e.target.value)}
+                            rows={1}
+                            placeholder="Reply to this review…"
+                            className="flex-1 resize-none px-3 py-2 rounded-xl border border-surface-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
+                          />
+                          <button
+                            type="button"
+                            onClick={sendReply}
+                            disabled={!replyDraft.trim() || replySending}
+                            className="px-3 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {replySending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Reply'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

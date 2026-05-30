@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createServerClient } from '@/lib/supabase/server';
 
 /** Fetch the existing review for this order (so the UI knows if already rated). */
 export async function GET(
@@ -11,12 +12,59 @@ export async function GET(
     const admin = createAdminClient();
     const { data: review } = await admin
       .from('reviews')
-      .select('id, rating, comment, created_at')
+      .select('id, rating, comment, owner_reply, owner_reply_at, created_at')
       .eq('order_id', id)
       .maybeSingle();
     return NextResponse.json({ review: review || null });
   } catch (err) {
     console.error('Failed to load review:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/** Owner reply to a review (authenticated member of the order's tenant). */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { reply } = await req.json();
+    const text = typeof reply === 'string' ? reply.trim().slice(0, 1000) : '';
+    if (!text) return NextResponse.json({ error: 'Reply is empty' }, { status: 400 });
+
+    const supabase = await createServerClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const admin = createAdminClient();
+    const { data: order } = await admin
+      .from('orders')
+      .select('tenant_id')
+      .eq('id', id)
+      .single();
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+    const { data: member } = await supabase
+      .from('tenant_members')
+      .select('tenant_id')
+      .eq('user_id', session.user.id)
+      .single();
+    if (member?.tenant_id !== order.tenant_id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: review, error } = await admin
+      .from('reviews')
+      .update({ owner_reply: text, owner_reply_at: new Date().toISOString() })
+      .eq('order_id', id)
+      .select('id, rating, comment, owner_reply, owner_reply_at, created_at')
+      .single();
+
+    if (error || !review) return NextResponse.json({ error: 'No review to reply to' }, { status: 404 });
+    return NextResponse.json({ review });
+  } catch (err) {
+    console.error('Failed to reply to review:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -127,7 +127,7 @@ export async function POST(
     // Notify the other party (throttled, in background).
     const { data: tenant } = await admin
       .from('tenants')
-      .select('id, name, phone, primary_color, notify_sms, notify_email')
+      .select('id, name, phone, whatsapp, primary_color, notify_sms, notify_email, notify_whatsapp')
       .eq('id', order.tenant_id)
       .single();
 

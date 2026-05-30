@@ -252,7 +252,7 @@ export async function sendOrderMessageNotification(params: {
     customer_email?: string | null;
     tenant_id: string;
   };
-  tenant: { id: string; name: string; phone: string; primary_color?: string; notify_sms?: boolean; notify_email?: boolean };
+  tenant: { id: string; name: string; phone: string; whatsapp?: string | null; primary_color?: string; notify_sms?: boolean; notify_email?: boolean; notify_whatsapp?: boolean };
   direction: 'to_customer' | 'to_restaurant';
   preview: string;
 }) {
@@ -272,8 +272,10 @@ export async function sendOrderMessageNotification(params: {
   if ((count ?? 0) > 0) return;
 
   const short = preview.length > 90 ? `${preview.slice(0, 87)}…` : preview;
+  const waOn = Boolean(tenant.notify_whatsapp) && isWhatsAppConfigured();
 
   if (direction === 'to_restaurant') {
+    const msg = `New message on order #${order.order_number} from ${order.customer_name}: "${short}" — open Didi to reply.`;
     if (tenant.notify_sms !== false && tenant.phone) {
       await sendAndLog({
         tenantId: tenant.id,
@@ -282,10 +284,23 @@ export async function sendOrderMessageNotification(params: {
         provider: 'arkesel',
         recipient: tenant.phone,
         template,
-        message: `New message on order #${order.order_number} from ${order.customer_name}: "${short}" — open Didi to reply.`,
+        message: msg,
+      });
+    }
+    const waTo = tenant.whatsapp || tenant.phone;
+    if (waOn && waTo) {
+      await sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'whatsapp',
+        provider: 'twilio',
+        recipient: waTo,
+        template,
+        message: msg,
       });
     }
   } else {
+    const msg = `${tenant.name} replied to your order #${order.order_number}: "${short}". Open your order page to view and reply.`;
     if (order.customer_phone) {
       await sendAndLog({
         tenantId: tenant.id,
@@ -294,7 +309,18 @@ export async function sendOrderMessageNotification(params: {
         provider: 'arkesel',
         recipient: order.customer_phone,
         template,
-        message: `${tenant.name} replied to your order #${order.order_number}: "${short}". Open your order page to view and reply.`,
+        message: msg,
+      });
+    }
+    if (waOn && order.customer_phone) {
+      await sendAndLog({
+        tenantId: tenant.id,
+        orderId: order.id,
+        channel: 'whatsapp',
+        provider: 'twilio',
+        recipient: order.customer_phone,
+        template,
+        message: msg,
       });
     }
     if (order.customer_email && tenant.notify_email) {
