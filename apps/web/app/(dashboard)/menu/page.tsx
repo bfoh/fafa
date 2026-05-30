@@ -29,6 +29,11 @@ interface MenuCategory {
   sort_order: number;
 }
 
+interface PriceTier {
+  label: string;
+  price: number;
+}
+
 interface MenuItemOption {
   id?: string;
   name: string;
@@ -36,6 +41,7 @@ interface MenuItemOption {
   option_type: OptionType;
   sub_options?: string | null;
   min_quantity?: number;
+  price_tiers?: PriceTier[] | null;
 }
 
 interface MenuItem {
@@ -127,20 +133,70 @@ function joinSubs(list: string[]): string | null {
   return list.length ? list.join(', ') : null;
 }
 
-/* ─── Chop Bar default options ──────────────────────────── */
+/* ─── Price-tier helpers ────────────────────────────────── */
 
-const CHOP_BAR_DEFAULTS: MenuItemOption[] = [
-  { name: 'Light Soup',       price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
-  { name: 'Abunabunu Soup',   price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
-  { name: 'Peanut Soup',      price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
-  { name: 'Palm Nut Soup',    price_modifier: 0, option_type: 'soup',    min_quantity: 0 },
-  { name: 'Goat Meat',        price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
-  { name: 'Beef',             price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
-  { name: 'Chicken',          price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: null },
-  { name: 'Fish',             price_modifier: 0, option_type: 'protein', min_quantity: 10, sub_options: 'Tilapia, Salmon, Catfish' },
-  { name: 'Wele',             price_modifier: 5, option_type: 'extra',   min_quantity: 0 },
-  { name: 'Egg',              price_modifier: 5, option_type: 'extra',   min_quantity: 0 },
+function makeTiers(prices: number[]): PriceTier[] {
+  return prices.map((p) => ({ label: '', price: p }));
+}
+
+function parseTiers(raw: unknown): PriceTier[] {
+  if (!raw) return [];
+  let arr: unknown = raw;
+  if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw); } catch { return []; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((t) => {
+      const o = (t ?? {}) as { label?: unknown; price?: unknown };
+      return { label: String(o.label ?? ''), price: Number(o.price) || 0 };
+    })
+    .filter((t) => t.price > 0 || t.label.trim());
+}
+
+/* ─── Preset catalog (owners tap to add, then set prices) ── */
+
+const SOUP_CATALOG: string[] = [
+  'Light Soup', 'Abunabunu', 'Wrewre', 'Goat Light Soup', 'Chicken Light Soup',
+  'Dry Fish Soup', 'Palm Nut Soup', 'Groundnut Soup',
 ];
+
+interface ProteinPreset { name: string; tiers: PriceTier[]; }
+
+const PROTEIN_CATALOG: ProteinPreset[] = [
+  { name: 'Dry Fish',       tiers: [{ label: 'Akosombo & Akwebi', price: 60 }, { label: '', price: 80 }, { label: '', price: 100 }, { label: '', price: 120 }] },
+  { name: 'Smoked Salmon',  tiers: makeTiers([30, 50, 60, 80]) },
+  { name: 'Fresh Salmon',   tiers: makeTiers([20, 30, 50, 60]) },
+  { name: 'Fresh Tilapia',  tiers: makeTiers([50, 70, 80, 100]) },
+  { name: 'Fresh Chicken',  tiers: makeTiers([20, 30, 40, 50]) },
+  { name: 'Bush Meat (Akratie)', tiers: makeTiers([50, 70, 80, 100]) },
+  { name: 'Porcupine (Apese)',   tiers: makeTiers([50, 80, 100, 120]) },
+  { name: 'Rat Meat (Okusie)',   tiers: makeTiers([30, 50, 70, 80]) },
+  { name: 'Oyuo',           tiers: makeTiers([40, 70, 80, 100, 120]) },
+  { name: 'Mushroom',       tiers: makeTiers([30, 50, 70, 80, 100]) },
+  { name: 'Snail',          tiers: makeTiers([50, 80, 100, 120]) },
+  { name: 'Catfish',        tiers: makeTiers([80, 100, 120, 150]) },
+  { name: 'Goat Meat',      tiers: makeTiers([20, 30, 50]) },
+  { name: 'Beef',           tiers: makeTiers([20, 30, 50]) },
+];
+
+const EXTRA_CATALOG: { name: string; price: number }[] = [
+  { name: 'Wele', price: 5 }, { name: 'Egg', price: 5 }, { name: 'Gari', price: 5 },
+  { name: 'Shito', price: 5 }, { name: 'Avocado', price: 10 }, { name: 'Extra Soup', price: 10 },
+  { name: 'Boiled Plantain', price: 10 }, { name: 'Vegetable Salad', price: 10 },
+  { name: 'Kontomire', price: 10 }, { name: 'Boiled Yam', price: 10 },
+];
+
+/* Build a fresh default option from a catalog entry. */
+function soupOption(name: string): MenuItemOption {
+  return { name, price_modifier: 0, option_type: 'soup', min_quantity: 0, sub_options: null, price_tiers: null };
+}
+function proteinOption(preset: ProteinPreset): MenuItemOption {
+  return { name: preset.name, price_modifier: 0, option_type: 'protein', min_quantity: 0, sub_options: null, price_tiers: preset.tiers.map((t) => ({ ...t })) };
+}
+function extraOption(name: string, price: number): MenuItemOption {
+  return { name, price_modifier: price, option_type: 'extra', min_quantity: 0, sub_options: null, price_tiers: null };
+}
 
 /* ─── Component ─────────────────────────────────────────── */
 
@@ -183,6 +239,7 @@ export default function MenuPage() {
   const [newOptSubs, setNewOptSubs] = useState<string[]>([]);
   const [subDraft, setSubDraft] = useState('');
   const [newOptMinQty, setNewOptMinQty] = useState('');
+  const [newOptTiers, setNewOptTiers] = useState<PriceTier[]>([]);
 
   // DB feature detection
   const [dbHasChopBarColumn, setDbHasChopBarColumn] = useState(false);
@@ -255,6 +312,7 @@ export default function MenuPage() {
               option_type: inferOptionType(opt.name, (opt.option_type as OptionType) || 'extra', price),
               sub_options: opt.sub_options || null,
               min_quantity: Number(opt.min_quantity) || 0,
+              price_tiers: parseTiers(opt.price_tiers),
             };
           })
           // Collapse exact duplicates left over from repeated default loads
@@ -404,6 +462,7 @@ export default function MenuPage() {
     setNewOptSubs([]);
     setSubDraft('');
     setNewOptMinQty('');
+    setNewOptTiers([]);
   }
 
   // Adds an option to the local options array in the form
@@ -413,6 +472,7 @@ export default function MenuPage() {
     // Fold any unconfirmed draft text into the chip list first
     const draftParts = subDraft.split(',').map((s) => s.trim()).filter(Boolean);
     const subs = [...newOptSubs, ...draftParts.filter((p) => !newOptSubs.some((s) => s.toLowerCase() === p.toLowerCase()))];
+    const tiers = type === 'protein' ? newOptTiers.filter((t) => t.price > 0 || t.label.trim()) : [];
     const price = type === 'soup' ? 0 : parseFloat(newOptPrice) || 0;
     const minQty = type === 'protein' ? parseFloat(newOptMinQty) || 0 : 0;
     setItemOptions((prev) => [
@@ -423,6 +483,7 @@ export default function MenuPage() {
         option_type: type,
         sub_options: joinSubs(subs),
         min_quantity: minQty,
+        price_tiers: tiers.length ? tiers : null,
       },
     ]);
     resetNewOptionForm();
@@ -442,10 +503,28 @@ export default function MenuPage() {
   }
 
   function loadChopBarDefaults() {
+    const defaults: MenuItemOption[] = [
+      ...['Light Soup', 'Abunabunu', 'Palm Nut Soup', 'Groundnut Soup'].map(soupOption),
+      proteinOption(PROTEIN_CATALOG[0]), // Dry Fish
+      proteinOption(PROTEIN_CATALOG.find((p) => p.name === 'Fresh Tilapia')!),
+      proteinOption(PROTEIN_CATALOG.find((p) => p.name === 'Fresh Chicken')!),
+      extraOption('Wele', 5),
+      extraOption('Egg', 5),
+    ];
     setItemOptions((prev) => {
       const existingNames = new Set(prev.map((o) => o.name.toLowerCase()));
-      const toAdd = CHOP_BAR_DEFAULTS.filter((d) => !existingNames.has(d.name.toLowerCase()));
+      const toAdd = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
       return [...prev, ...toAdd];
+    });
+  }
+
+  // Adds a single catalog entry (tap-to-add chip grid)
+  function addCatalogOption(opt: MenuItemOption) {
+    setItemOptions((prev) => {
+      if (prev.some((o) => o.name.toLowerCase() === opt.name.toLowerCase() && o.option_type === opt.option_type)) {
+        return prev;
+      }
+      return [...prev, { ...opt, price_tiers: opt.price_tiers ? opt.price_tiers.map((t) => ({ ...t })) : null }];
     });
   }
 
@@ -532,6 +611,7 @@ export default function MenuPage() {
           option_type: opt.option_type || 'extra',
           min_quantity: opt.min_quantity || 0,
           sub_options: opt.sub_options || null,
+          price_tiers: opt.price_tiers && opt.price_tiers.length ? opt.price_tiers : null,
         }));
 
         const { error: optErr } = await supabase
@@ -1044,6 +1124,8 @@ export default function MenuPage() {
                 {(() => {
                   const effType: OptionType = itemIsChopBar ? newOptType : 'extra';
                   const meta = OPTION_TYPE_META[effType];
+                  const isAdded = (name: string, type: OptionType) =>
+                    itemOptions.some((o) => o.name.toLowerCase() === name.toLowerCase() && o.option_type === type);
                   return (
                     <div className="bg-surface-50 border border-surface-100 rounded-2xl p-4 space-y-3.5">
                       <p className="text-[10px] font-extrabold text-surface-400 uppercase tracking-widest">
@@ -1078,18 +1160,53 @@ export default function MenuPage() {
                         {meta.hint}
                       </p>
 
+                      {/* Quick add from catalog (chop bar only) */}
+                      {itemIsChopBar && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> Quick add — tap to add, then set prices
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {effType === 'soup' && SOUP_CATALOG.map((name) => {
+                              const added = isAdded(name, 'soup');
+                              return (
+                                <CatalogChip key={name} label={name} added={added} onAdd={() => addCatalogOption(soupOption(name))} />
+                              );
+                            })}
+                            {effType === 'protein' && PROTEIN_CATALOG.map((p) => {
+                              const added = isAdded(p.name, 'protein');
+                              return (
+                                <CatalogChip key={p.name} label={p.name} added={added} onAdd={() => addCatalogOption(proteinOption(p))} />
+                              );
+                            })}
+                            {effType === 'extra' && EXTRA_CATALOG.map((e) => {
+                              const added = isAdded(e.name, 'extra');
+                              return (
+                                <CatalogChip key={e.name} label={`${e.name} · GH₵${e.price}`} added={added} onAdd={() => addCatalogOption(extraOption(e.name, e.price))} />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="h-px bg-surface-200 flex-1" />
+                        <span className="text-[10px] font-bold text-surface-300 uppercase tracking-wider">or add your own</span>
+                        <div className="h-px bg-surface-200 flex-1" />
+                      </div>
+
                       {/* Name */}
                       <input
                         type="text"
                         placeholder={
                           effType === 'soup' ? 'Soup name (e.g. Light Soup)'
-                          : effType === 'protein' ? 'Protein name (e.g. Fish, Goat Meat)'
+                          : effType === 'protein' ? 'Protein name (e.g. Tilapia, Goat Meat)'
                           : 'Add-on name (e.g. Extra Egg)'
                         }
                         value={newOptName}
                         onChange={(e) => setNewOptName(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') { e.preventDefault(); addLocalOption(); }
+                          if (e.key === 'Enter' && effType !== 'protein') { e.preventDefault(); addLocalOption(); }
                         }}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                       />
@@ -1100,23 +1217,26 @@ export default function MenuPage() {
                       )}
 
                       {effType === 'protein' && (
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
                           <div>
-                            <label className="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Minimum amount (GH₵)</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="e.g. 10 — smallest portion a customer can buy"
-                              value={newOptMinQty}
-                              onChange={(e) => setNewOptMinQty(e.target.value)}
-                              className="w-full mt-1 px-3.5 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
-                            />
+                            <label className="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Price options</label>
+                            <p className="text-[10px] text-surface-400 mb-1.5">Add the price points customers can pick (e.g. 60 / 80 / 100). Label is optional.</p>
+                            <TierEditor tiers={newOptTiers} setTiers={setNewOptTiers} />
                           </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Types (optional)</label>
-                            <SubTypeChips subs={newOptSubs} setSubs={setNewOptSubs} draft={subDraft} setDraft={setSubDraft} placeholder="e.g. Tilapia — press Enter" />
-                          </div>
+                          {newOptTiers.filter((t) => t.price > 0).length === 0 && (
+                            <div>
+                              <label className="text-[10px] font-bold text-surface-400 uppercase tracking-wider">No price options? Set a minimum (GH₵)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="e.g. 10 — customer then types any amount"
+                                value={newOptMinQty}
+                                onChange={(e) => setNewOptMinQty(e.target.value)}
+                                className="w-full mt-1 px-3.5 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -1241,6 +1361,83 @@ export default function MenuPage() {
   );
 }
 
+/* ─── Catalog quick-add chip ────────────────────────────── */
+
+function CatalogChip({ label, added, onAdd }: { label: string; added: boolean; onAdd: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAdd}
+      disabled={added}
+      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+        added
+          ? 'bg-success-500/10 border-success-500/30 text-success-700 cursor-default'
+          : 'bg-white border-surface-200 text-surface-600 hover:bg-brand-500/5 hover:border-brand-300 hover:text-brand-600'
+      }`}
+    >
+      {added ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+      {label}
+    </button>
+  );
+}
+
+/* ─── Price-tier editor ─────────────────────────────────── */
+
+function TierEditor({
+  tiers,
+  setTiers,
+}: {
+  tiers: PriceTier[];
+  setTiers: React.Dispatch<React.SetStateAction<PriceTier[]>>;
+}) {
+  const update = (i: number, patch: Partial<PriceTier>) =>
+    setTiers((prev) => prev.map((t, j) => (j === i ? { ...t, ...patch } : t)));
+  const remove = (i: number) => setTiers((prev) => prev.filter((_, j) => j !== i));
+  const add = () => setTiers((prev) => [...prev, { label: '', price: 0 }]);
+
+  return (
+    <div className="space-y-1.5">
+      {tiers.map((t, i) => (
+        <div key={i} className="flex gap-1.5 items-center">
+          <input
+            type="text"
+            value={t.label}
+            onChange={(e) => update(i, { label: e.target.value })}
+            placeholder={`Option ${i + 1} label (optional)`}
+            className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-surface-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+          />
+          <div className="relative shrink-0">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-surface-400 pointer-events-none">GH₵</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={t.price === 0 ? '' : t.price}
+              onChange={(e) => update(i, { price: parseFloat(e.target.value) || 0 })}
+              placeholder="0"
+              className="w-24 pl-9 pr-2 py-1.5 rounded-lg border border-surface-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => remove(i)}
+            className="p-1 text-surface-400 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors shrink-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={add}
+        className="text-[11px] font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+      >
+        <Plus className="w-3 h-3" /> Add price option
+      </button>
+    </div>
+  );
+}
+
 /* ─── Sub-type chip input ───────────────────────────────── */
 
 function SubTypeChips({
@@ -1311,15 +1508,18 @@ function RowEditor({
   const [min, setMin] = useState((option.min_quantity ?? 0) ? String(option.min_quantity) : '');
   const [subs, setSubs] = useState<string[]>(parseSubs(option.sub_options));
   const [draft, setDraft] = useState('');
+  const [tiers, setTiers] = useState<PriceTier[]>(option.price_tiers ? option.price_tiers.map((t) => ({ ...t })) : []);
 
   const save = () => {
     const parts = draft.split(',').map((s) => s.trim()).filter(Boolean);
     const allSubs = [...subs, ...parts.filter((p) => !subs.some((s) => s.toLowerCase() === p.toLowerCase()))];
+    const cleanTiers = tiers.filter((t) => t.price > 0 || t.label.trim());
     onSave({
       name: name.trim() || option.name,
       price_modifier: type === 'soup' ? 0 : parseFloat(price) || 0,
-      min_quantity: type === 'protein' ? parseFloat(min) || 0 : 0,
-      sub_options: joinSubs(allSubs),
+      min_quantity: type === 'protein' && cleanTiers.length === 0 ? parseFloat(min) || 0 : 0,
+      sub_options: type === 'extra' ? joinSubs(allSubs) : null,
+      price_tiers: type === 'protein' && cleanTiers.length ? cleanTiers : null,
     });
   };
 
@@ -1332,29 +1532,37 @@ function RowEditor({
         className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
       />
       {type === 'protein' && (
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={min}
-          onChange={(e) => setMin(e.target.value)}
-          placeholder="Minimum amount (GH₵)"
-          className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-        />
+        <div className="space-y-2">
+          <div>
+            <label className="text-[10px] font-bold text-surface-400 uppercase tracking-wider">Price options</label>
+            <TierEditor tiers={tiers} setTiers={setTiers} />
+          </div>
+          {tiers.filter((t) => t.price > 0).length === 0 && (
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={min}
+              onChange={(e) => setMin(e.target.value)}
+              placeholder="No price options? Minimum amount (GH₵)"
+              className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            />
+          )}
+        </div>
       )}
       {type === 'extra' && (
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="Price (GH₵) — 0 = free"
-          className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-        />
-      )}
-      {type !== 'soup' && (
-        <SubTypeChips subs={subs} setSubs={setSubs} draft={draft} setDraft={setDraft} placeholder="Add a type — press Enter" />
+        <>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="Price (GH₵) — 0 = free"
+            className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+          />
+          <SubTypeChips subs={subs} setSubs={setSubs} draft={draft} setDraft={setDraft} placeholder="Add a type — press Enter" />
+        </>
       )}
       <div className="flex gap-2">
         <button
@@ -1417,22 +1625,34 @@ function OptionGroup({
               />
             </div>
           ) : (
-            <div key={i} className="flex items-center justify-between px-3 py-2.5 group">
+            <div key={i} className="flex items-center justify-between px-3 py-2.5 group gap-2">
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-semibold text-surface-800 truncate">{o.name}</span>
-                <div className="flex gap-2 mt-0.5 flex-wrap">
-                  {o.sub_options && (
-                    <span className="text-[10px] text-surface-400 font-medium">Types: {o.sub_options}</span>
-                  )}
-                  {(o.min_quantity ?? 0) > 0 && (
-                    <span className="text-[10px] text-brand-500 font-bold">Min: {formatGHS(o.min_quantity ?? 0)}</span>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
+                  {o.price_tiers && o.price_tiers.length > 0 ? (
+                    o.price_tiers.map((t, ti) => (
+                      <span key={ti} className="text-[10px] font-bold bg-surface-100 text-surface-600 px-1.5 py-0.5 rounded">
+                        {t.label ? `${t.label} ` : ''}{formatGHS(t.price)}
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      {o.sub_options && (
+                        <span className="text-[10px] text-surface-400 font-medium">Types: {o.sub_options}</span>
+                      )}
+                      {(o.min_quantity ?? 0) > 0 && (
+                        <span className="text-[10px] text-brand-500 font-bold">Min: {formatGHS(o.min_quantity ?? 0)}</span>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-bold text-brand-500">
-                  {o.price_modifier > 0 ? `+${formatGHS(o.price_modifier)}` : 'Included'}
-                </span>
+                {!(o.price_tiers && o.price_tiers.length > 0) && (
+                  <span className="text-xs font-bold text-brand-500">
+                    {o.price_modifier > 0 ? `+${formatGHS(o.price_modifier)}` : 'Included'}
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => setEditingIdx(i)}
@@ -1506,28 +1726,43 @@ function CustomerPreview({
         <div className="space-y-2">
           <p className="text-[10px] font-extrabold text-surface-400 uppercase tracking-wider">Add meats & proteins</p>
           <div className="space-y-2">
-            {proteins.map((p, i) => (
-              <div key={i} className="rounded-xl border border-surface-150 px-3 py-2.5 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-surface-800">{p.name}</span>
-                  {(p.min_quantity ?? 0) > 0 && (
-                    <span className="text-[9px] font-bold bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded">
-                      Min: {formatGHS(p.min_quantity ?? 0)}
-                    </span>
+            {proteins.map((p, i) => {
+              const hasTiers = !!(p.price_tiers && p.price_tiers.length > 0);
+              return (
+                <div key={i} className="rounded-xl border border-surface-150 px-3 py-2.5 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-surface-800">{p.name}</span>
+                    {!hasTiers && (p.min_quantity ?? 0) > 0 && (
+                      <span className="text-[9px] font-bold bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded">
+                        Min: {formatGHS(p.min_quantity ?? 0)}
+                      </span>
+                    )}
+                  </div>
+                  {hasTiers ? (
+                    <div className="flex gap-1.5 flex-wrap">
+                      {p.price_tiers!.map((t, j) => (
+                        <span key={j} className="px-2.5 py-1 rounded-lg border border-surface-200 text-[11px] font-bold text-surface-600">
+                          {t.label ? `${t.label} · ` : ''}{formatGHS(t.price)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {p.sub_options && (
+                        <div className="flex gap-1.5 flex-wrap">
+                          {parseSubs(p.sub_options).map((sub, j) => (
+                            <span key={j} className="px-2 py-0.5 rounded-md border border-surface-200 text-[10px] font-bold text-surface-500">
+                              {sub}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] text-surface-400 font-semibold">Customer enters amount (GH₵)</p>
+                    </>
                   )}
                 </div>
-                {p.sub_options && (
-                  <div className="flex gap-1.5 flex-wrap">
-                    {parseSubs(p.sub_options).map((sub, j) => (
-                      <span key={j} className="px-2 py-0.5 rounded-md border border-surface-200 text-[10px] font-bold text-surface-500">
-                        {sub}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <p className="text-[10px] text-surface-400 font-semibold">Customer enters amount (GH₵)</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

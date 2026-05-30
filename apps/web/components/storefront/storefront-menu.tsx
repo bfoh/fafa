@@ -7,6 +7,11 @@ import { Plus, Minus, ShoppingBag, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
 
+interface PriceTier {
+  label: string;
+  price: number;
+}
+
 interface MenuItemOption {
   id: string;
   name: string;
@@ -14,6 +19,22 @@ interface MenuItemOption {
   option_type?: string;
   sub_options?: string | null;
   min_quantity?: number;
+  price_tiers?: PriceTier[] | string | null;
+}
+
+function parseTiers(raw: unknown): PriceTier[] {
+  if (!raw) return [];
+  let arr: unknown = raw;
+  if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw); } catch { return []; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((t) => {
+      const o = (t ?? {}) as { label?: unknown; price?: unknown };
+      return { label: String(o.label ?? ''), price: Number(o.price) || 0 };
+    })
+    .filter((t) => t.price > 0 || t.label.trim());
 }
 
 interface MenuItemData {
@@ -479,6 +500,7 @@ function ChopBarCustomizer({
   const [basePrice, setBasePrice] = useState<number>(Math.max(20, minBasePrice));
   const [optionsState, setOptionsState] = useState<Record<string, { checked: boolean; amount: number }>>({});
   const [selectedSubOptions, setSelectedSubOptions] = useState<Record<string, string>>({});
+  const [selectedTiers, setSelectedTiers] = useState<Record<string, number>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const options = (item.menu_item_options || []).map(opt => ({
@@ -487,6 +509,7 @@ function ChopBarCustomizer({
     option_type: opt.option_type || 'extra',
     sub_options: opt.sub_options || null,
     min_quantity: Number(opt.min_quantity) || 0,
+    price_tiers: parseTiers(opt.price_tiers),
   }));
 
   // Classify options by option_type (no more heuristic guessing!)
@@ -497,6 +520,7 @@ function ChopBarCustomizer({
   useEffect(() => {
     const initial: Record<string, { checked: boolean; amount: number }> = {};
     const subOptsInit: Record<string, string> = {};
+    const tiersInit: Record<string, number> = {};
 
     options.forEach((opt) => {
       const defaultAmount = opt.option_type === 'soup'
@@ -508,6 +532,10 @@ function ChopBarCustomizer({
         amount: defaultAmount,
       };
 
+      if (opt.price_tiers.length > 0) {
+        tiersInit[opt.id] = 0;
+      }
+
       if (opt.sub_options) {
         const splits = opt.sub_options.split(',').map(s => s.trim()).filter(Boolean);
         if (splits.length > 0) {
@@ -517,6 +545,7 @@ function ChopBarCustomizer({
     });
     setOptionsState(initial);
     setSelectedSubOptions(subOptsInit);
+    setSelectedTiers(tiersInit);
   }, [item]);
 
   const isBasePriceInvalid = basePrice < minBasePrice;
@@ -525,12 +554,15 @@ function ChopBarCustomizer({
     const opt = options.find(o => o.id === optId);
     const state = optionsState[optId];
     if (!opt || !state || !state.checked) return sum;
-    
+
+    if (opt.price_tiers.length > 0) {
+      const tier = opt.price_tiers[selectedTiers[optId] ?? 0];
+      return sum + (tier ? tier.price : 0);
+    }
     if (opt.price_modifier > 0) {
       return sum + Number(opt.price_modifier);
-    } else {
-      return sum + state.amount;
     }
+    return sum + state.amount;
   }, 0);
 
   const handleBasePriceChange = (val: string) => {
@@ -586,11 +618,11 @@ function ChopBarCustomizer({
   const hasValidationErrors = Object.keys(validationErrors).length > 0;
 
   const handleSubmit = () => {
-    // Final validation check
+    // Final validation check (amount-entry proteins only — tiers are always valid)
     const errors: Record<string, string> = {};
     options.forEach((opt) => {
       const state = optionsState[opt.id];
-      if (state?.checked && opt.min_quantity > 0 && opt.price_modifier === 0) {
+      if (state?.checked && opt.price_tiers.length === 0 && opt.min_quantity > 0 && opt.price_modifier === 0) {
         if (state.amount < opt.min_quantity) {
           errors[opt.id] = `Minimum amount is ${formatGHS(opt.min_quantity)}`;
         }
@@ -603,15 +635,22 @@ function ChopBarCustomizer({
     }
 
     const selectedOptions: Array<{ name: string; priceModifier: number; price_modifier: number }> = [];
-    
+
     options.forEach((opt) => {
       const state = optionsState[opt.id];
       if (state && state.checked) {
-        const finalAmount = opt.price_modifier > 0 ? Number(opt.price_modifier) : state.amount;
-        
+        let finalAmount: number;
         let optionName = opt.name;
-        if (opt.sub_options && selectedSubOptions[opt.id]) {
-          optionName = `${opt.name} (${selectedSubOptions[opt.id]})`;
+
+        if (opt.price_tiers.length > 0) {
+          const tier = opt.price_tiers[selectedTiers[opt.id] ?? 0];
+          finalAmount = tier ? tier.price : 0;
+          if (tier?.label) optionName = `${opt.name} (${tier.label})`;
+        } else {
+          finalAmount = opt.price_modifier > 0 ? Number(opt.price_modifier) : state.amount;
+          if (opt.sub_options && selectedSubOptions[opt.id]) {
+            optionName = `${opt.name} (${selectedSubOptions[opt.id]})`;
+          }
         }
 
         selectedOptions.push({
@@ -757,6 +796,9 @@ function ChopBarCustomizer({
                   const currentAmt = state?.amount ?? 50;
                   const minQty = meat.min_quantity || 0;
                   const error = validationErrors[meat.id];
+                  const hasTiers = meat.price_tiers.length > 0;
+                  const tierIdx = selectedTiers[meat.id] ?? 0;
+                  const tierPrice = hasTiers ? (meat.price_tiers[tierIdx]?.price ?? 0) : 0;
 
                   return (
                     <div
@@ -782,7 +824,7 @@ function ChopBarCustomizer({
                           <span className="text-sm font-semibold text-surface-800">
                             {meat.name}
                           </span>
-                          {minQty > 0 && (
+                          {!hasTiers && minQty > 0 && (
                             <span className="text-[9px] font-bold bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded">
                               Min: {formatGHS(minQty)}
                             </span>
@@ -793,73 +835,101 @@ function ChopBarCustomizer({
                             className="text-xs font-bold"
                             style={{ color: tenant.primary_color }}
                           >
-                            GH₵ {currentAmt}
+                            {formatGHS(hasTiers ? tierPrice : currentAmt)}
                           </span>
                         )}
                       </div>
 
                       {isChecked && (
                         <div className="pl-6 animate-fade-in space-y-3">
-                          {meat.sub_options && (
+                          {hasTiers ? (
                             <div className="space-y-1.5">
-                              <span className="text-[10px] text-surface-400 font-semibold uppercase tracking-wider block">Select Type:</span>
+                              <span className="text-[10px] text-surface-400 font-semibold uppercase tracking-wider block">Choose option:</span>
                               <div className="flex gap-1.5 flex-wrap">
-                                {meat.sub_options.split(',').map(s => s.trim()).filter(Boolean).map((sub) => {
-                                  const isSubSelected = selectedSubOptions[meat.id] === sub;
+                                {meat.price_tiers.map((t, ti) => {
+                                  const sel = tierIdx === ti;
                                   return (
                                     <button
-                                      key={sub}
+                                      key={ti}
                                       type="button"
-                                      onClick={() => setSelectedSubOptions(prev => ({ ...prev, [meat.id]: sub }))}
+                                      onClick={() => setSelectedTiers(prev => ({ ...prev, [meat.id]: ti }))}
                                       className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                                        isSubSelected
+                                        sel
                                           ? 'text-white border-transparent shadow-sm'
                                           : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50'
                                       }`}
-                                      style={isSubSelected ? { background: tenant.primary_color } : {}}
+                                      style={sel ? { background: tenant.primary_color } : {}}
                                     >
-                                      {sub}
+                                      {t.label ? `${t.label} · ` : ''}{formatGHS(t.price)}
                                     </button>
                                   );
                                 })}
                               </div>
                             </div>
-                          )}
-                          <div className="flex gap-2 items-center">
-                            <span className="text-xs text-surface-400 font-semibold">Amount:</span>
-                            <input
-                              type="number"
-                              min={minQty}
-                              step="1"
-                              value={currentAmt === 0 ? '' : currentAmt}
-                              onChange={(e) => handleAmountChange(meat.id, e.target.value)}
-                              className={`w-24 px-3 py-1.5 rounded-lg border bg-white text-surface-900 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500/40 ${
-                                error ? 'border-error-500 ring-1 ring-error-500/20' : 'border-surface-200'
-                              }`}
-                              style={{ '--tw-ring-color': tenant.primary_color } as React.CSSProperties}
-                            />
-                            <div className="flex gap-1 overflow-x-auto pb-1 flex-1">
-                              {proteinSuggestions.filter(v => v >= minQty).map((val) => (
-                                <button
-                                  key={val}
-                                  type="button"
-                                  onClick={() => handleAmountChange(meat.id, val.toString())}
-                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors shrink-0 ${
-                                    currentAmt === val
-                                      ? 'text-white border-transparent shadow-sm'
-                                      : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50'
+                          ) : (
+                            <>
+                              {meat.sub_options && (
+                                <div className="space-y-1.5">
+                                  <span className="text-[10px] text-surface-400 font-semibold uppercase tracking-wider block">Select Type:</span>
+                                  <div className="flex gap-1.5 flex-wrap">
+                                    {meat.sub_options.split(',').map(s => s.trim()).filter(Boolean).map((sub) => {
+                                      const isSubSelected = selectedSubOptions[meat.id] === sub;
+                                      return (
+                                        <button
+                                          key={sub}
+                                          type="button"
+                                          onClick={() => setSelectedSubOptions(prev => ({ ...prev, [meat.id]: sub }))}
+                                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                                            isSubSelected
+                                              ? 'text-white border-transparent shadow-sm'
+                                              : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50'
+                                          }`}
+                                          style={isSubSelected ? { background: tenant.primary_color } : {}}
+                                        >
+                                          {sub}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex gap-2 items-center">
+                                <span className="text-xs text-surface-400 font-semibold">Amount:</span>
+                                <input
+                                  type="number"
+                                  min={minQty}
+                                  step="1"
+                                  value={currentAmt === 0 ? '' : currentAmt}
+                                  onChange={(e) => handleAmountChange(meat.id, e.target.value)}
+                                  className={`w-24 px-3 py-1.5 rounded-lg border bg-white text-surface-900 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500/40 ${
+                                    error ? 'border-error-500 ring-1 ring-error-500/20' : 'border-surface-200'
                                   }`}
-                                  style={currentAmt === val ? { background: tenant.primary_color } : {}}
-                                >
-                                  GH₵ {val}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          {error && (
-                            <p className="text-[10px] font-bold text-error-600 animate-fade-in">
-                              ⚠️ {error}
-                            </p>
+                                  style={{ '--tw-ring-color': tenant.primary_color } as React.CSSProperties}
+                                />
+                                <div className="flex gap-1 overflow-x-auto pb-1 flex-1">
+                                  {proteinSuggestions.filter(v => v >= minQty).map((val) => (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      onClick={() => handleAmountChange(meat.id, val.toString())}
+                                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors shrink-0 ${
+                                        currentAmt === val
+                                          ? 'text-white border-transparent shadow-sm'
+                                          : 'bg-white border-surface-200 text-surface-600 hover:bg-surface-50'
+                                      }`}
+                                      style={currentAmt === val ? { background: tenant.primary_color } : {}}
+                                    >
+                                      GH₵ {val}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {error && (
+                                <p className="text-[10px] font-bold text-error-600 animate-fade-in">
+                                  ⚠️ {error}
+                                </p>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
