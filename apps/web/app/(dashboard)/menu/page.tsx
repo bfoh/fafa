@@ -17,6 +17,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface MenuCategory {
   id: string;
@@ -83,21 +84,8 @@ export default function MenuPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const tId = session.user.app_metadata?.tenant_id || 
-                  (session as any).user.user_metadata?.tenant_id;
-      
-      if (!tId) {
-        // Fallback check
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
-        if (member) {
-          setTenantId(member.tenant_id);
-          fetchMenuData(member.tenant_id);
-        }
-      } else {
+      const tId = await getResolvedTenantIdClient(supabase, session);
+      if (tId) {
         setTenantId(tId);
         fetchMenuData(tId);
       }

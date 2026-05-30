@@ -31,6 +31,30 @@ export default function TenantStatusControl({
   const [loading, setLoading] = useState<TenantStatus | null>(null);
   const [error, setError] = useState('');
 
+  async function handleImpersonate() {
+    setError('');
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId }),
+      });
+      if (!res.ok) {
+        throw new Error('Failed to set impersonation state');
+      }
+
+      // Set cookie client-side
+      document.cookie = `didi_impersonate_tenant_id=${tenantId}; path=/; max-age=31536000; SameSite=Lax`;
+      
+      // Redirect
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setError('Impersonation failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }
+
   async function setStatus(next: TenantStatus) {
     setLoading(next);
     setError('');
@@ -54,7 +78,13 @@ export default function TenantStatusControl({
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
+        <button
+          onClick={handleImpersonate}
+          className="px-3 py-1.5 rounded-xl font-bold text-[11px] bg-brand-500 text-white transition-all hover:opacity-90 active:scale-95 cursor-pointer"
+        >
+          Impersonate (View as Tenant)
+        </button>
         {TRANSITIONS.filter((t) => t.status !== status).map((t) => (
           <button
             key={t.status}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Loader2, Plus, Trash2, X } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface DeliveryZone {
   id: string;
@@ -37,20 +38,16 @@ export default function DeliverySettingsPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
-          setTenantId(member.tenant_id);
+        if (tId) {
+          setTenantId(tId);
 
           // Fetch tenant settings
           const { data: tenant } = await supabase
             .from('tenants')
             .select('accepts_delivery, accepts_pickup, delivery_fee, min_order_amount')
-            .eq('id', member.tenant_id)
+            .eq('id', tId)
             .single();
 
           if (tenant) {
@@ -64,7 +61,7 @@ export default function DeliverySettingsPage() {
           const { data: fetchedZones } = await supabase
             .from('delivery_zones')
             .select('*')
-            .eq('tenant_id', member.tenant_id)
+            .eq('tenant_id', tId)
             .eq('is_active', true)
             .order('name');
 

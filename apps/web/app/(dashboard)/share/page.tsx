@@ -15,6 +15,7 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 export default function SharePage() {
   const supabase = createBrowserClient();
@@ -35,21 +36,24 @@ export default function SharePage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id, tenants(name, slug, primary_color)')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member && member.tenants) {
-          const tenant = member.tenants as any;
-          setTenantName(tenant.name);
-          setTenantSlug(tenant.slug);
-          setPrimaryColor(tenant.primary_color || '#FF6B35');
+        if (tId) {
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('name, slug, primary_color')
+            .eq('id', tId)
+            .single();
 
-          const baseUrl = getBaseUrl();
-          const storefront = `${baseUrl}/${tenant.slug}`;
-          setStorefrontUrl(storefront);
+          if (tenant) {
+            setTenantName(tenant.name);
+            setTenantSlug(tenant.slug);
+            setPrimaryColor(tenant.primary_color || '#FF6B35');
+
+            const baseUrl = getBaseUrl();
+            const storefront = `${baseUrl}/${tenant.slug}`;
+            setStorefrontUrl(storefront);
+          }
         }
       } catch (err) {
         console.error('Failed to load sharing settings:', err);

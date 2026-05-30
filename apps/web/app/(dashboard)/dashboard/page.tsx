@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import SetupChecklist from '@/components/dashboard/setup-checklist';
+import { getResolvedTenantId } from '@/lib/admin/guard';
 
 export const metadata = {
   title: 'Dashboard',
@@ -42,23 +43,23 @@ export default async function DashboardPage() {
 
     if (!session) redirect('/login');
 
-    // Get tenant_id + setup-relevant tenant fields
-    const { data: member } = await supabase
-      .from('tenant_members')
-      .select('tenant_id, tenants(slug, paystack_subaccount_code, logo_url)')
-      .eq('user_id', session.user.id)
+    const { tenantId, isPlatformAdmin } = await getResolvedTenantId();
+
+    if (!tenantId) {
+      if (isPlatformAdmin) {
+        redirect('/admin');
+      } else {
+        redirect('/register');
+      }
+    }
+
+    // Get setup-relevant tenant fields directly
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('slug, paystack_subaccount_code, logo_url')
+      .eq('id', tenantId)
       .single();
 
-    if (!member) redirect('/register');
-
-    const tenantId = member.tenant_id;
-    // Embedded resource may come back as an object or a single-element array.
-    const tenantsField = member.tenants as unknown;
-    const tenant = (
-      Array.isArray(tenantsField) ? tenantsField[0] : tenantsField
-    ) as
-      | { slug: string; paystack_subaccount_code: string | null; logo_url: string | null }
-      | undefined;
     const today = new Date().toISOString().split('T')[0];
 
     // Fetch today's stats

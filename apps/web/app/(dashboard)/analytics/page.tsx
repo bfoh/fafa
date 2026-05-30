@@ -18,6 +18,7 @@ import {
   Banknote,
   Award,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface OrderItem {
   id: string;
@@ -50,21 +51,16 @@ export default function AnalyticsPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
-          const tenantId = member.tenant_id;
-          setTenantId(tenantId);
+        if (tId) {
+          setTenantId(tId);
 
           // 1. Fetch all orders (excluding cancelled)
           const { data: fetchedOrders, error: ordersErr } = await supabase
             .from('orders')
             .select('id, status, total, payment_method, payment_status, created_at')
-            .eq('tenant_id', tenantId)
+            .eq('tenant_id', tId)
             .neq('status', 'cancelled');
 
           if (!ordersErr && fetchedOrders) {
@@ -79,7 +75,7 @@ export default function AnalyticsPage() {
           const { data: fetchedItems, error: itemsErr } = await supabase
             .from('order_items')
             .select('item_name, unit_price, quantity, line_total, orders!inner(tenant_id, status)')
-            .eq('orders.tenant_id', tenantId)
+            .eq('orders.tenant_id', tId)
             .neq('orders.status', 'cancelled');
 
           if (!itemsErr && fetchedItems) {

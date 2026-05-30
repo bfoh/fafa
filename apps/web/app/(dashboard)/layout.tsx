@@ -1,6 +1,8 @@
 import { Sidebar } from '@/components/layout/sidebar';
 import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getResolvedTenantId } from '@/lib/admin/guard';
+import ImpersonationBanner from '@/components/admin/impersonation-banner';
 
 export default async function DashboardLayout({
   children,
@@ -17,19 +19,23 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  // Fetch tenant info for sidebar
-  const { data: member } = await supabase
-    .from('tenant_members')
-    .select('tenant_id, role, tenants(name, slug, logo_url, primary_color)')
-    .eq('user_id', session.user.id)
+  const { tenantId, isImpersonating, isPlatformAdmin } = await getResolvedTenantId();
+
+  if (!tenantId) {
+    if (isPlatformAdmin) {
+      redirect('/admin');
+    } else {
+      redirect('/register');
+    }
+  }
+
+  // Fetch tenant details directly
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('name, slug, logo_url, primary_color')
+    .eq('id', tenantId)
     .single();
 
-  const tenant = (member?.tenants as unknown) as {
-    name: string;
-    slug: string;
-    logo_url: string | null;
-    primary_color: string | null;
-  } | null;
   const tenantName = tenant?.name;
   const logoUrl = tenant?.logo_url || undefined;
   const primaryColor = tenant?.primary_color || undefined;
@@ -45,8 +51,11 @@ export default async function DashboardLayout({
       />
 
       {/* Main content area */}
-      <main className="lg:pl-64 min-h-screen">
-        <div className="p-4 lg:p-8 pt-16 lg:pt-8">
+      <main className="lg:pl-64 min-h-screen flex flex-col">
+        {isImpersonating && tenantName && (
+          <ImpersonationBanner tenantName={tenantName} />
+        )}
+        <div className="p-4 lg:p-8 pt-16 lg:pt-8 flex-1">
           {children}
         </div>
       </main>

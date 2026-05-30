@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Loader2, Image as ImageIcon } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 const presetColors = [
   { name: 'Warm Orange', hex: '#FF6B35' },
@@ -39,18 +40,14 @@ export default function BrandingSettingsPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
-          setTenantId(member.tenant_id);
+        if (tId) {
+          setTenantId(tId);
           const { data: tenant } = await supabase
             .from('tenants')
             .select('name, slug, primary_color, secondary_color, logo_url, cover_image_url')
-            .eq('id', member.tenant_id)
+            .eq('id', tId)
             .single();
 
           if (tenant) {

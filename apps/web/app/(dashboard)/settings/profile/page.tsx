@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { CUISINES } from '@/lib/marketplace/cuisines';
 import { CITY_COORDS } from '@/lib/marketplace/geo';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 const LocationPicker = dynamic(
   () => import('@/components/onboarding/location-picker'),
@@ -35,23 +36,19 @@ export default function ProfileSettingsPage() {
   const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    async function loadTenant() {
+    async function loadTenantData() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
-          setTenantId(member.tenant_id);
+        if (tId) {
+          setTenantId(tId);
           const { data: tenant } = await supabase
             .from('tenants')
             .select('*')
-            .eq('id', member.tenant_id)
+            .eq('id', tId)
             .single();
 
           if (tenant) {
@@ -80,7 +77,7 @@ export default function ProfileSettingsPage() {
         setLoading(false);
       }
     }
-    loadTenant();
+    loadTenantData();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

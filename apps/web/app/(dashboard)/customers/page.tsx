@@ -17,6 +17,7 @@ import {
   ShoppingBag,
   Loader2,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface Customer {
   id: string;
@@ -48,17 +49,13 @@ export default function CustomersPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: member } = await supabase
-        .from('tenant_members')
-        .select('tenant_id')
-        .eq('user_id', session.user.id)
-        .single();
+      const tId = await getResolvedTenantIdClient(supabase, session);
 
-      if (member) {
+      if (tId) {
         const { data, error } = await supabase
           .from('customers')
           .select('*')
-          .eq('tenant_id', member.tenant_id);
+          .eq('tenant_id', tId);
 
         if (!error && data) {
           const formatted = data.map((c) => ({

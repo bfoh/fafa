@@ -17,6 +17,7 @@ import {
   DollarSign,
   Search,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface Payment {
   id: string;
@@ -48,14 +49,10 @@ export default function PaymentsPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
-          setTenantId(member.tenant_id);
+        if (tId) {
+          setTenantId(tId);
 
           const { data, error } = await supabase
             .from('payments')
@@ -72,7 +69,7 @@ export default function PaymentsPage() {
                 customer_name
               )
             `)
-            .eq('tenant_id', member.tenant_id)
+            .eq('tenant_id', tId)
             .order('created_at', { ascending: false });
 
           if (error) throw error;

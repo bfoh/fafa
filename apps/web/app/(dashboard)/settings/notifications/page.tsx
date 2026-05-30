@@ -12,6 +12,7 @@ import {
   Loader2,
   Calendar,
 } from 'lucide-react';
+import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 interface NotificationLog {
   id: string;
@@ -35,17 +36,13 @@ export default function NotificationsLogPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const { data: member } = await supabase
-          .from('tenant_members')
-          .select('tenant_id')
-          .eq('user_id', session.user.id)
-          .single();
+        const tId = await getResolvedTenantIdClient(supabase, session);
 
-        if (member) {
+        if (tId) {
           const { data, error } = await supabase
             .from('notification_log')
             .select('*')
-            .eq('tenant_id', member.tenant_id)
+            .eq('tenant_id', tId)
             .order('created_at', { ascending: false })
             .limit(50);
 

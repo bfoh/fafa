@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Loader2,
   Building2,
@@ -63,6 +64,30 @@ export default function AdminConsole({
   const [tenants, setTenants] = useState(initialTenants);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handleImpersonate(tenantId: string) {
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId }),
+      });
+      if (!res.ok) {
+        throw new Error('Failed to set impersonation state');
+      }
+
+      // Set cookie client-side
+      document.cookie = `didi_impersonate_tenant_id=${tenantId}; path=/; max-age=31536000; SameSite=Lax`;
+      
+      // Redirect
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Impersonation failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  }
 
   async function handleToggleStatus(
     tenantId: string,
@@ -320,23 +345,38 @@ export default function AdminConsole({
                     <span className="font-semibold">{formatGHS(t.revenue)}</span>
                     <span className="text-surface-400 truncate">{t.phone}</span>
                   </div>
-                  <button
-                    onClick={() => handleToggleStatus(t.id, t.status)}
-                    disabled={actionLoading === t.id}
-                    className={`mt-3 w-full py-2 rounded-xl font-bold text-[11px] transition-all active:scale-95 disabled:opacity-50 ${
-                      t.status === 'active'
-                        ? 'bg-error-600 text-white'
-                        : 'bg-success-600 text-white'
-                    }`}
-                  >
-                    {actionLoading === t.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
-                    ) : t.status === 'active' ? (
-                      'Suspend'
-                    ) : (
-                      'Activate'
-                    )}
-                  </button>
+                  <p className="text-[10px] text-surface-400 mt-1">
+                    Joined: {new Date(t.created_at).toLocaleDateString('en-GH', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleImpersonate(t.id)}
+                      className="flex-1 py-2 rounded-xl font-bold text-[11px] bg-brand-500 text-white transition-all active:scale-95 cursor-pointer text-center"
+                    >
+                      Impersonate
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(t.id, t.status)}
+                      disabled={actionLoading === t.id}
+                      className={`flex-1 py-2 rounded-xl font-bold text-[11px] transition-all active:scale-95 disabled:opacity-50 ${
+                        t.status === 'active'
+                          ? 'bg-error-600 text-white'
+                          : 'bg-success-600 text-white'
+                      }`}
+                    >
+                      {actionLoading === t.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" />
+                      ) : t.status === 'active' ? (
+                        'Suspend'
+                      ) : (
+                        'Activate'
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -349,6 +389,7 @@ export default function AdminConsole({
                     <th className="p-4">Merchant</th>
                     <th className="p-4">Storefront</th>
                     <th className="p-4">Contact</th>
+                    <th className="p-4">Joined</th>
                     <th className="p-4 text-right">Orders</th>
                     <th className="p-4 text-right">Revenue</th>
                     <th className="p-4 text-center">Status</th>
@@ -394,6 +435,13 @@ export default function AdminConsole({
                           </p>
                         )}
                       </td>
+                      <td className="p-4 text-surface-500 whitespace-nowrap">
+                        {new Date(t.created_at).toLocaleDateString('en-GH', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </td>
                       <td className="p-4 text-right font-semibold text-surface-800">
                         {t.orderCount}
                       </td>
@@ -407,7 +455,13 @@ export default function AdminConsole({
                           {t.status}
                         </span>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right space-x-2 whitespace-nowrap">
+                        <button
+                          onClick={() => handleImpersonate(t.id)}
+                          className="px-3 py-1.5 rounded-xl font-bold text-[10px] transition-all hover:opacity-90 active:scale-95 bg-brand-500 text-white cursor-pointer"
+                        >
+                          Impersonate
+                        </button>
                         <button
                           onClick={() => handleToggleStatus(t.id, t.status)}
                           disabled={actionLoading === t.id}
