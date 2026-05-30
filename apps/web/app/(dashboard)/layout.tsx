@@ -35,14 +35,6 @@ export default async function DashboardLayout({
   const primaryColor = tenant?.primary_color || undefined;
   const tenantSlug = tenant?.slug || undefined;
 
-  // Show the platform admin link only to platform admins.
-  const { data: adminRecord } = await supabase
-    .from('platform_admins')
-    .select('user_id')
-    .eq('user_id', session.user.id)
-    .maybeSingle();
-  const isPlatformAdmin = !!adminRecord;
-
   return (
     <div className="min-h-screen bg-surface-50">
       <Sidebar
@@ -50,7 +42,6 @@ export default async function DashboardLayout({
         logoUrl={logoUrl}
         primaryColor={primaryColor}
         tenantSlug={tenantSlug}
-        isPlatformAdmin={isPlatformAdmin}
       />
 
       {/* Main content area */}

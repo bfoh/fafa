@@ -23,6 +23,26 @@ export default function LoginPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
 
   useEffect(() => {
+    async function checkExistingSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: adminRecord } = await supabase
+          .from('platform_admins')
+          .select('user_id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (adminRecord) {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
+      }
+    }
+    checkExistingSession();
+  }, [supabase, router]);
+
+  useEffect(() => {
     const cached = localStorage.getItem('fafa_last_tenant');
     let cachedSlug = '';
     if (cached) {
@@ -77,7 +97,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -86,6 +106,20 @@ export default function LoginPage() {
       setError(authError.message);
       setLoading(false);
       return;
+    }
+
+    if (authData?.user) {
+      const { data: adminRecord } = await supabase
+        .from('platform_admins')
+        .select('user_id')
+        .eq('user_id', authData.user.id)
+        .maybeSingle();
+
+      if (adminRecord) {
+        router.push('/admin');
+        router.refresh();
+        return;
+      }
     }
 
     router.push('/dashboard');
