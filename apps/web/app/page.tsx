@@ -69,7 +69,7 @@ export default async function HomePage({
       const supabase = createAdminClient();
       const { data: items } = await supabase
         .from('menu_items')
-        .select('tenant_id, name, price, image_url, is_featured, sort_order')
+        .select('tenant_id, name, price, image_url, is_featured, sort_order, is_chop_bar')
         .in(
           'tenant_id',
           kitchens.map((k) => k.id)
@@ -86,6 +86,7 @@ export default async function HomePage({
             name: it.name,
             price: Number(it.price),
             image_url: it.image_url,
+            is_chop_bar: Boolean(it.is_chop_bar),
           });
           byTenant.set(it.tenant_id, arr);
         }

@@ -237,10 +237,13 @@ function MenuContent({
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center justify-between mt-2 gap-2">
                       {item.is_chop_bar ? (
-                        <span className="text-[10px] font-extrabold uppercase bg-surface-100 border border-surface-200 px-2.5 py-1 rounded-lg text-surface-600 tracking-wider">
-                          Min: {formatGHS(Number(item.price))}
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1 rounded-lg tracking-wide min-w-0"
+                          style={{ background: `${tenant.primary_color}14`, color: tenant.primary_color }}
+                        >
+                          🍽️ <span className="truncate">Order your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}</span>
                         </span>
                       ) : (
                         <p
@@ -252,11 +255,11 @@ function MenuContent({
                       )}
                       <button
                         onClick={() => handleAddItem(item)}
-                        className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 hover:opacity-90 shadow-md min-h-[40px] cursor-pointer"
+                        className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 hover:opacity-90 shadow-md min-h-[40px] shrink-0 cursor-pointer"
                         style={{ background: tenant.primary_color }}
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Add
+                        {item.is_chop_bar ? 'Customize' : 'Add'}
                       </button>
                     </div>
                   </div>

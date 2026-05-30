@@ -7,6 +7,7 @@ export interface MenuPreview {
   name: string;
   price: number;
   image_url: string | null;
+  is_chop_bar?: boolean;
 }
 
 export interface KitchenResult {
@@ -123,9 +124,15 @@ export default function KitchenCard({ k }: { k: KitchenResult }) {
                 <span className="flex-1 text-[13px] text-white/85 truncate">
                   {d.name}
                 </span>
-                <span className="text-[13px] font-bold text-brand-300 shrink-0">
-                  {formatGHS(d.price)}
-                </span>
+                {d.is_chop_bar ? (
+                  <span className="text-[11px] font-bold text-brand-300 shrink-0">
+                    {d.price > 0 ? `from ${formatGHS(d.price)}` : 'Order your way'}
+                  </span>
+                ) : (
+                  <span className="text-[13px] font-bold text-brand-300 shrink-0">
+                    {formatGHS(d.price)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
