@@ -59,3 +59,33 @@ export function loadLastOrder(slug: string): LastOrder | null {
     return null;
   }
 }
+
+const RECENT_ORDERS_KEY = 'didi_recent_orders';
+
+export interface RecentOrder {
+  slug: string;
+  orderId: string;
+  orderNumber: string;
+  savedAt: number;
+}
+
+/** Append an order to the device-local recent list (dedup by id, newest first, capped at 10). */
+export function saveRecentOrder(slug: string, orderId: string, orderNumber: string) {
+  try {
+    const list = loadRecentOrders().filter((o) => o.orderId !== orderId);
+    list.unshift({ slug, orderId, orderNumber, savedAt: Date.now() });
+    localStorage.setItem(RECENT_ORDERS_KEY, JSON.stringify(list.slice(0, 10)));
+  } catch {
+    /* ignore quota/availability */
+  }
+}
+
+export function loadRecentOrders(): RecentOrder[] {
+  try {
+    const raw = localStorage.getItem(RECENT_ORDERS_KEY);
+    const list = raw ? (JSON.parse(raw) as RecentOrder[]) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
