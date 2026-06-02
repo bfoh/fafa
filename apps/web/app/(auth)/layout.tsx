@@ -63,7 +63,7 @@ export default async function AuthLayout({
 
   return (
     <div
-      className={`${display.variable} relative min-h-screen flex text-white`}
+      className={`${display.variable} relative min-h-[100dvh] flex text-white`}
       style={{
         backgroundColor: '#0b0910',
         backgroundImage: [

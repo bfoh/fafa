@@ -18,7 +18,7 @@ export default async function PlatformAdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-surface-50 px-4 text-center">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-surface-50 px-4 text-center">
         <div className="w-16 h-16 bg-error-500/10 rounded-2xl flex items-center justify-center text-error-600 mb-4">
           <ShieldAlert className="w-8 h-8" />
         </div>

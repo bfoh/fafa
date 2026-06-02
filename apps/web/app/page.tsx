@@ -117,7 +117,7 @@ export default async function HomePage({
 
   return (
     <div
-      className={`${display.variable} relative min-h-screen text-white antialiased overflow-x-hidden`}
+      className={`${display.variable} relative min-h-[100dvh] text-white antialiased overflow-x-hidden`}
       style={{
         backgroundColor: '#0b0910',
         backgroundImage: [

@@ -144,7 +144,7 @@ export default async function TenantDetailPage({
   ];
 
   return (
-    <div className="min-h-screen bg-surface-50 p-6 sm:p-10 space-y-8">
+    <div className="min-h-[100dvh] bg-surface-50 p-6 sm:p-10 space-y-8">
       {/* Back */}
       <Link
         href="/admin"

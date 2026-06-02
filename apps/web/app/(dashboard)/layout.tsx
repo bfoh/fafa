@@ -43,7 +43,7 @@ export default async function DashboardLayout({
   const tenantSlug = tenant?.slug || undefined;
 
   return (
-    <div className="min-h-screen bg-surface-50">
+    <div className="min-h-[100dvh] bg-surface-50">
       {/* Desktop sidebar */}
       <Sidebar
         tenantName={tenantName}
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
       />
 
       {/* Main content area */}
-      <main className="lg:pl-64 min-h-screen flex flex-col">
+      <main className="lg:pl-64 min-h-[100dvh] flex flex-col">
         {isImpersonating && tenantName && (
           <ImpersonationBanner tenantName={tenantName} />
         )}

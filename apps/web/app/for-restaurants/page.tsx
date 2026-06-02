@@ -221,7 +221,7 @@ export default function ForRestaurantsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0B0A] text-surface-200 selection:bg-brand-500 selection:text-white font-sans overflow-x-hidden relative">
+    <div className="min-h-[100dvh] bg-[#0D0B0A] text-surface-200 selection:bg-brand-500 selection:text-white font-sans overflow-x-hidden relative">
       {/* Dynamic Glowing Mesh Orbs (Placed behind layout elements) */}
       <div className="absolute top-[-10%] right-[-10%] w-[650px] h-[650px] rounded-full bg-brand-500/10 blur-[150px] pointer-events-none z-0" />
       <div className="absolute top-[30%] left-[-20%] w-[700px] h-[700px] rounded-full bg-[#E85520]/15 blur-[160px] pointer-events-none z-0 animate-pulse-soft" />
