@@ -26,7 +26,7 @@ export default function CuisineChips() {
         key={slug}
         onClick={() => select(slug)}
         disabled={isPending}
-        className={`px-4 py-2 rounded-full text-xs font-semibold border whitespace-nowrap transition-all duration-200 disabled:opacity-60 ${
+        className={`snap-start-item shrink-0 px-4 py-2 rounded-full text-xs font-semibold border whitespace-nowrap transition-all duration-200 active:scale-95 disabled:opacity-60 ${
           on
             ? 'bg-gradient-to-br from-brand-400 to-brand-600 text-white border-transparent shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)]'
             : 'bg-white/5 text-white/70 border-white/10 backdrop-blur-md hover:bg-white/10 hover:text-white'
@@ -38,7 +38,7 @@ export default function CuisineChips() {
   };
 
   return (
-    <div className="flex flex-wrap gap-2 justify-center">
+    <div className="flex gap-2 overflow-x-auto no-scrollbar snap-rail px-4 -mx-4 sm:flex-wrap sm:justify-center sm:overflow-visible sm:mx-0 sm:px-0">
       {chip('all', 'All')}
       {CUISINES.map((c) => chip(c.slug, `${c.emoji} ${c.label}`))}
     </div>

@@ -42,44 +42,49 @@ export default function HeroSearch() {
   return (
     <form
       onSubmit={submit}
-      className="flex max-w-xl mx-auto items-center gap-1.5 p-1.5 bg-white/[0.07] border border-white/15 rounded-full backdrop-blur-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)]"
+      className="max-w-xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 sm:p-1.5 sm:bg-white/[0.07] sm:border sm:border-white/15 sm:rounded-full sm:backdrop-blur-2xl sm:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)]"
     >
-      <div className="flex items-center flex-1 pl-4">
+      {/* Search field — full-width pill on mobile, inline on sm+ */}
+      <div className="flex items-center flex-1 min-w-0 px-4 h-12 bg-white/[0.07] border border-white/15 rounded-full backdrop-blur-2xl sm:h-auto sm:px-0 sm:pl-4 sm:bg-transparent sm:border-0 sm:backdrop-blur-none">
         <Search className="w-4 h-4 text-white/40 shrink-0" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search jollof, waakye, pizza, a kitchen…"
-          className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent text-white placeholder:text-white/40"
+          placeholder="Search jollof, waakye, pizza…"
+          className="flex-1 min-w-0 px-3 py-2.5 text-sm outline-none bg-transparent text-white placeholder:text-white/40"
         />
       </div>
-      <button
-        type="button"
-        onClick={useMyLocation}
-        className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-bold transition-colors ${
-          nearActive
-            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30'
-            : 'text-white/80 hover:bg-white/10'
-        }`}
-      >
-        {locating ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <MapPin className="w-4 h-4" />
-        )}
-        {nearActive ? 'Near you' : 'Near me'}
-      </button>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="grid place-items-center w-11 h-11 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white shrink-0 shadow-[0_6px_20px_-6px_rgba(255,107,53,0.8)] hover:brightness-110 disabled:opacity-60 transition-all"
-      >
-        {isPending ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Search className="w-4 h-4" />
-        )}
-      </button>
+      {/* Actions — second row on mobile so the submit button is never clipped */}
+      <div className="flex items-center gap-2 sm:gap-1.5">
+        <button
+          type="button"
+          onClick={useMyLocation}
+          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 h-11 rounded-full text-xs font-bold transition-colors ${
+            nearActive
+              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30'
+              : 'bg-white/[0.07] border border-white/15 text-white/80 hover:bg-white/10 sm:bg-transparent sm:border-0'
+          }`}
+        >
+          {locating ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <MapPin className="w-4 h-4" />
+          )}
+          {nearActive ? 'Near you' : 'Near me'}
+        </button>
+        <button
+          type="submit"
+          disabled={isPending}
+          aria-label="Search"
+          className="grid place-items-center w-11 h-11 shrink-0 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-[0_6px_20px_-6px_rgba(255,107,53,0.8)] hover:brightness-110 disabled:opacity-60 transition-all"
+        >
+          {isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4" />
+          )}
+        </button>
+      </div>
     </form>
   );
 }

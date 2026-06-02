@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import HeroSearch from '@/components/marketplace/hero-search';
 import CuisineChips from '@/components/marketplace/cuisine-chips';
 import KitchenGrid from '@/components/marketplace/kitchen-grid';
+import { MarketplaceTabBar } from '@/components/marketplace/marketplace-tab-bar';
 import type {
   KitchenResult,
   MenuPreview,
@@ -135,7 +136,7 @@ export default async function HomePage({
         }}
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-0">
         {/* Header */}
         <header className="sticky top-0 z-30 border-b border-white/10 bg-black/20 backdrop-blur-2xl pt-safe">
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
@@ -172,12 +173,12 @@ export default async function HomePage({
         </header>
 
         {/* Hero */}
-        <section className="px-4 pt-14 pb-8 text-center">
-          <p className="text-xs font-semibold tracking-[0.25em] uppercase text-brand-300/80 mb-4">
+        <section className="px-4 pt-8 sm:pt-14 pb-8 text-center">
+          <p className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] sm:tracking-[0.25em] uppercase text-brand-300/80 mb-3 sm:mb-4">
             Ghana&apos;s kitchens, delivered
           </p>
           <h1
-            className="text-4xl sm:text-6xl font-extrabold leading-[1.05] tracking-tight"
+            className="text-[clamp(2.1rem,9vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             What do you want
@@ -187,11 +188,13 @@ export default async function HomePage({
               eat?
             </span>
           </h1>
-          <p className="text-white/50 mt-4 mb-8 max-w-md mx-auto">
+          <p className="text-sm sm:text-base text-white/50 mt-3 sm:mt-4 mb-7 sm:mb-8 max-w-md mx-auto">
             Order from the best local kitchens near you — pay with Mobile Money
             or card.
           </p>
-          <HeroSearch />
+          <div id="hero-search" className="scroll-mt-24">
+            <HeroSearch />
+          </div>
           <div className="mt-6">
             <CuisineChips />
           </div>
@@ -273,6 +276,8 @@ export default async function HomePage({
           </div>
         </footer>
       </div>
+
+      <MarketplaceTabBar />
     </div>
   );
 }

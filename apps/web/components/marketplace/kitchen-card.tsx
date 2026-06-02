@@ -41,7 +41,7 @@ export default function KitchenCard({ k }: { k: KitchenResult }) {
   return (
     <Link
       href={`/${k.slug}`}
-      className="group relative flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-400/40 hover:bg-white/[0.08] hover:shadow-[0_24px_60px_-14px_rgba(255,107,53,0.34)]"
+      className="group relative flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-400/40 hover:bg-white/[0.08] hover:shadow-[0_24px_60px_-14px_rgba(255,107,53,0.34)] active:scale-[0.985] active:border-brand-400/40"
     >
       {/* Hero (image clipped) + logo straddling the seam (not clipped) */}
       <div className="relative">
