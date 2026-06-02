@@ -181,8 +181,8 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2">
             <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
               Address
             </label>

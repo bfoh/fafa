@@ -292,7 +292,7 @@ export default function ForRestaurantsPage() {
               Try Live Demo
             </a>
           </div>
-          <div className="flex items-center justify-center gap-6 pt-6 text-[10px] sm:text-xs text-surface-500 font-semibold tracking-wider uppercase">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-6 text-[10px] sm:text-xs text-surface-500 font-semibold tracking-wider uppercase">
             <span>✓ No Setup Fees</span>
             <span>✓ 2-Min Onboarding</span>
             <span>✓ Auto-SMS Alerts</span>
@@ -311,7 +311,10 @@ export default function ForRestaurantsPage() {
             Premium Interactive Storefront Demo
           </h2>
           <p className="text-surface-400 text-xs sm:text-sm max-w-2xl mx-auto">
-            Interact with the simulated flow below: click products on the **Browser**, toggle favorites, and select **Simulate MoMo Payment** on the **Details screen** to play the real-time order alert and feed the Merchant Orders Board!
+            Interact with the simulated flow below: click products on the{' '}
+            <strong className="text-surface-200">Browser</strong>, toggle favorites, and select{' '}
+            <strong className="text-surface-200">Simulate MoMo Payment</strong> on the{' '}
+            <strong className="text-surface-200">Details screen</strong> to play the real-time order alert and feed the Merchant Orders Board!
           </p>
           {successMsg && (
             <div className="inline-block px-4 py-2 rounded-xl bg-brand-500/10 border border-brand-500/25 text-brand-400 text-xs font-semibold animate-bounce mt-3 shadow-[0_0_15px_rgba(255,107,53,0.15)]">
