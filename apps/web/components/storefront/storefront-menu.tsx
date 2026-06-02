@@ -384,7 +384,7 @@ function CartDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col animate-slide-up">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[88dvh] flex flex-col animate-slide-up">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 rounded-full bg-surface-300" />
@@ -727,7 +727,7 @@ function ChopBarCustomizer({
         onClick={onClose}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col animate-slide-up">
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[92dvh] flex flex-col animate-slide-up">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-10 h-1 rounded-full bg-surface-300" />

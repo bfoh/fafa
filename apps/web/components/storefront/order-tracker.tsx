@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatGHS } from '@/lib/utils/currency';
 import { waLink } from '@/lib/utils/whatsapp';
 import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star } from 'lucide-react';
+import { saveRecentOrder } from '@/lib/utils/customer-prefs';
 
 interface OrderItem {
   id: string;
@@ -114,6 +115,11 @@ export function OrderTracker({
   const [stars, setStars] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  // Remember this order on the device so it shows in the marketplace "Orders" sheet.
+  useEffect(() => {
+    saveRecentOrder(slug, initialOrder.id, initialOrder.order_number);
+  }, [slug, initialOrder.id, initialOrder.order_number]);
 
   // Live polling — stops once the order reaches a terminal state.
   useEffect(() => {

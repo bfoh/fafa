@@ -69,7 +69,7 @@ export default async function StorefrontLayout({
 
   return (
     <div
-      className="storefront-root min-h-screen bg-surface-50"
+      className="storefront-root min-h-[100dvh] bg-surface-50"
       style={
         {
           '--brand-primary': primaryColor,

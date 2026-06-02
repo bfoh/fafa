@@ -249,7 +249,7 @@ function CheckoutContent({ slug }: { slug: string }) {
   const belowMinLimit = tenant ? subtotal < tenant.min_order_amount : false;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-fade-in">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-fade-in">
       <Link
         href={`/${slug}`}
         className="inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700 mb-6 transition-colors"
@@ -280,6 +280,7 @@ function CheckoutContent({ slug }: { slug: string }) {
             <input
               id="checkout-name"
               type="text"
+              autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -298,6 +299,8 @@ function CheckoutContent({ slug }: { slug: string }) {
             <input
               id="checkout-phone"
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
@@ -316,6 +319,8 @@ function CheckoutContent({ slug }: { slug: string }) {
             <input
               id="checkout-email"
               type="email"
+              inputMode="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
@@ -395,6 +400,7 @@ function CheckoutContent({ slug }: { slug: string }) {
                 </label>
                 <textarea
                   id="checkout-address"
+                  autoComplete="street-address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required
@@ -491,24 +497,28 @@ function CheckoutContent({ slug }: { slug: string }) {
           </div>
         )}
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading || belowMinLimit}
-          className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
-          style={{ background: primaryColor }}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Placing order...
-            </>
-          ) : paymentMethod === 'cash_on_delivery' ? (
-            `Place Order — ${formatGHS(total)}`
-          ) : (
-            `Pay ${formatGHS(total)}`
-          )}
-        </button>
+        {/* Submit — sticky bar on mobile, inline on desktop */}
+        <div className="fixed inset-x-0 bottom-0 z-30 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-surface-50 via-surface-50 to-surface-50/0 md:static md:p-0 md:bg-none md:z-auto">
+          <div className="max-w-lg mx-auto">
+            <button
+              type="submit"
+              disabled={loading || belowMinLimit}
+              className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
+              style={{ background: primaryColor }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Placing order...
+                </>
+              ) : paymentMethod === 'cash_on_delivery' ? (
+                `Place Order — ${formatGHS(total)}`
+              ) : (
+                `Pay ${formatGHS(total)}`
+              )}
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );
