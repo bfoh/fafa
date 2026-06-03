@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ShieldAlert } from 'lucide-react';
 import { getPlatformAdmin } from '@/lib/admin/guard';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isPaidOrder } from '@/lib/orders/revenue';
 import AdminConsole, {
   type AdminTenant,
   type PlatformMetrics,
@@ -61,7 +62,7 @@ export default async function PlatformAdminPage() {
   let revenueToday = 0;
 
   for (const o of orders) {
-    const paid = o.payment_status === 'paid';
+    const paid = isPaidOrder(o);
     const amount = Number(o.total || 0);
     const created = o.created_at ? new Date(o.created_at) : null;
     const isToday = created ? created >= startOfToday : false;

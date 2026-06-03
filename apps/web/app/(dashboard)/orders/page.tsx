@@ -166,12 +166,19 @@ export default function OrdersPage() {
       }));
 
       setOrders(formatted);
-      
-      // Auto-select first order if exists
+
+      // Auto-select: the order deep-linked via ?order=<id> (e.g. from the
+      // dashboard's recent-orders list), else the most recent order.
       if (formatted.length > 0) {
-        setSelectedOrder(formatted[0]);
-        fetchOrderDetails(formatted[0].id);
-        loadOwnerMessages(formatted[0].id);
+        const targetId =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('order')
+            : null;
+        const initial =
+          (targetId && formatted.find((o) => o.id === targetId)) || formatted[0];
+        setSelectedOrder(initial);
+        fetchOrderDetails(initial.id);
+        loadOwnerMessages(initial.id);
       }
     } catch (err) {
       console.error('Error fetching orders:', err);

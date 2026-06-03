@@ -19,6 +19,7 @@ import {
   Award,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
+import { isPaidOrder } from '@/lib/orders/revenue';
 
 interface OrderItem {
   id: string;
@@ -112,7 +113,7 @@ export default function AnalyticsPage() {
 
   // Compute stats
   const totalRevenue = orders
-    .filter((o) => o.payment_status === 'paid' || o.status === 'delivered')
+    .filter(isPaidOrder)
     .reduce((sum, o) => sum + o.total, 0);
 
   const totalOrders = orders.length;
@@ -148,7 +149,7 @@ export default function AnalyticsPage() {
       
       const dayOrders = orders.filter((o) => o.created_at.startsWith(dateStr));
       const daySales = dayOrders
-        .filter((o) => o.payment_status === 'paid' || o.status === 'delivered')
+        .filter(isPaidOrder)
         .reduce((sum, o) => sum + o.total, 0);
 
       data.push({

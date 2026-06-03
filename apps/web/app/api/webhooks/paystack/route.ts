@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyWebhookSignature } from '@/lib/paystack/client';
-import { sendOrderNotifications } from '@/lib/notifications/send';
+import { settlePaidOrder } from '@/lib/orders/settle';
 
 export async function POST(req: Request) {
   try {
@@ -24,40 +24,11 @@ export async function POST(req: Request) {
         const { reference, metadata, channel } = event.data;
         const orderId = metadata?.order_id || reference;
 
-        // Update payment
-        await supabase
-          .from('payments')
-          .update({
-            status: 'success',
-            provider_ref: String(event.data.id),
-            method: channel === 'mobile_money' ? 'momo' : 'card',
-            paid_at: new Date().toISOString(),
-          })
-          .eq('order_id', orderId);
-
-        // Update order payment status
-        const { data: order, error: orderErr } = await supabase
-          .from('orders')
-          .update({ payment_status: 'paid' })
-          .eq('id', orderId)
-          .select()
-          .single();
-
-        if (!orderErr && order) {
-          // Fetch tenant
-          const { data: tenant } = await supabase
-            .from('tenants')
-            .select('*')
-            .eq('id', order.tenant_id)
-            .single();
-
-          if (tenant) {
-            // Trigger notifications
-            sendOrderNotifications({ order, tenant }, 'payment_confirmed')
-              .then(() => sendOrderNotifications({ order, tenant }, 'order_placed'))
-              .catch((err) => console.error('Failed to send webhook notifications:', err));
-          }
-        }
+        // Idempotent settle (shared with the callback verification path).
+        await settlePaidOrder(orderId, {
+          channel,
+          providerRef: String(event.data.id),
+        });
 
         break;
       }

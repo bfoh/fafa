@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { OrderTracker, type TrackedOrder, type HistoryEntry } from '@/components/storefront/order-tracker';
+import { verifyTransaction } from '@/lib/paystack/client';
+import { settlePaidOrder } from '@/lib/orders/settle';
 
 export default async function OrderConfirmationPage({
   params,
@@ -24,6 +26,32 @@ export default async function OrderConfirmationPage({
     .single();
 
   if (!order) notFound();
+
+  // Authoritative payment settlement on return from Paystack. The webhook is an
+  // async backup that can be missed/misconfigured; verifying here guarantees the
+  // order is marked paid (and counted as revenue) once the customer lands back
+  // on this confirmation page. Idempotent and a no-op for paid / COD orders.
+  if (
+    order.payment_status === 'pending' &&
+    order.payment_method !== 'cash_on_delivery'
+  ) {
+    try {
+      const verification = await verifyTransaction(order.id);
+      const data = verification.data;
+      if (
+        data?.status === 'success' &&
+        Number(data.amount) >= Math.round(Number(order.total) * 100)
+      ) {
+        await settlePaidOrder(order.id, {
+          channel: data.channel,
+          providerRef: String(data.id),
+        });
+        order.payment_status = 'paid';
+      }
+    } catch (err) {
+      console.error('Callback payment verification failed:', err);
+    }
+  }
 
   const { data: history } = await supabase
     .from('order_status_history')
