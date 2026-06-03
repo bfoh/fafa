@@ -9,6 +9,8 @@ import { CartProvider } from '@/hooks/use-cart';
 import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { GHANA_CITIES } from '@/lib/delivery/ghana-areas';
+import { resolveDeliveryFee } from '@/lib/delivery/resolve';
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -31,7 +33,8 @@ function CheckoutContent({ slug }: { slug: string }) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
-  const [selectedZoneId, setSelectedZoneId] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedArea, setSelectedArea] = useState<string>('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'cash_on_delivery'>('momo');
@@ -57,6 +60,12 @@ function CheckoutContent({ slug }: { slug: string }) {
     accepts_pay_online: boolean;
     accepts_pay_on_delivery: boolean;
     primary_color: string;
+    location_lat: number | null;
+    location_lng: number | null;
+    city: string | null;
+    free_delivery_radius_km: number | null;
+    per_km_rate: number | null;
+    max_delivery_distance_km: number | null;
   } | null>(null);
 
   // Delivery zones state
@@ -75,7 +84,7 @@ function CheckoutContent({ slug }: { slug: string }) {
       try {
         const { data: tenantData } = await supabase
           .from('tenants')
-          .select('id, name, slug, delivery_fee, min_order_amount, accepts_delivery, accepts_pickup, accepts_pay_online, accepts_pay_on_delivery, primary_color')
+          .select('id, name, slug, delivery_fee, min_order_amount, accepts_delivery, accepts_pickup, accepts_pay_online, accepts_pay_on_delivery, primary_color, location_lat, location_lng, city, free_delivery_radius_km, per_km_rate, max_delivery_distance_km')
           .eq('slug', slug)
           .eq('status', 'active')
           .single();
@@ -91,8 +100,19 @@ function CheckoutContent({ slug }: { slug: string }) {
             accepts_pay_online: tenantData.accepts_pay_online,
             accepts_pay_on_delivery: tenantData.accepts_pay_on_delivery,
             primary_color: tenantData.primary_color || '#FF6B35',
+            location_lat: tenantData.location_lat != null ? Number(tenantData.location_lat) : null,
+            location_lng: tenantData.location_lng != null ? Number(tenantData.location_lng) : null,
+            city: tenantData.city ?? null,
+            free_delivery_radius_km: tenantData.free_delivery_radius_km != null ? Number(tenantData.free_delivery_radius_km) : null,
+            per_km_rate: tenantData.per_km_rate != null ? Number(tenantData.per_km_rate) : null,
+            max_delivery_distance_km: tenantData.max_delivery_distance_km != null ? Number(tenantData.max_delivery_distance_km) : null,
           };
           setTenant(loadedTenant);
+
+          // Default the city selector to the restaurant's city if we know it.
+          if (loadedTenant.city && GHANA_CITIES.some((c) => c.name === loadedTenant.city)) {
+            setSelectedCity(loadedTenant.city);
+          }
 
           // Handle default delivery type selection based on tenant preferences
           if (loadedTenant.accepts_delivery && !loadedTenant.accepts_pickup) {
@@ -138,16 +158,30 @@ function CheckoutContent({ slug }: { slug: string }) {
     loadTenantData();
   }, [supabase, slug]);
 
-  const selectedZone = deliveryZones.find((z) => z.id === selectedZoneId);
-  const deliveryFee =
-    deliveryType === 'delivery'
-      ? selectedZone
-        ? selectedZone.fee
-        : tenant
-        ? tenant.delivery_fee
-        : 0
-      : 0;
+  const activeZones = useMemo(
+    () => deliveryZones.map((z) => ({ name: z.name, fee: z.fee })),
+    [deliveryZones]
+  );
 
+  const feeResult = useMemo(() => {
+    if (deliveryType !== 'delivery' || !tenant || !selectedArea) return null;
+    return resolveDeliveryFee({
+      restaurant: {
+        lat: tenant.location_lat,
+        lng: tenant.location_lng,
+        baseFee: tenant.delivery_fee,
+        freeRadiusKm: tenant.free_delivery_radius_km,
+        perKmRate: tenant.per_km_rate,
+        maxDistanceKm: tenant.max_delivery_distance_km,
+      },
+      city: selectedCity,
+      areaName: selectedArea,
+      manualZones: activeZones,
+    });
+  }, [deliveryType, tenant, selectedCity, selectedArea, activeZones]);
+
+  const deliveryFee = deliveryType === 'delivery' ? feeResult?.fee ?? 0 : 0;
+  const notDeliverable = feeResult ? !feeResult.deliverable : false;
   const total = subtotal + deliveryFee;
   const primaryColor = tenant?.primary_color || '#FF6B35';
 
@@ -187,7 +221,8 @@ function CheckoutContent({ slug }: { slug: string }) {
           deliveryAddress: deliveryType === 'delivery' ? address : undefined,
           deliveryNotes: notes || undefined,
           paymentMethod,
-          deliveryZoneId: deliveryType === 'delivery' && selectedZoneId ? selectedZoneId : undefined,
+          city: deliveryType === 'delivery' ? selectedCity : undefined,
+          areaName: deliveryType === 'delivery' ? selectedArea : undefined,
         }),
       });
 
@@ -369,30 +404,49 @@ function CheckoutContent({ slug }: { slug: string }) {
 
           {deliveryType === 'delivery' && (
             <div className="animate-fade-in space-y-3">
-              {deliveryZones.length > 0 && (
+              <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <label htmlFor="checkout-zone" className="block text-sm font-medium text-surface-700 mb-1">
-                    Select Your Area
+                  <label htmlFor="checkout-city" className="block text-sm font-medium text-surface-700 mb-1">
+                    City
                   </label>
                   <select
-                    id="checkout-zone"
-                    value={selectedZoneId}
-                    onChange={(e) => setSelectedZoneId(e.target.value)}
+                    id="checkout-city"
+                    value={selectedCity}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setSelectedArea('');
+                    }}
                     required
                     className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer"
-                    style={{
-                      ['--tw-ring-color' as string]: primaryColor,
-                    } as React.CSSProperties}
+                    style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
                   >
-                    <option value="">Select neighborhood...</option>
-                    {deliveryZones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.name} ({formatGHS(zone.fee)} · {zone.estimated_minutes || 30} mins)
-                      </option>
+                    <option value="">Select city...</option>
+                    {GHANA_CITIES.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
                     ))}
                   </select>
                 </div>
-              )}
+
+                <div>
+                  <label htmlFor="checkout-area" className="block text-sm font-medium text-surface-700 mb-1">
+                    Select Your Area
+                  </label>
+                  <select
+                    id="checkout-area"
+                    value={selectedArea}
+                    onChange={(e) => setSelectedArea(e.target.value)}
+                    required
+                    disabled={!selectedCity}
+                    className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer disabled:opacity-50"
+                    style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
+                  >
+                    <option value="">Select neighborhood...</option>
+                    {(GHANA_CITIES.find((c) => c.name === selectedCity)?.neighborhoods ?? []).map((n) => (
+                      <option key={n.name} value={n.name}>{n.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <div>
                 <label htmlFor="checkout-address" className="block text-sm font-medium text-surface-700 mb-1">
@@ -480,7 +534,7 @@ function CheckoutContent({ slug }: { slug: string }) {
           </div>
           {deliveryType === 'delivery' && (
             <div className="flex justify-between text-sm text-surface-600">
-              <span>Delivery fee {selectedZone ? `(${selectedZone.name})` : ''}</span>
+              <span>Delivery fee {selectedArea ? `(${selectedArea})` : ''}</span>
               <span>{formatGHS(deliveryFee)}</span>
             </div>
           )}
@@ -489,6 +543,12 @@ function CheckoutContent({ slug }: { slug: string }) {
             <span>{formatGHS(total)}</span>
           </div>
         </section>
+
+        {notDeliverable && (
+          <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-xs text-center font-medium animate-fade-in">
+            This area is outside the restaurant&apos;s delivery range. Try Pickup or a closer area.
+          </div>
+        )}
 
         {/* Limit warning */}
         {belowMinLimit && tenant && (
@@ -502,7 +562,7 @@ function CheckoutContent({ slug }: { slug: string }) {
           <div className="max-w-lg mx-auto">
             <button
               type="submit"
-              disabled={loading || belowMinLimit}
+              disabled={loading || belowMinLimit || notDeliverable}
               className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
               style={{ background: primaryColor }}
             >
