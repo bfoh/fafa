@@ -5,6 +5,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import { Loader2, Plus, Trash2, X } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
+import { DEFAULT_FREE_RADIUS_KM, DEFAULT_PER_KM_RATE } from '@/lib/delivery/pricing';
 
 interface DeliveryZone {
   id: string;
@@ -24,6 +25,9 @@ export default function DeliverySettingsPage() {
   const [acceptsPickup, setAcceptsPickup] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
   const [minOrderAmount, setMinOrderAmount] = useState('');
+  const [freeRadiusKm, setFreeRadiusKm] = useState('');
+  const [perKmRate, setPerKmRate] = useState('');
+  const [maxDistanceKm, setMaxDistanceKm] = useState('');
 
   // Delivery Zones list
   const [zones, setZones] = useState<DeliveryZone[]>([]);
@@ -46,7 +50,7 @@ export default function DeliverySettingsPage() {
           // Fetch tenant settings
           const { data: tenant } = await supabase
             .from('tenants')
-            .select('accepts_delivery, accepts_pickup, delivery_fee, min_order_amount')
+            .select('accepts_delivery, accepts_pickup, delivery_fee, min_order_amount, free_delivery_radius_km, per_km_rate, max_delivery_distance_km')
             .eq('id', tId)
             .single();
 
@@ -55,6 +59,9 @@ export default function DeliverySettingsPage() {
             setAcceptsPickup(tenant.accepts_pickup ?? false);
             setDeliveryFee(Number(tenant.delivery_fee).toString());
             setMinOrderAmount(Number(tenant.min_order_amount).toString());
+            setFreeRadiusKm(tenant.free_delivery_radius_km != null ? Number(tenant.free_delivery_radius_km).toString() : '');
+            setPerKmRate(tenant.per_km_rate != null ? Number(tenant.per_km_rate).toString() : '');
+            setMaxDistanceKm(tenant.max_delivery_distance_km != null ? Number(tenant.max_delivery_distance_km).toString() : '');
           }
 
           // Fetch zones
@@ -97,6 +104,9 @@ export default function DeliverySettingsPage() {
           accepts_pickup: acceptsPickup,
           delivery_fee: parseFloat(deliveryFee) || 0,
           min_order_amount: parseFloat(minOrderAmount) || 0,
+          free_delivery_radius_km: freeRadiusKm.trim() === '' ? DEFAULT_FREE_RADIUS_KM : parseFloat(freeRadiusKm),
+          per_km_rate: perKmRate.trim() === '' ? null : parseFloat(perKmRate),
+          max_delivery_distance_km: maxDistanceKm.trim() === '' ? null : parseFloat(maxDistanceKm),
           updated_at: new Date().toISOString(),
         })
         .eq('id', tenantId);
@@ -208,7 +218,7 @@ export default function DeliverySettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
-                Base Delivery Fee (GH₵)
+                Base Delivery Fee (GH₵) — covers the free radius
               </label>
               <input
                 type="number"
@@ -236,6 +246,51 @@ export default function DeliverySettingsPage() {
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+                Free Radius (km)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={freeRadiusKm}
+                onChange={(e) => setFreeRadiusKm(e.target.value)}
+                placeholder={`${DEFAULT_FREE_RADIUS_KM}`}
+                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+                Per km (GH₵)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={perKmRate}
+                onChange={(e) => setPerKmRate(e.target.value)}
+                placeholder={`${DEFAULT_PER_KM_RATE} (default)`}
+                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+                Max Distance (km)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                value={maxDistanceKm}
+                onChange={(e) => setMaxDistanceKm(e.target.value)}
+                placeholder="no limit"
+                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              />
+            </div>
+          </div>
         </div>
 
         <button
@@ -250,8 +305,8 @@ export default function DeliverySettingsPage() {
       {/* Neighborhood Delivery Zones configuration */}
       <div className="border-t border-surface-100 pt-6 space-y-4">
         <div>
-          <h3 className="text-base font-bold text-surface-900">Custom Neighborhood Zones</h3>
-          <p className="text-xs text-surface-400 mt-0.5">Add specific neighborhood delivery rates (e.g. East Legon: GH₵ 15).</p>
+          <h3 className="text-base font-bold text-surface-900">Fixed-Price Area Overrides</h3>
+          <p className="text-xs text-surface-400 mt-0.5">Optional. Pin a flat fee for a specific area (e.g. East Legon: GH₵ 15). Overrides distance pricing when the customer&apos;s area name matches exactly.</p>
         </div>
 
         <form onSubmit={handleAddZone} className="flex gap-2 flex-wrap sm:flex-nowrap">
