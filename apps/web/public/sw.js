@@ -1,4 +1,4 @@
-const CACHE = 'didi-shell-v1';
+const CACHE = 'didi-shell-v2';
 const SHELL = ['/', '/offline'];
 
 self.addEventListener('install', (e) => {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Download, X, Share } from 'lucide-react';
 
-const DISMISS_KEY = 'didi_install_dismissed';
+const DISMISS_KEY = 'didi_install_dismissed_v2';
 
 interface BIPEvent extends Event {
   prompt: () => Promise<void>;
@@ -34,15 +34,19 @@ export function InstallPrompt() {
     };
     window.addEventListener('beforeinstallprompt', onBIP);
 
-    // iOS Safari has no beforeinstallprompt — detect and show a manual hint.
+    // iOS has no beforeinstallprompt — detect iOS Safari and show a manual hint.
+    // (iPadOS 13+ reports as "MacIntel" with touch points; other iOS browsers —
+    // Chrome/Firefox/Edge/Opera — can't Add to Home Screen, so skip them.)
     const ua = window.navigator.userAgent;
-    const isIOS = /iphone|ipad|ipod/i.test(ua);
-    const isSafari = /safari/i.test(ua) && !/crios|fxios/i.test(ua);
-    if (isIOS && isSafari) {
+    const isIOS =
+      /iphone|ipad|ipod/i.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isOtherIOSBrowser = /crios|fxios|edgios|opios|mercury/i.test(ua);
+    if (isIOS && !isOtherIOSBrowser) {
       const t = setTimeout(() => {
         setIosHint(true);
         setShow(true);
-      }, 3000);
+      }, 1500);
       return () => {
         clearTimeout(t);
         window.removeEventListener('beforeinstallprompt', onBIP);
