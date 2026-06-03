@@ -21,6 +21,8 @@ export async function POST(req: Request) {
       paymentMethod,
       city,
       areaName,
+      customerLat,
+      customerLng,
     } = body;
 
     // 1. Resolve tenant
@@ -108,6 +110,11 @@ export async function POST(req: Request) {
         .eq('tenant_id', tenant.id)
         .eq('is_active', true);
 
+      const customerPin =
+        customerLat != null && customerLng != null
+          ? { lat: Number(customerLat), lng: Number(customerLng) }
+          : null;
+
       const resolved = resolveDeliveryFee({
         restaurant: {
           lat: tenant.location_lat != null ? Number(tenant.location_lat) : null,
@@ -120,6 +127,7 @@ export async function POST(req: Request) {
         city: city || tenant.city || '',
         areaName: areaName || '',
         manualZones: (zones || []).map((z) => ({ name: z.name, fee: Number(z.fee) })),
+        customer: customerPin,
       });
 
       if (!resolved.deliverable) {
@@ -191,6 +199,10 @@ export async function POST(req: Request) {
         customer_email: customer.email || null,
         delivery_area_name: deliveryType === 'delivery' ? deliveryAreaName : null,
         delivery_distance_km: deliveryType === 'delivery' ? deliveryDistanceKm : null,
+        delivery_lat:
+          deliveryType === 'delivery' && customerLat != null ? Number(customerLat) : null,
+        delivery_lng:
+          deliveryType === 'delivery' && customerLng != null ? Number(customerLng) : null,
       })
       .select()
       .single();
