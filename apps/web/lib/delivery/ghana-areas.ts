@@ -34,6 +34,13 @@ export const GHANA_CITIES: City[] = [
       { name: 'Tesano', lat: 5.598, lng: -0.23 },
       { name: 'Lapaz', lat: 5.606, lng: -0.254 },
       { name: 'Dansoman', lat: 5.538, lng: -0.266 },
+      { name: 'Teshie', lat: 5.585, lng: -0.106 },
+      { name: 'Nungua', lat: 5.6, lng: -0.072 },
+      { name: 'Haatso', lat: 5.66, lng: -0.197 },
+      { name: 'Dome', lat: 5.654, lng: -0.226 },
+      { name: 'Kwabenya', lat: 5.69, lng: -0.214 },
+      { name: 'Kaneshie', lat: 5.564, lng: -0.234 },
+      { name: 'Abeka', lat: 5.588, lng: -0.243 },
     ],
   },
   {
@@ -76,6 +83,46 @@ export const GHANA_CITIES: City[] = [
     neighborhoods: [
       { name: 'Pedu', lat: 5.12, lng: -1.27 },
       { name: 'OLA', lat: 5.11, lng: -1.25 },
+    ],
+  },
+  {
+    name: 'Kasoa',
+    lat: 5.5347,
+    lng: -0.4167,
+    neighborhoods: [
+      { name: 'Kasoa Central', lat: 5.535, lng: -0.417 },
+      { name: 'Ofaakor', lat: 5.51, lng: -0.43 },
+      { name: 'Opeikuma', lat: 5.55, lng: -0.4 },
+    ],
+  },
+  {
+    name: 'Ho',
+    lat: 6.6113,
+    lng: 0.4703,
+    neighborhoods: [
+      { name: 'Ho Central', lat: 6.611, lng: 0.47 },
+      { name: 'Bankoe', lat: 6.6, lng: 0.472 },
+      { name: 'Ahoe', lat: 6.62, lng: 0.48 },
+    ],
+  },
+  {
+    name: 'Koforidua',
+    lat: 6.0941,
+    lng: -0.2591,
+    neighborhoods: [
+      { name: 'Central', lat: 6.094, lng: -0.259 },
+      { name: 'Adweso', lat: 6.11, lng: -0.27 },
+      { name: 'Srodae', lat: 6.085, lng: -0.25 },
+    ],
+  },
+  {
+    name: 'Sunyani',
+    lat: 7.3349,
+    lng: -2.3123,
+    neighborhoods: [
+      { name: 'Sunyani Central', lat: 7.335, lng: -2.312 },
+      { name: 'Fiapre', lat: 7.35, lng: -2.34 },
+      { name: 'Penkwase', lat: 7.32, lng: -2.3 },
     ],
   },
 ];
