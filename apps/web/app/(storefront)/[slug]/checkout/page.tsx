@@ -260,6 +260,7 @@ function CheckoutContent({ slug }: { slug: string }) {
           items: items.map((item) => ({
             menuItemId: item.menuItemId,
             quantity: item.quantity,
+            price: item.price,
             options: item.options,
           })),
           customer: { name, phone, email: email || undefined },

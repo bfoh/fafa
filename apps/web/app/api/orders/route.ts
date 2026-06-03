@@ -5,6 +5,7 @@ import { normalizeGhanaPhone, isValidGhanaPhone } from '@/lib/utils/phone';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import { getBaseUrl } from '@/lib/utils';
 import { resolveDeliveryFee } from '@/lib/delivery/resolve';
+import { resolveItemBasePrice } from '@/lib/orders/item-pricing';
 
 export async function POST(req: Request) {
   try {
@@ -70,10 +71,15 @@ export async function POST(req: Request) {
       (item: { menuItemId: string; quantity: number; price?: number; options: Array<{ name: string; priceModifier: number }> }) => {
         const menuItem = menuItems.find((m) => m.id === item.menuItemId)!;
         const isChopBar = (menuItem as any).is_chop_bar ?? false;
-        
-        // If it's a chop bar style item, we use the custom base price from the client.
-        // Otherwise we use the fixed price from the DB.
-        const basePrice = isChopBar ? (Number(item.price) || 0) : Number(menuItem.price);
+
+        // Chop-bar items carry a customer-built price; normal items use the DB
+        // price. The helper floors chop-bar at the configured base so a missing
+        // or tampered client price can never undercharge.
+        const basePrice = resolveItemBasePrice({
+          isChopBar,
+          clientPrice: item.price,
+          dbPrice: Number(menuItem.price),
+        });
 
         const optionsTotal = (item.options || []).reduce(
           (s: number, o: { priceModifier: number }) => s + o.priceModifier,
