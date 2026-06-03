@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getResolvedTenantId } from '@/lib/admin/guard';
 import { sendOrderMessageNotification } from '@/lib/notifications/send';
 
 const MAX_BODY = 2000;
@@ -13,15 +13,10 @@ const MAX_THREAD = 300;
  */
 async function resolveActor(orderTenantId: string): Promise<'restaurant' | 'customer'> {
   try {
-    const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return 'customer';
-    const { data: member } = await supabase
-      .from('tenant_members')
-      .select('tenant_id')
-      .eq('user_id', session.user.id)
-      .single();
-    return member?.tenant_id === orderTenantId ? 'restaurant' : 'customer';
+    // Impersonation-aware: a platform admin managing this restaurant resolves to
+    // the impersonated tenant. Returns null tenant for anonymous customers.
+    const { tenantId } = await getResolvedTenantId();
+    return tenantId && tenantId === orderTenantId ? 'restaurant' : 'customer';
   } catch {
     return 'customer';
   }

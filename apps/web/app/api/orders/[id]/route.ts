@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import { verifyTransaction } from '@/lib/paystack/client';
 import { settlePaidOrder } from '@/lib/orders/settle';
+import { getResolvedTenantId } from '@/lib/admin/guard';
 import type { OrderStatus, PaymentStatus } from '@fafa/types';
 
 /* ── Public order tracking ──────────────────────────────────
@@ -83,25 +84,25 @@ export async function PATCH(
     const { id } = await params;
     const { status, cancellationReason, estimatedReadyMinutes } = await req.json();
 
-    const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const authClient = await createServerClient();
+    const { data: { session } } = await authClient.auth.getSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 1. Resolve tenant_id from user session
-    const { data: member } = await supabase
-      .from('tenant_members')
-      .select('tenant_id')
-      .eq('user_id', session.user.id)
-      .single();
+    // 1. Resolve the active tenant — honours platform-admin impersonation, so an
+    //    admin managing a restaurant's orders resolves to the impersonated tenant
+    //    (not their own). Non-admins always resolve to their own membership.
+    const { tenantId } = await getResolvedTenantId();
 
-    if (!member) {
+    if (!tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tenantId = member.tenant_id;
+    // Service-role client for the mutation, authorised by the resolved tenant and
+    // scoped by tenant_id below. Bypasses RLS so impersonated writes succeed.
+    const supabase = createAdminClient();
 
     // 2. Fetch the order to verify ownership
     const { data: order, error: orderErr } = await supabase

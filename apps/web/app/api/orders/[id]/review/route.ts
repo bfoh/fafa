@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createServerClient } from '@/lib/supabase/server';
+import { getResolvedTenantId } from '@/lib/admin/guard';
 
 /** Fetch the existing review for this order (so the UI knows if already rated). */
 export async function GET(
@@ -33,10 +33,6 @@ export async function PATCH(
     const text = typeof reply === 'string' ? reply.trim().slice(0, 1000) : '';
     if (!text) return NextResponse.json({ error: 'Reply is empty' }, { status: 400 });
 
-    const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const admin = createAdminClient();
     const { data: order } = await admin
       .from('orders')
@@ -45,12 +41,9 @@ export async function PATCH(
       .single();
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
-    const { data: member } = await supabase
-      .from('tenant_members')
-      .select('tenant_id')
-      .eq('user_id', session.user.id)
-      .single();
-    if (member?.tenant_id !== order.tenant_id) {
+    // Impersonation-aware tenant resolution (admin managing this restaurant).
+    const { tenantId } = await getResolvedTenantId();
+    if (!tenantId || tenantId !== order.tenant_id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
