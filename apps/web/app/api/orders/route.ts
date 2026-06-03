@@ -4,6 +4,7 @@ import { initializeTransaction } from '@/lib/paystack/client';
 import { normalizeGhanaPhone, isValidGhanaPhone } from '@/lib/utils/phone';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import { getBaseUrl } from '@/lib/utils';
+import { resolveDeliveryFee } from '@/lib/delivery/resolve';
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +19,8 @@ export async function POST(req: Request) {
       deliveryAddress,
       deliveryNotes,
       paymentMethod,
-      deliveryZoneId,
+      city,
+      areaName,
     } = body;
 
     // 1. Resolve tenant
@@ -95,22 +97,41 @@ export async function POST(req: Request) {
     );
 
     let deliveryFee = 0;
-    if (deliveryType === 'delivery') {
-      if (deliveryZoneId) {
-        const { data: zone } = await supabase
-          .from('delivery_zones')
-          .select('fee, tenant_id, is_active')
-          .eq('id', deliveryZoneId)
-          .single();
+    let deliveryDistanceKm: number | null = null;
+    let deliveryAreaName: string | null = null;
 
-        if (zone && zone.tenant_id === tenant.id && zone.is_active) {
-          deliveryFee = Number(zone.fee);
-        } else {
-          deliveryFee = Number(tenant.delivery_fee);
-        }
-      } else {
-        deliveryFee = Number(tenant.delivery_fee);
+    if (deliveryType === 'delivery') {
+      // Load active manual zones for override matching.
+      const { data: zones } = await supabase
+        .from('delivery_zones')
+        .select('name, fee')
+        .eq('tenant_id', tenant.id)
+        .eq('is_active', true);
+
+      const resolved = resolveDeliveryFee({
+        restaurant: {
+          lat: tenant.location_lat != null ? Number(tenant.location_lat) : null,
+          lng: tenant.location_lng != null ? Number(tenant.location_lng) : null,
+          baseFee: Number(tenant.delivery_fee),
+          freeRadiusKm: tenant.free_delivery_radius_km != null ? Number(tenant.free_delivery_radius_km) : null,
+          perKmRate: tenant.per_km_rate != null ? Number(tenant.per_km_rate) : null,
+          maxDistanceKm: tenant.max_delivery_distance_km != null ? Number(tenant.max_delivery_distance_km) : null,
+        },
+        city: city || tenant.city || '',
+        areaName: areaName || '',
+        manualZones: (zones || []).map((z) => ({ name: z.name, fee: Number(z.fee) })),
+      });
+
+      if (!resolved.deliverable) {
+        return NextResponse.json(
+          { error: 'This address is outside the delivery range for this restaurant.' },
+          { status: 400 }
+        );
       }
+
+      deliveryFee = resolved.fee;
+      deliveryDistanceKm = resolved.distanceKm;
+      deliveryAreaName = areaName || null;
     }
 
     const total = subtotal + deliveryFee;
@@ -168,7 +189,8 @@ export async function POST(req: Request) {
         customer_name: customer.name,
         customer_phone: normalizedPhone,
         customer_email: customer.email || null,
-        delivery_zone_id: deliveryType === 'delivery' ? (deliveryZoneId || null) : null,
+        delivery_area_name: deliveryType === 'delivery' ? deliveryAreaName : null,
+        delivery_distance_km: deliveryType === 'delivery' ? deliveryDistanceKm : null,
       })
       .select()
       .single();
