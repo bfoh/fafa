@@ -14,6 +14,7 @@ import {
   Clock,
   Hourglass,
   Download,
+  RefreshCw,
 } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 
@@ -64,7 +65,25 @@ export default function AdminConsole({
   const [tenants, setTenants] = useState(initialTenants);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState(false);
   const router = useRouter();
+
+  async function handleReconcile() {
+    setReconciling(true);
+    try {
+      const res = await fetch('/api/admin/reconcile-payments', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Reconcile failed');
+      alert(
+        `Reconcile complete.\nChecked: ${data.checked}\nSettled: ${data.settled}\nUnconfirmed: ${data.failed}`
+      );
+      if (data.settled > 0) router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Reconcile failed');
+    } finally {
+      setReconciling(false);
+    }
+  }
 
   async function handleImpersonate(tenantId: string) {
     try {
@@ -254,12 +273,27 @@ export default function AdminConsole({
             control merchant statuses.
           </p>
         </div>
-        <Link
-          href="/dashboard"
-          className="px-4 py-2 border border-surface-200 bg-white text-surface-700 font-semibold rounded-xl text-xs hover:bg-surface-50 transition-colors"
-        >
-          Go to Merchant Dashboard
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleReconcile}
+            disabled={reconciling}
+            title="Verify and settle old pending online orders against Paystack"
+            className="flex items-center gap-1.5 px-4 py-2 border border-surface-200 bg-white text-surface-700 font-semibold rounded-xl text-xs hover:bg-surface-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {reconciling ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            Reconcile payments
+          </button>
+          <Link
+            href="/dashboard"
+            className="px-4 py-2 border border-surface-200 bg-white text-surface-700 font-semibold rounded-xl text-xs hover:bg-surface-50 transition-colors"
+          >
+            Go to Merchant Dashboard
+          </Link>
+        </div>
       </div>
 
       {/* KPI summaries */}
