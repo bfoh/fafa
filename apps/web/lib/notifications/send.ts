@@ -9,6 +9,7 @@ import { sendEmail } from '@/lib/brevio/client';
 import { sendWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/client';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatGHS } from '@/lib/utils/currency';
+import { getBaseUrl } from '@/lib/utils';
 import type { Tenant, Order, NotificationEvent } from '@fafa/types';
 
 interface NotificationContext {
@@ -30,9 +31,10 @@ function getTemplates(
   const amount = formatGHS(order.total);
 
   switch (event) {
-    case 'order_placed':
+    case 'order_placed': {
+      const trackUrl = `${getBaseUrl()}/${tenant.slug}/order/${order.id}`;
       return {
-        customerSms: `Hi ${order.customer_name}! Your order #${order.order_number} has been received by ${tenant.name}. Total: ${amount}. You'll be notified when it's confirmed.`,
+        customerSms: `Hi ${order.customer_name}! Your order #${order.order_number} has been received by ${tenant.name}. Total: ${amount}. Track it: ${trackUrl}`,
         tenantSms: `New order #${order.order_number}! ${order.customer_name} - ${amount}. Open Didi to confirm.`,
         customerEmail: {
           subject: `Order #${order.order_number} received - ${tenant.name}`,
@@ -43,13 +45,17 @@ function getTemplates(
               <p>Your order <strong>#${order.order_number}</strong> from <strong>${tenant.name}</strong> has been received.</p>
               <p style="font-size: 24px; font-weight: bold; color: ${tenant.primary_color}">${amount}</p>
               <p>Payment: ${order.payment_method === 'cash_on_delivery' ? 'Pay on delivery' : order.payment_method === 'momo' ? 'Mobile Money' : 'Card'}</p>
-              <p>You'll receive updates as your order progresses.</p>
+              <p style="margin: 24px 0;">
+                <a href="${trackUrl}" style="background: ${tenant.primary_color}; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; display: inline-block;">Track your order</a>
+              </p>
+              <p style="color: #888; font-size: 12px;">Or open: ${trackUrl}</p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
               <p style="color: #888; font-size: 12px;">Powered by Didi</p>
             </div>
           `,
         },
       };
+    }
 
     case 'order_confirmed':
       return {
