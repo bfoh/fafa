@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   haversineKm,
   computeDeliveryFee,
+  estimateMinutes,
   DEFAULT_FREE_RADIUS_KM,
   DEFAULT_PER_KM_RATE,
+  AVG_SPEED_KM_PER_MIN,
+  DEFAULT_PREP_MINUTES,
 } from './pricing';
 
 describe('haversineKm', () => {
@@ -52,5 +55,37 @@ describe('computeDeliveryFee', () => {
   it('uses defaults when radius/perKm omitted', () => {
     expect(DEFAULT_FREE_RADIUS_KM).toBe(3);
     expect(DEFAULT_PER_KM_RATE).toBe(2.5);
+  });
+});
+
+describe('computeDeliveryFee breakdown', () => {
+  it('is all base with zero extras within the radius', () => {
+    const r = computeDeliveryFee({ baseFee: 10, distanceKm: 2 });
+    expect(r.breakdown).toEqual({ base: 10, extraKm: 0, perKm: DEFAULT_PER_KM_RATE, extraCharge: 0 });
+  });
+
+  it('reports extra km and charge beyond the radius', () => {
+    // 3km free, 6.2km → ceil(3.2)=4 extra km * 2.5 = 10
+    const r = computeDeliveryFee({ baseFee: 10, distanceKm: 6.2 });
+    expect(r.breakdown.base).toBe(10);
+    expect(r.breakdown.extraKm).toBe(4);
+    expect(r.breakdown.perKm).toBe(2.5);
+    expect(r.breakdown.extraCharge).toBe(10);
+  });
+});
+
+describe('estimateMinutes', () => {
+  it('returns prep only when distance is null', () => {
+    expect(estimateMinutes({ distanceKm: null, prepMinutes: 20 })).toBe(20);
+  });
+
+  it('adds travel time from distance', () => {
+    // 4km / 0.4 km-per-min = 10 min travel; + 20 prep = 30
+    expect(estimateMinutes({ distanceKm: 4, prepMinutes: 20 })).toBe(30);
+  });
+
+  it('exposes ETA constants', () => {
+    expect(AVG_SPEED_KM_PER_MIN).toBe(0.4);
+    expect(DEFAULT_PREP_MINUTES).toBe(20);
   });
 });
