@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import SetupChecklist from '@/components/dashboard/setup-checklist';
 import { getResolvedTenantId } from '@/lib/admin/guard';
+import { VISIBLE_ORDER_FILTER } from '@/lib/orders/visibility';
 
 export const metadata = {
   title: 'Dashboard',
@@ -76,11 +77,12 @@ export default async function DashboardPage() {
       allOrdersResult,
       reviewsResult,
     ] = await Promise.all([
-        // Total orders today
+        // Total orders today (paid online or cash-on-delivery only)
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
+          .or(VISIBLE_ORDER_FILTER)
           .gte('created_at', `${today}T00:00:00`),
 
         // Revenue today
@@ -91,18 +93,20 @@ export default async function DashboardPage() {
           .eq('payment_status', 'paid')
           .gte('created_at', `${today}T00:00:00`),
 
-        // Pending orders
+        // Pending orders (only those visible to the kitchen)
         supabase
           .from('orders')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
+          .or(VISIBLE_ORDER_FILTER)
           .in('status', ['pending', 'confirmed', 'preparing']),
 
-        // Recent orders
+        // Recent orders (paid online or cash-on-delivery only)
         supabase
           .from('orders')
           .select('*')
           .eq('tenant_id', tenantId)
+          .or(VISIBLE_ORDER_FILTER)
           .order('created_at', { ascending: false })
           .limit(10),
 

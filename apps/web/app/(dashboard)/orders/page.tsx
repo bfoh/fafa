@@ -29,6 +29,7 @@ import {
   Star,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
+import { isVisibleToRestaurant, VISIBLE_ORDER_FILTER } from '@/lib/orders/visibility';
 import Link from 'next/link';
 
 interface OrderItem {
@@ -154,6 +155,7 @@ export default function OrdersPage() {
         .from('orders')
         .select('*')
         .eq('tenant_id', tId)
+        .or(VISIBLE_ORDER_FILTER)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -205,7 +207,10 @@ export default function OrdersPage() {
           const newOrder = payload.new as any;
           
           if (payload.eventType === 'INSERT') {
-            // Add new order at the top
+            // Only surface paid online orders or cash-on-delivery; unpaid online
+            // orders stay hidden until payment is confirmed (an UPDATE then
+            // promotes them into the list).
+            if (!isVisibleToRestaurant(newOrder)) return;
             const formatted = {
               ...newOrder,
               subtotal: Number(newOrder.subtotal),
@@ -215,16 +220,24 @@ export default function OrdersPage() {
             setOrders((prev) => [formatted, ...prev]);
             playBeep();
           } else if (payload.eventType === 'UPDATE') {
-            // Update order in list
             const formatted = {
               ...newOrder,
               subtotal: Number(newOrder.subtotal),
               delivery_fee: Number(newOrder.delivery_fee),
               total: Number(newOrder.total),
             };
-            setOrders((prev) =>
-              prev.map((o) => (o.id === formatted.id ? formatted : o))
-            );
+            setOrders((prev) => {
+              const exists = prev.some((o) => o.id === formatted.id);
+              if (exists) {
+                return prev.map((o) => (o.id === formatted.id ? formatted : o));
+              }
+              // A previously-hidden online order just became paid — promote it.
+              if (isVisibleToRestaurant(formatted)) {
+                playBeep();
+                return [formatted, ...prev];
+              }
+              return prev;
+            });
             // If active order was updated, sync its details
             setSelectedOrder((current) => {
               if (current && current.id === formatted.id) {

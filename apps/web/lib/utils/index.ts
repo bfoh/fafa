@@ -78,7 +78,15 @@ export function getBaseUrl(): string {
     return window.location.origin;
   }
 
-  // 3. Vercel deployment URL (useful on server-side SSR / metadata)
+  // 3. Vercel STABLE production domain (server context, e.g. payment callbacks).
+  // Must come before the per-deployment URL: the deployment URL (VERCEL_URL) is
+  // unique per build and gated by Vercel Deployment Protection, so redirecting a
+  // customer there after payment dumps them on a "Log in to Vercel" screen.
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  // 4. Per-deployment Vercel URL (last resort for SSR/metadata).
   if (process.env.NEXT_PUBLIC_VERCEL_URL) {
     const host = process.env.NEXT_PUBLIC_VERCEL_URL;
     return host.startsWith('http') ? host : `https://${host}`;
