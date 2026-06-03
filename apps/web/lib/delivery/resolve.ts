@@ -1,5 +1,5 @@
 import { findNeighborhood } from './ghana-areas';
-import { computeDeliveryFee, haversineKm } from './pricing';
+import { computeDeliveryFee, haversineKm, type LatLng, type FeeBreakdown } from './pricing';
 
 export interface ManualZone {
   name: string;
@@ -20,6 +20,7 @@ export interface ResolveInput {
   city: string;
   areaName: string;
   manualZones: ManualZone[]; // active zones only
+  customer?: LatLng | null; // optional exact pin
 }
 
 export interface ResolveResult {
@@ -27,24 +28,41 @@ export interface ResolveResult {
   deliverable: boolean;
   distanceKm: number | null;
   source: 'override' | 'distance' | 'base';
+  distanceSource: 'pin' | 'centroid' | null;
+  breakdown: FeeBreakdown | null;
 }
 
 export function resolveDeliveryFee(input: ResolveInput): ResolveResult {
-  const { restaurant, city, areaName, manualZones } = input;
+  const { restaurant, city, areaName, manualZones, customer } = input;
 
   // 1. Manual zone override (exact area name, case-insensitive).
   const q = areaName.trim().toLowerCase();
   const override = manualZones.find((z) => z.name.trim().toLowerCase() === q);
   if (override) {
-    return { fee: override.fee, deliverable: true, distanceKm: null, source: 'override' };
+    return {
+      fee: override.fee,
+      deliverable: true,
+      distanceKm: null,
+      source: 'override',
+      distanceSource: null,
+      breakdown: null,
+    };
   }
 
-  // 2. Distance pricing when we have both ends.
+  // 2. Distance pricing. Destination = pin if given, else the area centroid.
+  const hasCoords = restaurant.lat != null && restaurant.lng != null;
   const area = findNeighborhood(city, areaName);
-  if (restaurant.lat != null && restaurant.lng != null && area) {
+  const dest: LatLng | null = customer ?? (area ? { lat: area.lat, lng: area.lng } : null);
+  const distanceSource: 'pin' | 'centroid' | null = customer
+    ? 'pin'
+    : area
+    ? 'centroid'
+    : null;
+
+  if (hasCoords && dest) {
     const distanceKm = haversineKm(
-      { lat: restaurant.lat, lng: restaurant.lng },
-      { lat: area.lat, lng: area.lng }
+      { lat: restaurant.lat as number, lng: restaurant.lng as number },
+      dest
     );
     const r = computeDeliveryFee({
       baseFee: restaurant.baseFee,
@@ -53,9 +71,23 @@ export function resolveDeliveryFee(input: ResolveInput): ResolveResult {
       perKmRate: restaurant.perKmRate ?? undefined,
       maxDistanceKm: restaurant.maxDistanceKm,
     });
-    return { fee: r.fee, deliverable: r.deliverable, distanceKm: r.distanceKm, source: 'distance' };
+    return {
+      fee: r.fee,
+      deliverable: r.deliverable,
+      distanceKm: r.distanceKm,
+      source: 'distance',
+      distanceSource,
+      breakdown: r.breakdown,
+    };
   }
 
   // 3. Fallback: base fee.
-  return { fee: restaurant.baseFee, deliverable: true, distanceKm: null, source: 'base' };
+  return {
+    fee: restaurant.baseFee,
+    deliverable: true,
+    distanceKm: null,
+    source: 'base',
+    distanceSource: null,
+    breakdown: null,
+  };
 }

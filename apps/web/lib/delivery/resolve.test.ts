@@ -68,3 +68,56 @@ describe('resolveDeliveryFee', () => {
     expect(r.deliverable).toBe(false);
   });
 });
+
+describe('resolveDeliveryFee with a customer pin', () => {
+  it('measures distance from the pin and reports distanceSource = pin', () => {
+    // A pin far north-east of the restaurant; centroid would give a different number.
+    const r = resolveDeliveryFee({
+      restaurant,
+      city: 'Accra',
+      areaName: 'East Legon',
+      manualZones: [],
+      customer: { lat: 5.71, lng: -0.1 },
+    });
+    expect(r.source).toBe('distance');
+    expect(r.distanceSource).toBe('pin');
+    expect(r.distanceKm).not.toBeNull();
+    expect(r.breakdown).not.toBeNull();
+  });
+
+  it('uses the centroid (distanceSource = centroid) when no pin is given', () => {
+    const r = resolveDeliveryFee({
+      restaurant,
+      city: 'Accra',
+      areaName: 'East Legon',
+      manualZones: [],
+    });
+    expect(r.distanceSource).toBe('centroid');
+  });
+
+  it('lets a manual override win over a pin', () => {
+    const r = resolveDeliveryFee({
+      restaurant,
+      city: 'Accra',
+      areaName: 'East Legon',
+      manualZones: [{ name: 'East Legon', fee: 15 }],
+      customer: { lat: 5.71, lng: -0.1 },
+    });
+    expect(r.source).toBe('override');
+    expect(r.distanceSource).toBeNull();
+    expect(r.breakdown).toBeNull();
+    expect(r.fee).toBe(15);
+  });
+
+  it('computes from the pin even when the area is unknown', () => {
+    const r = resolveDeliveryFee({
+      restaurant,
+      city: 'Accra',
+      areaName: 'Atlantis',
+      manualZones: [],
+      customer: { lat: 5.71, lng: -0.1 },
+    });
+    expect(r.source).toBe('distance');
+    expect(r.distanceSource).toBe('pin');
+  });
+});
