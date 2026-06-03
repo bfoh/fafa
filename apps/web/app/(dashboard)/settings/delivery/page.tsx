@@ -28,6 +28,7 @@ export default function DeliverySettingsPage() {
   const [freeRadiusKm, setFreeRadiusKm] = useState('');
   const [perKmRate, setPerKmRate] = useState('');
   const [maxDistanceKm, setMaxDistanceKm] = useState('');
+  const [avgPrepMinutes, setAvgPrepMinutes] = useState('');
 
   // Delivery Zones list
   const [zones, setZones] = useState<DeliveryZone[]>([]);
@@ -50,7 +51,7 @@ export default function DeliverySettingsPage() {
           // Fetch tenant settings
           const { data: tenant } = await supabase
             .from('tenants')
-            .select('accepts_delivery, accepts_pickup, delivery_fee, min_order_amount, free_delivery_radius_km, per_km_rate, max_delivery_distance_km')
+            .select('accepts_delivery, accepts_pickup, delivery_fee, min_order_amount, free_delivery_radius_km, per_km_rate, max_delivery_distance_km, avg_prep_minutes')
             .eq('id', tId)
             .single();
 
@@ -62,6 +63,7 @@ export default function DeliverySettingsPage() {
             setFreeRadiusKm(tenant.free_delivery_radius_km != null ? Number(tenant.free_delivery_radius_km).toString() : '');
             setPerKmRate(tenant.per_km_rate != null ? Number(tenant.per_km_rate).toString() : '');
             setMaxDistanceKm(tenant.max_delivery_distance_km != null ? Number(tenant.max_delivery_distance_km).toString() : '');
+            setAvgPrepMinutes(tenant.avg_prep_minutes != null ? Number(tenant.avg_prep_minutes).toString() : '');
           }
 
           // Fetch zones
@@ -107,6 +109,7 @@ export default function DeliverySettingsPage() {
           free_delivery_radius_km: freeRadiusKm.trim() === '' ? DEFAULT_FREE_RADIUS_KM : parseFloat(freeRadiusKm),
           per_km_rate: perKmRate.trim() === '' ? null : parseFloat(perKmRate),
           max_delivery_distance_km: maxDistanceKm.trim() === '' ? null : parseFloat(maxDistanceKm),
+          avg_prep_minutes: avgPrepMinutes.trim() === '' ? 20 : parseInt(avgPrepMinutes, 10),
           updated_at: new Date().toISOString(),
         })
         .eq('id', tenantId);
@@ -247,7 +250,7 @@ export default function DeliverySettingsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
                 Free Radius (km)
@@ -287,6 +290,20 @@ export default function DeliverySettingsPage() {
                 value={maxDistanceKm}
                 onChange={(e) => setMaxDistanceKm(e.target.value)}
                 placeholder="no limit"
+                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
+                Avg Prep (min)
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                value={avgPrepMinutes}
+                onChange={(e) => setAvgPrepMinutes(e.target.value)}
+                placeholder="20"
                 className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
