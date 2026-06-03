@@ -262,6 +262,35 @@ export default function OrdersPage() {
     };
   }, [tenantId]);
 
+  // Fallback poll: realtime can drop an event (e.g. an online order settling to
+  // paid via webhook/verify elsewhere). Re-fetch the visible list quietly every
+  // 30s so a paid order always surfaces even if its realtime UPDATE was missed.
+  useEffect(() => {
+    if (!tenantId) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .or(VISIBLE_ORDER_FILTER)
+        .order('created_at', { ascending: false });
+      if (!data) return;
+      const formatted = data.map((o) => ({
+        ...o,
+        subtotal: Number(o.subtotal),
+        delivery_fee: Number(o.delivery_fee),
+        total: Number(o.total),
+      }));
+      setOrders((prev) => {
+        const hasNew = formatted.some((o) => !prev.some((p) => p.id === o.id));
+        if (hasNew) playBeep();
+        return formatted;
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
+
   // Fetch items & timeline details for selected order
   async function fetchOrderDetails(orderId: string) {
     setItemsLoading(true);
