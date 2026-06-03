@@ -141,6 +141,13 @@ export default function OrdersPage() {
       const tId = await getResolvedTenantIdClient(supabase, session);
       if (tId) {
         setTenantId(tId);
+        // Reconcile momo/card orders Paystack confirmed but the webhook missed;
+        // newly-settled ones then arrive via the realtime subscription.
+        try {
+          await fetch('/api/orders/tenant-reconcile', { method: 'POST' });
+        } catch {
+          // Best-effort; the list still loads without it.
+        }
         fetchOrders(tId);
       }
     }

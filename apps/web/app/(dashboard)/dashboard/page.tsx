@@ -13,6 +13,7 @@ import Link from 'next/link';
 import SetupChecklist from '@/components/dashboard/setup-checklist';
 import { getResolvedTenantId } from '@/lib/admin/guard';
 import { VISIBLE_ORDER_FILTER } from '@/lib/orders/visibility';
+import { reconcileTenantPendingPayments } from '@/lib/orders/reconcile';
 
 export const metadata = {
   title: 'Dashboard',
@@ -57,6 +58,12 @@ export default async function DashboardPage() {
         redirect('/register');
       }
     }
+
+    // Settle any momo/card orders Paystack confirmed but the webhook missed, so
+    // they show in the stats/recent list below. No-op when nothing is pending.
+    await reconcileTenantPendingPayments(tenantId).catch((e) =>
+      console.error('Dashboard payment reconcile failed:', e)
+    );
 
     // Get setup-relevant tenant fields directly
     const { data: tenant } = await supabase
