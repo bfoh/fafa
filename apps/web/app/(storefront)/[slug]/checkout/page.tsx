@@ -11,6 +11,12 @@ import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { GHANA_CITIES } from '@/lib/delivery/ghana-areas';
 import { resolveDeliveryFee } from '@/lib/delivery/resolve';
+import { estimateMinutes, DEFAULT_PREP_MINUTES } from '@/lib/delivery/pricing';
+import dynamic from 'next/dynamic';
+
+const LocationPicker = dynamic(() => import('@/components/onboarding/location-picker'), {
+  ssr: false,
+});
 
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,6 +41,9 @@ function CheckoutContent({ slug }: { slug: string }) {
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedArea, setSelectedArea] = useState<string>('');
+  const [customerPin, setCustomerPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [geoError, setGeoError] = useState('');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'cash_on_delivery'>('momo');
@@ -66,6 +75,7 @@ function CheckoutContent({ slug }: { slug: string }) {
     free_delivery_radius_km: number | null;
     per_km_rate: number | null;
     max_delivery_distance_km: number | null;
+    avg_prep_minutes: number | null;
   } | null>(null);
 
   // Delivery zones state
@@ -84,7 +94,7 @@ function CheckoutContent({ slug }: { slug: string }) {
       try {
         const { data: tenantData } = await supabase
           .from('tenants')
-          .select('id, name, slug, delivery_fee, min_order_amount, accepts_delivery, accepts_pickup, accepts_pay_online, accepts_pay_on_delivery, primary_color, location_lat, location_lng, city, free_delivery_radius_km, per_km_rate, max_delivery_distance_km')
+          .select('id, name, slug, delivery_fee, min_order_amount, accepts_delivery, accepts_pickup, accepts_pay_online, accepts_pay_on_delivery, primary_color, location_lat, location_lng, city, free_delivery_radius_km, per_km_rate, max_delivery_distance_km, avg_prep_minutes')
           .eq('slug', slug)
           .eq('status', 'active')
           .single();
@@ -106,6 +116,7 @@ function CheckoutContent({ slug }: { slug: string }) {
             free_delivery_radius_km: tenantData.free_delivery_radius_km != null ? Number(tenantData.free_delivery_radius_km) : null,
             per_km_rate: tenantData.per_km_rate != null ? Number(tenantData.per_km_rate) : null,
             max_delivery_distance_km: tenantData.max_delivery_distance_km != null ? Number(tenantData.max_delivery_distance_km) : null,
+            avg_prep_minutes: tenantData.avg_prep_minutes != null ? Number(tenantData.avg_prep_minutes) : null,
           };
           setTenant(loadedTenant);
 
@@ -177,13 +188,48 @@ function CheckoutContent({ slug }: { slug: string }) {
       city: selectedCity,
       areaName: selectedArea,
       manualZones: activeZones,
+      customer: customerPin,
     });
-  }, [deliveryType, tenant, selectedCity, selectedArea, activeZones]);
+  }, [deliveryType, tenant, selectedCity, selectedArea, activeZones, customerPin]);
 
   const deliveryFee = deliveryType === 'delivery' ? feeResult?.fee ?? 0 : 0;
   const notDeliverable = feeResult ? !feeResult.deliverable : false;
+  const etaMinutes =
+    feeResult && tenant
+      ? estimateMinutes({
+          distanceKm: feeResult.distanceKm,
+          prepMinutes: tenant.avg_prep_minutes ?? DEFAULT_PREP_MINUTES,
+        })
+      : null;
   const total = subtotal + deliveryFee;
   const primaryColor = tenant?.primary_color || '#FF6B35';
+
+  // Centroid of the chosen area — used to center the optional location map.
+  const areaCenter = useMemo(() => {
+    const city = GHANA_CITIES.find((c) => c.name === selectedCity);
+    const n = city?.neighborhoods.find((x) => x.name === selectedArea);
+    return n ? ([n.lat, n.lng] as [number, number]) : undefined;
+  }, [selectedCity, selectedArea]);
+
+  function useMyLocation() {
+    setGeoError('');
+    if (!('geolocation' in navigator)) {
+      setGeoError('Location not supported on this device. Drag the map instead.');
+      setShowMap(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCustomerPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setShowMap(true);
+      },
+      () => {
+        setGeoError('Could not get your location. Drag the map to set it.');
+        setShowMap(true);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -223,6 +269,8 @@ function CheckoutContent({ slug }: { slug: string }) {
           paymentMethod,
           city: deliveryType === 'delivery' ? selectedCity : undefined,
           areaName: deliveryType === 'delivery' ? selectedArea : undefined,
+          customerLat: deliveryType === 'delivery' ? customerPin?.lat : undefined,
+          customerLng: deliveryType === 'delivery' ? customerPin?.lng : undefined,
         }),
       });
 
@@ -448,6 +496,42 @@ function CheckoutContent({ slug }: { slug: string }) {
                 </div>
               </div>
 
+              {selectedArea && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-surface-700">Pinpoint your location <span className="text-surface-400">(optional)</span></span>
+                    <button
+                      type="button"
+                      onClick={useMyLocation}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
+                      style={{ color: primaryColor }}
+                    >
+                      📍 Use my location
+                    </button>
+                  </div>
+                  {geoError && <p className="text-xs text-warning-700">{geoError}</p>}
+                  {(showMap || customerPin) && (
+                    <LocationPicker
+                      center={areaCenter}
+                      value={customerPin}
+                      onChange={(lat, lng) => setCustomerPin({ lat, lng })}
+                    />
+                  )}
+                  {!showMap && !customerPin && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMap(true)}
+                      className="text-xs text-surface-500 underline"
+                    >
+                      Or drop a pin on the map
+                    </button>
+                  )}
+                  {customerPin && (
+                    <p className="text-xs text-success-600">✓ Using your exact location for a precise fee.</p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label htmlFor="checkout-address" className="block text-sm font-medium text-surface-700 mb-1">
                   Delivery address
@@ -533,10 +617,26 @@ function CheckoutContent({ slug }: { slug: string }) {
             <span>{formatGHS(subtotal)}</span>
           </div>
           {deliveryType === 'delivery' && (
-            <div className="flex justify-between text-sm text-surface-600">
-              <span>Delivery fee {selectedArea ? `(${selectedArea})` : ''}</span>
-              <span>{formatGHS(deliveryFee)}</span>
-            </div>
+            <>
+              <div className="flex justify-between text-sm text-surface-600">
+                <span>Delivery fee {selectedArea ? `(${selectedArea})` : ''}</span>
+                <span>{formatGHS(deliveryFee)}</span>
+              </div>
+              {feeResult?.source === 'distance' && feeResult.breakdown && (
+                <p className="text-[11px] text-surface-400">
+                  {formatGHS(feeResult.fee)} = base {formatGHS(feeResult.breakdown.base)}
+                  {feeResult.breakdown.extraKm === 0
+                    ? ` (within ${tenant?.free_delivery_radius_km ?? 3}km)`
+                    : ` + ${feeResult.breakdown.extraKm}km × ${formatGHS(feeResult.breakdown.perKm)}`}
+                </p>
+              )}
+              {etaMinutes != null && (
+                <div className="flex justify-between text-xs text-surface-500">
+                  <span>Est. arrival</span>
+                  <span>~{etaMinutes} min</span>
+                </div>
+              )}
+            </>
           )}
           <div className="border-t border-surface-200 pt-2 flex justify-between font-bold text-surface-900">
             <span>Total</span>
