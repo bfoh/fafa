@@ -59,6 +59,13 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
   --radius-full: 9999px;
+
+  /* ─── Redesign additions ────────────────────────────────── */
+  --color-canvas: #FCFBFA;
+  --color-hairline: rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12);
+  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 0.05), 0 16px 32px -14px rgb(0 0 0 / 0.16);
+  --ease-quick: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ─── Base Styles ─────────────────────────────────────────── */
@@ -218,6 +225,25 @@ label {
 
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* ─── Redesign helpers ────────────────────────────────────── */
+.bg-canvas { background-color: var(--color-canvas); }
+.border-hairline { border-color: var(--color-hairline); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.press { transition: transform 180ms var(--ease-quick); }
+.press:active { transform: scale(0.97); }
+.lift { transition: box-shadow 180ms var(--ease-quick), transform 180ms var(--ease-quick); }
+.lift:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ─── Skeleton Loader ─────────────────────────────────────── */
