@@ -17,23 +17,61 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
 
-  // The browser client parses the recovery token from the URL hash on load and
-  // emits PASSWORD_RECOVERY (or SIGNED_IN). We also check for an existing session
-  // in case that event already fired before this listener attached.
+  // Establish the recovery session from the reset link. The @supabase/ssr browser
+  // client does NOT auto-consume hash tokens, so we handle both flows explicitly:
+  // implicit (#access_token/#refresh_token in the hash) and PKCE (?code=). Falls
+  // back to any existing session.
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
-        setReady(true);
+    async function init() {
+      try {
+        const hashStr = window.location.hash.startsWith('#')
+          ? window.location.hash.slice(1)
+          : '';
+        const hash = new URLSearchParams(hashStr);
+        const query = new URLSearchParams(window.location.search);
+
+        // Supabase returned an error on the link itself.
+        if (hash.get('error_description') || query.get('error_description')) {
+          setReady(false);
+          setChecking(false);
+          return;
+        }
+
+        const accessToken = hash.get('access_token');
+        const refreshToken = hash.get('refresh_token');
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!error) {
+            window.history.replaceState(null, '', window.location.pathname);
+            setReady(true);
+            setChecking(false);
+            return;
+          }
+        }
+
+        const code = query.get('code');
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error) {
+            window.history.replaceState(null, '', window.location.pathname);
+            setReady(true);
+            setChecking(false);
+            return;
+          }
+        }
+
+        const { data } = await supabase.auth.getSession();
+        setReady(!!data.session);
+      } catch {
+        setReady(false);
+      } finally {
         setChecking(false);
       }
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-      setChecking(false);
-    });
-
-    return () => sub.subscription.unsubscribe();
+    }
+    init();
   }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
