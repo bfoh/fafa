@@ -302,6 +302,7 @@ export default function MenuPage() {
   const [itemOptions, setItemOptions] = useState<MenuItemOption[]>([]);
   const [itemFormLoading, setItemFormLoading] = useState(false);
   const [itemIsChopBar, setItemIsChopBar] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // New option form
   const [newOptName, setNewOptName] = useState('');
@@ -506,6 +507,7 @@ export default function MenuPage() {
     setEditingIdx(null);
     setShowPreview(false);
     setDishPickerOpen(false);
+    setShowAdvanced(false);
     setItemModalOpen(true);
   }
 
@@ -526,6 +528,16 @@ export default function MenuPage() {
     setEditingIdx(null);
     setShowPreview(false);
     setDishPickerOpen(false);
+    setShowAdvanced(
+      Boolean(
+        item.description ||
+          item.is_chop_bar ||
+          (item.menu_item_options && item.menu_item_options.length > 0) ||
+          item.is_featured ||
+          item.is_available === false ||
+          item.image_url
+      )
+    );
     setItemModalOpen(true);
   }
 
@@ -1083,6 +1095,21 @@ export default function MenuPage() {
                 </div>
               </div>
 
+              {/* More options — advanced fields collapsed by default */}
+              <div className="border-t border-hairline pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  className="flex items-center gap-2 text-sm font-semibold text-surface-700"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                  More options
+                  <span className="text-xs font-normal text-surface-400">photo, description, chop bar, extras…</span>
+                </button>
+              </div>
+
+              {showAdvanced && (
+              <>
               <div>
                 <label className="block text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">
                   Description
@@ -1424,6 +1451,8 @@ export default function MenuPage() {
                   </div>
                 )}
               </div>
+              </>
+              )}
             </form>
 
             <div className="border-t border-surface-100 px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex gap-3">
