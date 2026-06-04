@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const supabase = createBrowserClient();
 
   const [branding, setBranding] = useState<{
     name: string;
@@ -39,19 +37,22 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError('');
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email,
-      { redirectTo: `${window.location.origin}/reset-password` }
-    );
-
-    if (resetError) {
-      setError(resetError.message);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not send reset link. Please try again.');
+      }
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSent(true);
-    setLoading(false);
   }
 
   if (sent) {
