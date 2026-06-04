@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { getBaseUrl } from '@/lib/utils';
+import { seedSampleMenu } from '@/lib/onboarding/sample-menu';
 import {
   UtensilsCrossed,
   CreditCard,
@@ -29,63 +30,6 @@ interface SetupChecklistProps {
 }
 
 const DISMISS_KEY = 'didi:setup-dismissed';
-
-// Sample Ghanaian dishes seeded into the default categories created at signup.
-const SAMPLE_MENU: {
-  category: string;
-  name: string;
-  description: string;
-  price: number;
-}[] = [
-  {
-    category: 'Main Dishes',
-    name: 'Jollof Rice with Chicken',
-    description: 'Smoky party jollof served with grilled chicken',
-    price: 45,
-  },
-  {
-    category: 'Main Dishes',
-    name: 'Waakye Special',
-    description: 'Rice and beans with spaghetti, egg, gari and shito',
-    price: 35,
-  },
-  {
-    category: 'Main Dishes',
-    name: 'Banku with Tilapia',
-    description: 'Fresh grilled tilapia with hot pepper and banku',
-    price: 50,
-  },
-  {
-    category: 'Main Dishes',
-    name: 'Fried Rice with Chicken',
-    description: 'Vegetable fried rice with seasoned chicken',
-    price: 45,
-  },
-  {
-    category: 'Sides & Extras',
-    name: 'Kelewele',
-    description: 'Spicy fried ripe plantain cubes',
-    price: 15,
-  },
-  {
-    category: 'Sides & Extras',
-    name: 'Fried Plantain',
-    description: 'Golden fried ripe plantain',
-    price: 12,
-  },
-  {
-    category: 'Drinks',
-    name: 'Sobolo',
-    description: 'Chilled hibiscus drink',
-    price: 10,
-  },
-  {
-    category: 'Drinks',
-    name: 'Bottled Water',
-    description: '500ml bottled water',
-    price: 5,
-  },
-];
 
 export default function SetupChecklist({
   tenantId,
@@ -116,48 +60,7 @@ export default function SetupChecklist({
     setSeedError('');
     try {
       const supabase = createBrowserClient();
-
-      // Guard against double-seed: only proceed if the store still has 0 items.
-      const { count } = await supabase
-        .from('menu_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId);
-
-      if ((count || 0) > 0) {
-        router.refresh();
-        return;
-      }
-
-      const { data: categories } = await supabase
-        .from('menu_categories')
-        .select('id, name, sort_order')
-        .eq('tenant_id', tenantId)
-        .order('sort_order', { ascending: true });
-
-      if (!categories || categories.length === 0) {
-        setSeedError('No menu categories found. Add a category first.');
-        return;
-      }
-
-      const byName = new Map(categories.map((c) => [c.name, c.id]));
-      const fallbackId = categories[0].id;
-
-      const rows = SAMPLE_MENU.map((dish, i) => ({
-        tenant_id: tenantId,
-        category_id: byName.get(dish.category) ?? fallbackId,
-        name: dish.name,
-        description: dish.description,
-        price: dish.price,
-        is_available: true,
-        sort_order: i,
-      }));
-
-      const { error } = await supabase.from('menu_items').insert(rows);
-      if (error) {
-        setSeedError(error.message);
-        return;
-      }
-
+      await seedSampleMenu(supabase, tenantId);
       router.refresh();
     } catch (err) {
       setSeedError(
