@@ -301,7 +301,7 @@ export function OrderTracker({
             />
           )}
         </div>
-        <h1 className="text-xl font-bold text-surface-900">
+        <h1 className="text-2xl font-bold text-surface-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
           {isCancelled ? 'Order cancelled' : stages[Math.max(0, currentIndex)]?.label ?? 'Order placed'}
         </h1>
         <p className="text-surface-500 mt-2 text-sm">
@@ -324,7 +324,7 @@ export function OrderTracker({
 
       {/* ── Rate your order (after delivery) ── */}
       {isDelivered && (
-        <div className="bg-white rounded-2xl border border-surface-100 shadow-sm p-5 mb-5 text-center">
+        <div className="bg-white rounded-2xl border border-hairline shadow-card p-5 mb-5 text-center">
           <h2 className="text-sm font-bold text-surface-900">
             {review ? 'Your rating' : 'Rate your order'}
           </h2>
@@ -351,7 +351,7 @@ export function OrderTracker({
             onChange={(e) => setReviewComment(e.target.value)}
             rows={2}
             placeholder="Add a comment (optional)"
-            className="w-full resize-none px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+            className="w-full resize-none px-3.5 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
           />
           <button
             type="button"
@@ -377,7 +377,7 @@ export function OrderTracker({
 
       {/* ── Timeline ── */}
       {!isCancelled && (
-        <div className="bg-white rounded-2xl border border-surface-100 shadow-sm p-5 mb-5">
+        <div className="bg-white rounded-2xl border border-hairline shadow-card p-5 mb-5">
           <ol className="relative">
             {stages.map((stage, i) => {
               const done = i < currentIndex;
@@ -436,7 +436,7 @@ export function OrderTracker({
       )}
 
       {/* ── Chat with the restaurant ── */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden mb-5">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card overflow-hidden mb-5">
         <div className="px-5 py-3 border-b border-surface-100 flex items-center gap-2">
           <MessageCircle className="w-4 h-4" style={{ color: accent }} />
           <h2 className="text-sm font-bold text-surface-900">Message {tenant.name}</h2>
@@ -481,7 +481,7 @@ export function OrderTracker({
             }}
             rows={1}
             placeholder="Type a message…"
-            className="flex-1 resize-none px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm max-h-28"
+            className="flex-1 resize-none px-3.5 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm max-h-28"
           />
           <button
             type="button"
@@ -497,7 +497,7 @@ export function OrderTracker({
       </div>
 
       {/* ── Order details ── */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card overflow-hidden">
         <div className="p-5 border-b border-surface-100">
           <div className="flex items-center justify-between">
             <div>
