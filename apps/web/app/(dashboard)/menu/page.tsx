@@ -733,18 +733,20 @@ export default function MenuPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-brand-500" />
-            Menu Management
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
+            <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-brand-500" />
+            </span>
+            Menu
           </h1>
-          <p className="text-surface-500 text-sm mt-1">
-            Build your menu, organize items by category, and toggle availability.
+          <p className="text-surface-500 text-sm mt-1.5">
+            Build your menu, organise by category, toggle availability.
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setCategoryModalOpen(true)}
-            className="px-4 py-2 border border-surface-200 text-surface-700 font-semibold rounded-xl text-sm hover:bg-surface-50 transition-colors"
+            className="px-4 py-2 border border-hairline text-surface-700 font-semibold rounded-xl text-sm hover:bg-surface-50 transition-colors"
           >
             Manage Categories
           </button>
@@ -813,7 +815,7 @@ export default function MenuPage() {
               placeholder="Search dishes, drinks, extras..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all text-sm shadow-sm"
+              className="w-full pl-11 pr-4 py-3 rounded-2xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition-all text-sm shadow-sm"
             />
           </div>
 
@@ -978,7 +980,7 @@ export default function MenuPage() {
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
                   required
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                 />
                 <button
                   type="submit"
@@ -1036,7 +1038,7 @@ export default function MenuPage() {
                   placeholder="e.g. Assorted Jollof with Goat Meat"
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                 />
               </div>
 
@@ -1053,7 +1055,7 @@ export default function MenuPage() {
                     placeholder={itemIsChopBar ? "Min e.g. 20" : "45.00"}
                     value={itemPrice}
                     onChange={(e) => setItemPrice(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                   />
                   {itemIsChopBar && (
                     <p className="text-[10px] text-surface-400 mt-1">
@@ -1069,7 +1071,7 @@ export default function MenuPage() {
                   <select
                     value={itemCategoryId}
                     onChange={(e) => setItemCategoryId(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                   >
                     <option value="">Select a category</option>
                     {categories.map((c) => (
@@ -1090,7 +1092,7 @@ export default function MenuPage() {
                   value={itemDescription}
                   onChange={(e) => setItemDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm resize-none"
+                  className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm resize-none"
                 />
               </div>
 
@@ -1104,7 +1106,7 @@ export default function MenuPage() {
                     <img
                       src={itemImageUrl}
                       alt="Preview"
-                      className="w-16 h-16 rounded-xl object-cover border border-surface-200"
+                      className="w-16 h-16 rounded-xl object-cover border border-hairline"
                     />
                   ) : (
                     <div className="w-16 h-16 rounded-xl bg-surface-50 border-2 border-dashed border-surface-200 flex items-center justify-center">
@@ -1201,7 +1203,7 @@ export default function MenuPage() {
                           key={dish.key}
                           type="button"
                           onClick={() => loadDishDefaults(dish)}
-                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-surface-200 hover:border-brand-300 hover:bg-brand-500/5 text-surface-700 hover:text-brand-600 text-sm font-bold transition-all active:scale-95"
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white border border-hairline hover:border-brand-300 hover:bg-brand-500/5 text-surface-700 hover:text-brand-600 text-sm font-bold transition-all active:scale-95"
                         >
                           <span className="text-lg leading-none">{dish.emoji}</span>
                           {dish.label}
@@ -1302,7 +1304,7 @@ export default function MenuPage() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && effType !== 'protein') { e.preventDefault(); addLocalOption(); }
                         }}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm"
                       />
 
                       {/* Adaptive fields */}
@@ -1327,7 +1329,7 @@ export default function MenuPage() {
                                 placeholder="e.g. 10 — customer then types any amount"
                                 value={newOptMinQty}
                                 onChange={(e) => setNewOptMinQty(e.target.value)}
-                                className="w-full mt-1 px-3.5 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+                                className="w-full mt-1 px-3.5 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
                               />
                             </div>
                           )}
@@ -1345,7 +1347,7 @@ export default function MenuPage() {
                               placeholder="e.g. 5 — leave 0 to include free"
                               value={newOptPrice}
                               onChange={(e) => setNewOptPrice(e.target.value)}
-                              className="w-full mt-1 px-3.5 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+                              className="w-full mt-1 px-3.5 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
                             />
                           </div>
                           <div>
@@ -1400,7 +1402,7 @@ export default function MenuPage() {
 
                 {/* ── Customer preview ── */}
                 {itemIsChopBar && itemOptions.length > 0 && (
-                  <div className="border border-surface-150 rounded-2xl overflow-hidden">
+                  <div className="border border-hairline rounded-2xl overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setShowPreview((s) => !s)}
@@ -1428,7 +1430,7 @@ export default function MenuPage() {
               <button
                 type="button"
                 onClick={() => setItemModalOpen(false)}
-                className="flex-1 py-3 px-4 rounded-xl border border-surface-200 text-surface-700 font-semibold hover:bg-surface-50 transition-all"
+                className="flex-1 py-3 px-4 rounded-xl border border-hairline text-surface-700 font-semibold hover:bg-surface-50 transition-all"
               >
                 Cancel
               </button>
@@ -1498,7 +1500,7 @@ function TierEditor({
             value={t.label}
             onChange={(e) => update(i, { label: e.target.value })}
             placeholder={`Option ${i + 1} label (optional)`}
-            className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-surface-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-hairline bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
           <div className="relative shrink-0">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-surface-400 pointer-events-none">GH₵</span>
@@ -1509,7 +1511,7 @@ function TierEditor({
               value={t.price === 0 ? '' : t.price}
               onChange={(e) => update(i, { price: parseFloat(e.target.value) || 0 })}
               placeholder="0"
-              className="w-24 pl-9 pr-2 py-1.5 rounded-lg border border-surface-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+              className="w-24 pl-9 pr-2 py-1.5 rounded-lg border border-hairline bg-white text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             />
           </div>
           <button
@@ -1557,7 +1559,7 @@ function SubTypeChips({
     setDraft('');
   };
   return (
-    <div className="mt-1 flex flex-wrap items-center gap-1.5 px-2.5 py-2 rounded-xl border border-surface-200 bg-white focus-within:ring-2 focus-within:ring-brand-500/40 focus-within:border-brand-500">
+    <div className="mt-1 flex flex-wrap items-center gap-1.5 px-2.5 py-2 rounded-xl border border-hairline bg-white focus-within:ring-2 focus-within:ring-brand-500/40 focus-within:border-brand-500">
       {subs.map((s, i) => (
         <span key={i} className="inline-flex items-center gap-1 bg-surface-100 text-surface-700 text-[11px] font-semibold px-2 py-1 rounded-lg">
           {s}
@@ -1623,7 +1625,7 @@ function RowEditor({
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+        className="w-full px-3 py-2 rounded-lg border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
       />
       {type === 'protein' && (
         <div className="space-y-2">
@@ -1639,7 +1641,7 @@ function RowEditor({
               value={min}
               onChange={(e) => setMin(e.target.value)}
               placeholder="No price options? Minimum amount (GH₵)"
-              className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+              className="w-full px-3 py-2 rounded-lg border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             />
           )}
         </div>
@@ -1653,7 +1655,7 @@ function RowEditor({
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             placeholder="Price (GH₵) — 0 = free"
-            className="w-full px-3 py-2 rounded-lg border border-surface-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            className="w-full px-3 py-2 rounded-lg border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
           <SubTypeChips subs={subs} setSubs={setSubs} draft={draft} setDraft={setDraft} placeholder="Add a type — press Enter" />
         </>
@@ -1669,7 +1671,7 @@ function RowEditor({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-2 border border-surface-200 text-surface-600 hover:bg-surface-50 rounded-lg text-xs font-semibold transition-colors"
+          className="flex-1 py-2 border border-hairline text-surface-600 hover:bg-surface-50 rounded-lg text-xs font-semibold transition-colors"
         >
           Cancel
         </button>
@@ -1807,7 +1809,7 @@ function CustomerPreview({
           <p className="text-[10px] font-extrabold text-surface-400 uppercase tracking-wider">Select soup (free)</p>
           <div className="grid grid-cols-2 gap-2">
             {soups.map((s, i) => (
-              <div key={i} className="px-3 py-2 rounded-lg border border-surface-200 text-xs font-semibold text-surface-600">
+              <div key={i} className="px-3 py-2 rounded-lg border border-hairline text-xs font-semibold text-surface-600">
                 {s.name}
               </div>
             ))}
@@ -1823,7 +1825,7 @@ function CustomerPreview({
             {proteins.map((p, i) => {
               const hasTiers = !!(p.price_tiers && p.price_tiers.length > 0);
               return (
-                <div key={i} className="rounded-xl border border-surface-150 px-3 py-2.5 space-y-1.5">
+                <div key={i} className="rounded-xl border border-hairline px-3 py-2.5 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-surface-800">{p.name}</span>
                     {!hasTiers && (p.min_quantity ?? 0) > 0 && (
@@ -1835,7 +1837,7 @@ function CustomerPreview({
                   {hasTiers ? (
                     <div className="flex gap-1.5 flex-wrap">
                       {p.price_tiers!.map((t, j) => (
-                        <span key={j} className="px-2.5 py-1 rounded-lg border border-surface-200 text-[11px] font-bold text-surface-600">
+                        <span key={j} className="px-2.5 py-1 rounded-lg border border-hairline text-[11px] font-bold text-surface-600">
                           {t.label ? `${t.label} · ` : ''}{formatGHS(t.price)}
                         </span>
                       ))}
@@ -1845,7 +1847,7 @@ function CustomerPreview({
                       {p.sub_options && (
                         <div className="flex gap-1.5 flex-wrap">
                           {parseSubs(p.sub_options).map((sub, j) => (
-                            <span key={j} className="px-2 py-0.5 rounded-md border border-surface-200 text-[10px] font-bold text-surface-500">
+                            <span key={j} className="px-2 py-0.5 rounded-md border border-hairline text-[10px] font-bold text-surface-500">
                               {sub}
                             </span>
                           ))}
@@ -1867,7 +1869,7 @@ function CustomerPreview({
           <p className="text-[10px] font-extrabold text-surface-400 uppercase tracking-wider">Add-ons & extras</p>
           <div className="space-y-1.5">
             {extras.map((e, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg border border-surface-150 px-3 py-2">
+              <div key={i} className="flex items-center justify-between rounded-lg border border-hairline px-3 py-2">
                 <div className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded border border-surface-300" />
                   <span className="text-sm font-semibold text-surface-700">{e.name}</span>

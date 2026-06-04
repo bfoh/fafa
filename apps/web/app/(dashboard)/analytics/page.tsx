@@ -187,12 +187,14 @@ export default function AnalyticsPage() {
     <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-brand-500" />
-          Sales & Analytics
+        <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
+            <BarChart3 className="w-5 h-5 text-brand-500" />
+          </span>
+          Sales &amp; Analytics
         </h1>
-        <p className="text-surface-500 text-sm mt-1">
-          Monitor your restaurant&apos;s financial health, payment methods, and most popular menu items.
+        <p className="text-surface-500 text-sm mt-1.5">
+          Your financial health, payment mix, and most-loved dishes.
         </p>
       </div>
 

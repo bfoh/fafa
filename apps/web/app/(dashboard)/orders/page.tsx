@@ -559,18 +559,20 @@ export default function OrdersPage() {
       {/* Upper header summary */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-            <ShoppingBag className="w-6 h-6 text-brand-500" />
-            Live Orders Feed
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
+            <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-brand-500" />
+            </span>
+            Live Orders
           </h1>
-          <p className="text-surface-500 text-sm mt-1">
-            Incoming food requests from customers in real-time. Click to action.
+          <p className="text-surface-500 text-sm mt-1.5">
+            Incoming orders in real time — tap one to action it.
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={playBeep}
-            className="p-2 border border-surface-200 hover:bg-surface-50 rounded-xl text-surface-500"
+            className="p-2 border border-hairline hover:bg-surface-50 rounded-xl text-surface-500"
             title="Test notification chime"
           >
             <Bell className="w-5 h-5" />
@@ -604,7 +606,7 @@ export default function OrdersPage() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-colors ${
                   activeTab === tab.id
                     ? 'bg-brand-500 text-white'
-                    : 'bg-white text-surface-600 hover:bg-surface-50 border border-surface-150'
+                    : 'bg-white text-surface-600 hover:bg-surface-50 border border-hairline'
                 }`}
               >
                 {tab.label}
@@ -625,7 +627,7 @@ export default function OrdersPage() {
             placeholder="Search order number or client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
           />
         </div>
       </div>
@@ -732,7 +734,7 @@ export default function OrdersPage() {
                 </div>
                 <button
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 border border-surface-200 hover:bg-surface-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-surface-700 transition-colors"
+                  className="px-3 py-1.5 border border-hairline hover:bg-surface-50 rounded-xl text-xs font-semibold flex items-center gap-1.5 text-surface-700 transition-colors"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   Print Receipt
@@ -830,7 +832,7 @@ export default function OrdersPage() {
 
                 {/* Split grid: customer & delivery details */}
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="border border-surface-150 rounded-2xl p-4 space-y-2">
+                  <div className="border border-hairline rounded-2xl p-4 space-y-2">
                     <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider">
                       Customer Info
                     </h4>
@@ -847,7 +849,7 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  <div className="border border-surface-150 rounded-2xl p-4 space-y-2">
+                  <div className="border border-hairline rounded-2xl p-4 space-y-2">
                     <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider">
                       Delivery Details
                     </h4>
@@ -861,7 +863,7 @@ export default function OrdersPage() {
                           <span>{selectedOrder.delivery_address || 'No address specified'}</span>
                         </p>
                         {selectedOrder.delivery_notes && (
-                          <p className="text-xs text-surface-500 bg-surface-50 border border-surface-150 rounded-lg p-2 mt-1">
+                          <p className="text-xs text-surface-500 bg-surface-50 border border-hairline rounded-lg p-2 mt-1">
                             <strong>Note:</strong> {selectedOrder.delivery_notes}
                           </p>
                         )}
@@ -880,7 +882,7 @@ export default function OrdersPage() {
                       <Loader2 className="w-5 h-5 text-surface-400 animate-spin" />
                     </div>
                   ) : (
-                    <div className="bg-white border border-surface-150 rounded-2xl overflow-hidden">
+                    <div className="bg-white border border-hairline rounded-2xl overflow-hidden">
                       <table className="w-full text-left border-collapse text-sm">
                         <thead>
                           <tr className="bg-surface-50/70 border-b border-surface-150 text-[10px] font-bold text-surface-500 uppercase">
@@ -920,7 +922,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Pricing & payment breakdown */}
-                <div className="bg-surface-50/70 border border-surface-150 rounded-2xl p-4 flex flex-col gap-2.5 text-xs text-surface-600">
+                <div className="bg-surface-50/70 border border-hairline rounded-2xl p-4 flex flex-col gap-2.5 text-xs text-surface-600">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="font-medium text-surface-900">{formatGHS(selectedOrder.subtotal)}</span>
@@ -994,7 +996,7 @@ export default function OrdersPage() {
                     <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Star className="w-3.5 h-3.5" /> Customer Review
                     </h4>
-                    <div className="border border-surface-150 rounded-2xl p-4">
+                    <div className="border border-hairline rounded-2xl p-4">
                       <div className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map((n) => (
                           <Star
@@ -1022,7 +1024,7 @@ export default function OrdersPage() {
                             onChange={(e) => setReplyDraft(e.target.value)}
                             rows={1}
                             placeholder="Reply to this review…"
-                            className="flex-1 resize-none px-3 py-2 rounded-xl border border-surface-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
+                            className="flex-1 resize-none px-3 py-2 rounded-xl border border-hairline text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
                           />
                           <button
                             type="button"
@@ -1043,7 +1045,7 @@ export default function OrdersPage() {
                   <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5" /> Chat with Customer
                   </h4>
-                  <div className="border border-surface-150 rounded-2xl overflow-hidden">
+                  <div className="border border-hairline rounded-2xl overflow-hidden">
                     <div ref={msgThreadRef} className="max-h-64 overflow-y-auto p-3 space-y-2 bg-surface-50/40 scrollbar-thin">
                       {messages.length === 0 ? (
                         <p className="text-center text-[11px] text-surface-400 py-6">
@@ -1058,7 +1060,7 @@ export default function OrdersPage() {
                                 className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                                   mine
                                     ? 'bg-brand-500 text-white rounded-br-md'
-                                    : 'bg-white border border-surface-150 text-surface-800 rounded-bl-md'
+                                    : 'bg-white border border-hairline text-surface-800 rounded-bl-md'
                                 }`}
                               >
                                 <p className="whitespace-pre-wrap break-words">{m.body}</p>
@@ -1083,7 +1085,7 @@ export default function OrdersPage() {
                         }}
                         rows={1}
                         placeholder="Reply to customer…"
-                        className="flex-1 resize-none px-3 py-2 rounded-xl border border-surface-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
+                        className="flex-1 resize-none px-3 py-2 rounded-xl border border-hairline text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 max-h-24"
                       />
                       <button
                         type="button"
@@ -1137,7 +1139,7 @@ export default function OrdersPage() {
                 <select
                   value={estimatedReadyMinutes}
                   onChange={(e) => setEstimatedReadyMinutes(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
                 >
                   <option value="15">15 minutes</option>
                   <option value="20">20 minutes</option>
@@ -1151,7 +1153,7 @@ export default function OrdersPage() {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setConfirmModalOpen(false)}
-                  className="flex-1 py-2.5 border border-surface-200 hover:bg-surface-50 text-surface-700 rounded-xl text-sm font-semibold transition-colors"
+                  className="flex-1 py-2.5 border border-hairline hover:bg-surface-50 text-surface-700 rounded-xl text-sm font-semibold transition-colors"
                 >
                   Go Back
                 </button>
@@ -1197,14 +1199,14 @@ export default function OrdersPage() {
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-sm"
                 />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setCancelModalOpen(false)}
-                  className="flex-1 py-2.5 border border-surface-200 hover:bg-surface-50 text-surface-700 rounded-xl text-sm font-semibold transition-colors"
+                  className="flex-1 py-2.5 border border-hairline hover:bg-surface-50 text-surface-700 rounded-xl text-sm font-semibold transition-colors"
                 >
                   Go Back
                 </button>
