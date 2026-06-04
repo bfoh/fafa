@@ -19,7 +19,7 @@ interface SendEmailParams {
   replyTo?: string;
 }
 
-// Parse "Didi <orders@didi.com.gh>" → { name, email }.
+// Parse "Didi <orders@ghdidi.com>" → { name, email }.
 function parseSender(from: string): { email: string; name?: string } {
   const match = from.match(/^\s*(.*?)\s*<\s*([^>]+)\s*>\s*$/);
   if (match) return { name: match[1] || undefined, email: match[2] };
@@ -33,7 +33,7 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = 'Didi <orders@didi.com.gh>',
+  from = 'Didi <orders@ghdidi.com>',
   replyTo,
 }: SendEmailParams): Promise<{
   success: boolean;

@@ -250,7 +250,7 @@ export async function POST(req: Request) {
 
         const paystackResult = await initializeTransaction({
           email:
-            customer.email || `${normalizedPhone.replace('+', '')}@didi.com.gh`,
+            customer.email || `${normalizedPhone.replace('+', '')}@ghdidi.com`,
           amount: Math.round(total * 100), // Pesewas
           currency: 'GHS',
           reference: order.id,

@@ -321,7 +321,7 @@ export default function SharePage() {
 
         <div className="pt-6 border-t border-surface-200 w-full flex justify-between items-center text-[10px] font-bold text-surface-400 uppercase tracking-widest">
           <span>Powered by Didi</span>
-          <span>didi.com.gh</span>
+          <span>ghdidi.com</span>
         </div>
       </div>
     </div>
