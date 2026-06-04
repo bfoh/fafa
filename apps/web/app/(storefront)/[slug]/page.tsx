@@ -76,31 +76,63 @@ export default async function StorefrontPage({
     }))
     .filter((cat) => cat.menu_items.length > 0);
 
+  const primaryColor = tenant.primary_color || '#FF6B35';
+
   return (
     <div className="max-w-lg mx-auto">
-      {/* Cover image */}
-      {tenant.cover_image_url && (
-        <div className="h-40 relative overflow-hidden">
-          <img
-            src={tenant.cover_image_url}
-            alt={tenant.name}
-            className="w-full h-full object-cover"
+      {/* Hero */}
+      <div className="relative">
+        {tenant.cover_image_url ? (
+          <div className="h-48 relative overflow-hidden">
+            <img
+              src={tenant.cover_image_url}
+              alt={tenant.name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+          </div>
+        ) : (
+          <div
+            className="h-32"
+            style={{ background: `linear-gradient(135deg, ${primaryColor}22, ${primaryColor}08)` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        </div>
-      )}
-
-      {/* Restaurant info */}
-      <div className="px-4 pt-5 pb-3">
-        {tenant.description && (
-          <p className="text-sm text-surface-600">{tenant.description}</p>
         )}
-        <div className="flex items-center gap-4 mt-2 text-xs text-surface-400">
-          {tenant.city && <span>📍 {tenant.city}</span>}
-          {tenant.accepts_delivery && (
-            <span>🚗 Delivery {tenant.delivery_fee > 0 ? `from ${formatGHS(Number(tenant.delivery_fee))}` : 'available'}</span>
-          )}
-          {tenant.accepts_pickup && <span>🏪 Pickup</span>}
+
+        {/* Info card pulled over the cover */}
+        <div className="px-4">
+          <div className="-mt-8 relative bg-white rounded-2xl border border-hairline shadow-card p-4 animate-fade-in">
+            <h1 className="text-xl font-bold text-surface-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+              {tenant.name}
+            </h1>
+            {tenant.description && (
+              <p className="text-sm text-surface-500 mt-1 line-clamp-2">{tenant.description}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              {tenant.city && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                  📍 {tenant.city}
+                </span>
+              )}
+              {tenant.accepts_delivery && (
+                <span
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                  style={{ background: `${primaryColor}14`, color: primaryColor }}
+                >
+                  🚗 Delivery {tenant.delivery_fee > 0 ? `from ${formatGHS(Number(tenant.delivery_fee))}` : 'available'}
+                </span>
+              )}
+              {tenant.accepts_pickup && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                  🏪 Pickup
+                </span>
+              )}
+              {Number(tenant.min_order_amount) > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                  Min {formatGHS(Number(tenant.min_order_amount))}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

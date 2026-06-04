@@ -195,13 +195,13 @@ function MenuContent({
   return (
     <div className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Category tabs */}
-      <div className="sticky top-[calc(57px+env(safe-area-inset-top))] z-20 bg-surface-50/95 backdrop-blur border-b border-surface-100">
+      <div className="sticky top-[calc(57px+env(safe-area-inset-top))] z-20 bg-canvas/90 backdrop-blur-xl border-b border-hairline">
         <div className="flex gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar snap-rail">
           {categories.map((cat) => (
             <a
               key={cat.id}
               href={`#cat-${cat.id}`}
-              className="snap-start-item shrink-0 px-5 py-2.5 min-h-[40px] flex items-center rounded-full text-sm font-bold transition-colors active:scale-95 text-surface-600 bg-surface-100 hover:bg-surface-200"
+              className="snap-start-item shrink-0 px-4 py-2 min-h-[38px] flex items-center rounded-full text-sm font-semibold press text-surface-600 bg-white border border-hairline shadow-sm hover:bg-surface-50"
             >
               {cat.name}
             </a>
@@ -212,7 +212,7 @@ function MenuContent({
       {/* Order again */}
       {reorderItems.length > 0 && (
         <div className="px-4 pt-4">
-          <div className="rounded-2xl border border-surface-200 bg-white p-4 shadow-sm animate-fade-in">
+          <div className="rounded-2xl border border-hairline bg-white p-4 shadow-card animate-fade-in">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-extrabold text-surface-400 uppercase tracking-wider">Order again</p>
@@ -222,8 +222,8 @@ function MenuContent({
               </div>
               <button
                 onClick={handleReorder}
-                className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-xs font-semibold active:scale-95 transition-transform"
-                style={{ background: tenant.primary_color }}
+                className="shrink-0 inline-flex items-center gap-1.5 px-4 h-10 rounded-xl text-white text-xs font-semibold press shadow-md"
+                style={{ backgroundImage: `linear-gradient(135deg, ${tenant.primary_color}, ${tenant.primary_color}dd)` }}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Reorder
@@ -236,71 +236,65 @@ function MenuContent({
       {/* Menu items */}
       <div className="px-4 pt-4 space-y-6">
         {categories.map((cat) => (
-          <section key={cat.id} id={`cat-${cat.id}`}>
-            <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider mb-3">
+          <section key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-32">
+            <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest mb-3">
               {cat.name}
             </h2>
             <div className="space-y-3">
               {cat.menu_items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex gap-3 p-3 bg-white rounded-2xl border border-surface-100 shadow-sm hover:shadow-md transition-shadow animate-fade-in"
+                  className="flex gap-3.5 p-3 bg-white rounded-2xl border border-hairline shadow-card lift animate-fade-in"
                 >
                   {/* Image */}
                   {item.image_url ? (
                     <img
                       src={item.image_url}
                       alt={item.name}
-                      className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                      className="w-22 h-22 w-[5.5rem] h-[5.5rem] rounded-2xl object-cover flex-shrink-0 ring-1 ring-black/5"
                       loading="lazy"
                     />
                   ) : (
                     <div
-                      className="w-20 h-20 rounded-xl flex-shrink-0 flex items-center justify-center text-2xl"
-                      style={{
-                        background: `${tenant.primary_color}15`,
-                      }}
+                      className="w-[5.5rem] h-[5.5rem] rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl"
+                      style={{ background: `${tenant.primary_color}12` }}
                     >
                       🍽️
                     </div>
                   )}
 
                   {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-semibold text-surface-900 text-sm">
-                          {item.name}
-                        </h3>
-                        {item.description && (
-                          <p className="text-xs text-surface-400 mt-0.5 line-clamp-2">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between mt-2 gap-2">
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <h3 className="font-semibold text-surface-900 text-[15px] leading-snug">
+                      {item.name}
+                    </h3>
+                    {item.description && (
+                      <p className="text-xs text-surface-500 mt-0.5 line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                    <div className="flex items-end justify-between mt-auto pt-2 gap-2">
                       {item.is_chop_bar ? (
                         <span
-                          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1 rounded-lg tracking-wide min-w-0"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg tracking-wide min-w-0"
                           style={{ background: `${tenant.primary_color}14`, color: tenant.primary_color }}
                         >
-                          🍽️ <span className="truncate">Order your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}</span>
+                          🍽️ <span className="truncate">Your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}</span>
                         </span>
                       ) : (
                         <p
-                          className="font-bold text-sm"
-                          style={{ color: tenant.primary_color }}
+                          className="font-bold text-base"
+                          style={{ color: tenant.primary_color, fontFamily: 'var(--font-display)' }}
                         >
                           {formatGHS(Number(item.price))}
                         </p>
                       )}
                       <button
                         onClick={() => handleAddItem(item)}
-                        className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 hover:opacity-90 shadow-md min-h-[40px] shrink-0 cursor-pointer"
-                        style={{ background: tenant.primary_color }}
+                        className="flex items-center gap-1.5 px-4 h-10 rounded-xl text-white text-xs font-semibold press shadow-md shrink-0 cursor-pointer"
+                        style={{ backgroundImage: `linear-gradient(135deg, ${tenant.primary_color}, ${tenant.primary_color}dd)` }}
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         {item.is_chop_bar ? 'Customize' : 'Add'}
                       </button>
                     </div>
@@ -314,21 +308,21 @@ function MenuContent({
 
       {/* Floating cart bar */}
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-surface-50 via-surface-50/90 to-transparent animate-slide-up">
+        <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-canvas via-canvas/95 to-transparent animate-slide-up">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => setCartOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 min-h-[56px] rounded-2xl text-white font-semibold shadow-xl transition-all active:scale-[0.98] hover:opacity-95"
-              style={{ background: tenant.primary_color }}
+              className="w-full flex items-center justify-between px-5 h-14 rounded-2xl text-white font-semibold shadow-xl shadow-black/10 press"
+              style={{ backgroundImage: `linear-gradient(135deg, ${tenant.primary_color}, ${tenant.primary_color}dd)` }}
             >
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
-                <span className="bg-white/20 px-2 py-0.5 rounded-lg text-sm font-bold">
+                <span className="bg-white/25 px-2 py-0.5 rounded-lg text-sm font-bold tabular-nums">
                   {itemCount}
                 </span>
               </div>
               <span>View Cart</span>
-              <span className="font-bold">{formatGHS(subtotal)}</span>
+              <span className="font-bold tabular-nums">{formatGHS(subtotal)}</span>
             </button>
           </div>
         </div>
