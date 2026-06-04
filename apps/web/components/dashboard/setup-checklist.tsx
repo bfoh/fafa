@@ -179,6 +179,12 @@ export default function SetupChecklist({
             style={{ width: `${pct}%` }}
           />
         </div>
+        <Link
+          href="/welcome"
+          className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-brand-600 hover:text-brand-700"
+        >
+          Resume guided setup →
+        </Link>
       </div>
 
       {/* Steps */}
