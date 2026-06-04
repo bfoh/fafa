@@ -13,7 +13,7 @@ import {
   Store,
   Check,
   ChevronRight,
-  Sparkles,
+
   Rocket,
   Loader2,
   Copy,
@@ -243,7 +243,7 @@ export default function SetupChecklist({
                     {seeding ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <UtensilsCrossed className="w-3.5 h-3.5" />
                     )}
                     {seeding ? 'Adding…' : 'Add a sample menu for me'}
                   </button>

@@ -12,7 +12,6 @@ import {
   Check,
   Send,
   Printer,
-  Sparkles,
   ExternalLink,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';

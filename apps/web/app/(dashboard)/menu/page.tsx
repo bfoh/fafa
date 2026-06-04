@@ -11,7 +11,8 @@ import {
   Loader2,
   X,
   Check,
-  Sparkles,
+  Zap,
+  ListPlus,
   Search,
   Eye,
   EyeOff,
@@ -1212,7 +1213,7 @@ export default function MenuPage() {
                       onClick={() => setDishPickerOpen((v) => !v)}
                       className="px-3 py-1.5 bg-brand-500/10 text-brand-600 hover:bg-brand-500/20 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <ListPlus className="w-3 h-3" />
                       Load Defaults
                       <ChevronDown className={`w-3 h-3 transition-transform ${dishPickerOpen ? 'rotate-180' : ''}`} />
                     </button>
@@ -1288,7 +1289,7 @@ export default function MenuPage() {
                       {itemIsChopBar && (
                         <div className="space-y-1.5">
                           <p className="text-[10px] font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> Quick add — tap to add, then set prices
+                            <Zap className="w-3 h-3" /> Quick add — tap to add, then set prices
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {effType === 'soup' && SOUP_CATALOG.map((name) => {

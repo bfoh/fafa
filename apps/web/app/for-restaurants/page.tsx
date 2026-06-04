@@ -22,7 +22,6 @@ import {
   Filter,
   MapPin,
   Heart,
-  Sparkles
 } from 'lucide-react';
 
 interface MenuItem {
@@ -264,7 +263,7 @@ export default function ForRestaurantsPage() {
       <header className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 lg:pt-24 lg:pb-20 text-center lg:text-left">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-400 text-[10px] font-extrabold uppercase tracking-widest animate-bounce">
-            <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+            <Zap className="w-3.5 h-3.5 text-brand-400" />
             <span>🇬🇭</span> The Operating System for Ghana&apos;s Food Businesses
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] max-w-3xl mx-auto">
