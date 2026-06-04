@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
@@ -747,7 +748,7 @@ export default function MenuPage() {
         <div>
           <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
             <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-brand-500" />
+              <UtensilsCrossed className="w-5 h-5 text-brand-500" />
             </span>
             Menu
           </h1>

@@ -14,6 +14,7 @@ import {
   Check,
   ChevronRight,
   Sparkles,
+  Rocket,
   Loader2,
   Copy,
   X,
@@ -165,7 +166,9 @@ export default function SetupChecklist({
       {/* Header */}
       <div className="p-5 border-b border-surface-100">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-brand-500" />
+          <span className="w-8 h-8 rounded-xl bg-brand-500/10 flex items-center justify-center shrink-0">
+            <Rocket className="w-4.5 h-4.5 text-brand-500" />
+          </span>
           <h2 className="text-lg font-semibold text-surface-900">
             Get your store live
           </h2>
