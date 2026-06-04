@@ -342,9 +342,9 @@ function CheckoutContent({ slug }: { slug: string }) {
         Back to menu
       </Link>
 
-      <h1 className="text-xl font-bold text-surface-900 mb-6">Checkout</h1>
+      <h1 className="text-2xl font-bold text-surface-900 mb-6 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Checkout</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-sm animate-fade-in">
             {error}
@@ -352,8 +352,8 @@ function CheckoutContent({ slug }: { slug: string }) {
         )}
 
         {/* Customer details */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider">
+        <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-4">
+          <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
             Your Details
           </h2>
 
@@ -369,7 +369,7 @@ function CheckoutContent({ slug }: { slug: string }) {
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Your full name"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
               style={{
                 ['--tw-ring-color' as string]: primaryColor,
               } as React.CSSProperties}
@@ -389,7 +389,7 @@ function CheckoutContent({ slug }: { slug: string }) {
               onChange={(e) => setPhone(e.target.value)}
               required
               placeholder="024 123 4567"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
               style={{
                 ['--tw-ring-color' as string]: primaryColor,
               } as React.CSSProperties}
@@ -408,7 +408,7 @@ function CheckoutContent({ slug }: { slug: string }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
               style={{
                 ['--tw-ring-color' as string]: primaryColor,
               } as React.CSSProperties}
@@ -417,8 +417,8 @@ function CheckoutContent({ slug }: { slug: string }) {
         </section>
 
         {/* Delivery type */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider">
+        <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-3">
+          <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
             Delivery Option
           </h2>
 
@@ -466,7 +466,7 @@ function CheckoutContent({ slug }: { slug: string }) {
                       setSelectedArea('');
                     }}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer"
+                    className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer"
                     style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
                   >
                     <option value="">Select city...</option>
@@ -486,7 +486,7 @@ function CheckoutContent({ slug }: { slug: string }) {
                     onChange={(e) => setSelectedArea(e.target.value)}
                     required
                     disabled={!selectedCity}
-                    className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer disabled:opacity-50"
+                    className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer disabled:opacity-50"
                     style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
                   >
                     <option value="">Select neighborhood...</option>
@@ -545,7 +545,7 @@ function CheckoutContent({ slug }: { slug: string }) {
                   required
                   placeholder="House number, street, landmark, area details..."
                   rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm resize-none"
                   style={{
                     ['--tw-ring-color' as string]: primaryColor,
                   } as React.CSSProperties}
@@ -562,7 +562,7 @@ function CheckoutContent({ slug }: { slug: string }) {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Call when you arrive, gate code is 1234"
-                  className="w-full px-4 py-3 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                  className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
                   style={{
                     ['--tw-ring-color' as string]: primaryColor,
                   } as React.CSSProperties}
@@ -573,8 +573,8 @@ function CheckoutContent({ slug }: { slug: string }) {
         </section>
 
         {/* Payment method */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-surface-500 uppercase tracking-wider">
+        <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-3">
+          <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
             Payment Method
           </h2>
 
@@ -612,7 +612,7 @@ function CheckoutContent({ slug }: { slug: string }) {
         </section>
 
         {/* Order summary */}
-        <section className="bg-surface-100 rounded-2xl p-4 space-y-2">
+        <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-2">
           <div className="flex justify-between text-sm text-surface-600">
             <span>Subtotal</span>
             <span>{formatGHS(subtotal)}</span>
@@ -659,13 +659,13 @@ function CheckoutContent({ slug }: { slug: string }) {
         )}
 
         {/* Submit — sticky bar on mobile, inline on desktop */}
-        <div className="fixed inset-x-0 bottom-0 z-30 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-surface-50 via-surface-50 to-surface-50/0 md:static md:p-0 md:bg-none md:z-auto">
+        <div className="fixed inset-x-0 bottom-0 z-30 px-4 pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-canvas via-canvas to-canvas/0 md:static md:p-0 md:bg-none md:z-auto">
           <div className="max-w-lg mx-auto">
             <button
               type="submit"
               disabled={loading || belowMinLimit || notDeliverable}
-              className="w-full py-4 min-h-[56px] rounded-2xl text-white font-bold transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/5"
-              style={{ background: primaryColor }}
+              className="w-full h-14 rounded-2xl text-white font-bold press disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-black/10"
+              style={{ backgroundImage: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)` }}
             >
               {loading ? (
                 <>
