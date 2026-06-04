@@ -187,7 +187,7 @@ export default function BrandingSettingsPage() {
               </button>
             ))}
             {/* Custom HEX field */}
-            <div className="flex gap-1.5 items-center ml-2 border border-surface-200 rounded-xl px-3 py-1.5 bg-surface-50">
+            <div className="flex gap-1.5 items-center ml-2 border border-hairline rounded-xl px-3 py-1.5 bg-surface-50">
               <input
                 type="color"
                 value={primaryColor}
@@ -215,7 +215,7 @@ export default function BrandingSettingsPage() {
               <img
                 src={logoUrl}
                 alt="Logo preview"
-                className="w-16 h-16 rounded-2xl object-cover border border-surface-200"
+                className="w-16 h-16 rounded-2xl object-cover border border-hairline"
               />
             ) : (
               <div className="w-16 h-16 rounded-2xl bg-surface-50 border-2 border-dashed border-surface-200 flex items-center justify-center">
@@ -244,7 +244,7 @@ export default function BrandingSettingsPage() {
           </label>
           <div className="space-y-3">
             {coverUrl ? (
-              <div className="h-28 w-full rounded-2xl overflow-hidden border border-surface-200 relative">
+              <div className="h-28 w-full rounded-2xl overflow-hidden border border-hairline relative">
                 <img
                   src={coverUrl}
                   alt="Cover preview"

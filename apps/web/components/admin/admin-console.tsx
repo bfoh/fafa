@@ -256,7 +256,7 @@ export default function AdminConsole({
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-surface-50 p-6 sm:p-10 space-y-8">
+    <div className="min-h-[100dvh] bg-canvas p-6 sm:p-10 space-y-8">
       {/* Platform Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-surface-150 pb-6">
         <div>

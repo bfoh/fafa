@@ -144,7 +144,7 @@ export default async function TenantDetailPage({
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-surface-50 p-6 sm:p-10 space-y-8">
+    <div className="min-h-[100dvh] bg-canvas p-6 sm:p-10 space-y-8">
       {/* Back */}
       <Link
         href="/admin"
@@ -157,7 +157,7 @@ export default async function TenantDetailPage({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-surface-150 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-surface-900">
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
               {tenant.name}
             </h1>
             <span
@@ -185,7 +185,7 @@ export default async function TenantDetailPage({
           return (
             <div
               key={m.label}
-              className="bg-white rounded-2xl p-5 border border-surface-150 shadow-sm flex items-center gap-4"
+              className="bg-white rounded-2xl p-5 border border-hairline shadow-sm flex items-center gap-4"
             >
               <div className={`p-3 rounded-xl ${m.bg} ${m.color}`}>
                 <Icon className="w-6 h-6" />
@@ -205,7 +205,7 @@ export default async function TenantDetailPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile */}
-        <div className="bg-white rounded-2xl border border-surface-150 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-hairline shadow-sm p-6 space-y-4">
           <h2 className="text-sm font-bold text-surface-900">Profile</h2>
           <dl className="space-y-3 text-xs">
             {tenant.description && (
@@ -242,7 +242,7 @@ export default async function TenantDetailPage({
         </div>
 
         {/* Business config */}
-        <div className="bg-white rounded-2xl border border-surface-150 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-2xl border border-hairline shadow-sm p-6 space-y-4">
           <h2 className="text-sm font-bold text-surface-900">Business</h2>
           <dl className="space-y-2 text-xs">
             <Row label="Delivery fee" value={formatGHS(Number(tenant.delivery_fee || 0))} />
@@ -265,7 +265,7 @@ export default async function TenantDetailPage({
 
         {/* Payment + Team */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-surface-150 shadow-sm p-6 space-y-3">
+          <div className="bg-white rounded-2xl border border-hairline shadow-sm p-6 space-y-3">
             <h2 className="text-sm font-bold text-surface-900 flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-surface-400" /> Payments
             </h2>
@@ -285,7 +285,7 @@ export default async function TenantDetailPage({
             )}
           </div>
 
-          <div className="bg-white rounded-2xl border border-surface-150 shadow-sm p-6 space-y-3">
+          <div className="bg-white rounded-2xl border border-hairline shadow-sm p-6 space-y-3">
             <h2 className="text-sm font-bold text-surface-900">
               Team ({members.length})
             </h2>
@@ -315,7 +315,7 @@ export default async function TenantDetailPage({
       {/* Recent orders */}
       <div className="space-y-4">
         <h2 className="text-sm font-bold text-surface-900">Recent Orders</h2>
-        <div className="bg-white rounded-2xl border border-surface-150 shadow-sm overflow-hidden text-xs">
+        <div className="bg-white rounded-2xl border border-hairline shadow-sm overflow-hidden text-xs">
           {!recentOrders || recentOrders.length === 0 ? (
             <div className="py-12 text-center text-surface-400 italic">
               No orders yet.

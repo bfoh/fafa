@@ -230,7 +230,7 @@ export default function DeliverySettingsPage() {
                 required
                 value={deliveryFee}
                 onChange={(e) => setDeliveryFee(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default function DeliverySettingsPage() {
                 required
                 value={minOrderAmount}
                 onChange={(e) => setMinOrderAmount(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function DeliverySettingsPage() {
                 value={freeRadiusKm}
                 onChange={(e) => setFreeRadiusKm(e.target.value)}
                 placeholder={`${DEFAULT_FREE_RADIUS_KM}`}
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
             <div>
@@ -276,7 +276,7 @@ export default function DeliverySettingsPage() {
                 value={perKmRate}
                 onChange={(e) => setPerKmRate(e.target.value)}
                 placeholder={`${DEFAULT_PER_KM_RATE} (default)`}
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
             <div>
@@ -290,7 +290,7 @@ export default function DeliverySettingsPage() {
                 value={maxDistanceKm}
                 onChange={(e) => setMaxDistanceKm(e.target.value)}
                 placeholder="no limit"
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
             <div>
@@ -304,7 +304,7 @@ export default function DeliverySettingsPage() {
                 value={avgPrepMinutes}
                 onChange={(e) => setAvgPrepMinutes(e.target.value)}
                 placeholder="20"
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
               />
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function DeliverySettingsPage() {
             required
             value={newZoneName}
             onChange={(e) => setNewZoneName(e.target.value)}
-            className="flex-1 min-w-[140px] px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+            className="flex-1 min-w-[140px] px-3 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
           />
           <input
             type="number"
@@ -342,14 +342,14 @@ export default function DeliverySettingsPage() {
             required
             value={newZoneFee}
             onChange={(e) => setNewZoneFee(e.target.value)}
-            className="w-24 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+            className="w-24 px-3 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
           />
           <input
             type="number"
             placeholder="Est. mins"
             value={newZoneMins}
             onChange={(e) => setNewZoneMins(e.target.value)}
-            className="w-24 px-3 py-2 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+            className="w-24 px-3 py-2 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
           />
           <button
             type="submit"
@@ -361,7 +361,7 @@ export default function DeliverySettingsPage() {
           </button>
         </form>
 
-        <div className="bg-surface-50 border border-surface-150 rounded-2xl overflow-hidden text-xs">
+        <div className="bg-surface-50 border border-hairline rounded-2xl overflow-hidden text-xs">
           {zones.length === 0 ? (
             <p className="p-4 text-center text-surface-400 italic">No custom neighborhood zones. Orders will fallback to the base rate.</p>
           ) : (

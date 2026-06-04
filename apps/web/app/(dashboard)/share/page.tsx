@@ -189,9 +189,11 @@ export default function SharePage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-          <QrCode className="w-6 h-6 text-brand-500" />
-          Share & QR Code
+        <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
+            <QrCode className="w-5 h-5 text-brand-500" />
+          </span>
+          Share &amp; QR
         </h1>
         <p className="text-surface-500 text-sm mt-1">
           Share your online storefront link or print your customized QR code flyers.
@@ -212,7 +214,7 @@ export default function SharePage() {
                 type="text"
                 readOnly
                 value={storefrontUrl}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-surface-200 bg-surface-50 text-surface-700 text-xs focus:outline-none"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-surface-50 text-surface-700 text-xs focus:outline-none"
               />
               <button
                 onClick={handleCopy}
@@ -234,7 +236,7 @@ export default function SharePage() {
               <Link
                 href={storefrontUrl}
                 target="_blank"
-                className="flex-1 min-w-[140px] px-4 py-2.5 border border-surface-200 text-surface-700 hover:bg-surface-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                className="flex-1 min-w-[140px] px-4 py-2.5 border border-hairline text-surface-700 hover:bg-surface-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all"
               >
                 <ExternalLink className="w-4 h-4" />
                 Open Storefront

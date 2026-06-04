@@ -150,7 +150,7 @@ export default function ProfileSettingsPage() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+            className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
           />
         </div>
 
@@ -164,7 +164,7 @@ export default function ProfileSettingsPage() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
             />
           </div>
 
@@ -176,7 +176,7 @@ export default function ProfileSettingsPage() {
               type="tel"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
             />
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function ProfileSettingsPage() {
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
             />
           </div>
 
@@ -202,7 +202,7 @@ export default function ProfileSettingsPage() {
               type="text"
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+              className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
             />
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function ProfileSettingsPage() {
             placeholder="e.g. Best local dishes in East Legon"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+            className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
           />
         </div>
 
@@ -228,7 +228,7 @@ export default function ProfileSettingsPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs resize-none"
           />
         </div>
 

@@ -80,7 +80,7 @@ export default function NotificationsLogPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-surface-150 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-hairline overflow-hidden shadow-sm">
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center">
             <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />

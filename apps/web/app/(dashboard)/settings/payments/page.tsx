@@ -263,7 +263,7 @@ export default function PayoutSettingsPage() {
                     required
                     value={selectedBank}
                     onChange={(e) => setSelectedBank(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
+                    className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs"
                   >
                     <option value="" disabled>Select your bank/payout network</option>
                     {banks.map((bank) => (
@@ -284,7 +284,7 @@ export default function PayoutSettingsPage() {
                     placeholder="e.g. 0551109602 or standard account number"
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs font-mono"
+                    className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs font-mono"
                   />
                 </div>
               </div>
@@ -306,7 +306,7 @@ export default function PayoutSettingsPage() {
                     placeholder="e.g. ACCT_xxxxxxxxxxxx"
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs font-mono"
+                    className="w-full px-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-950 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs font-mono"
                   />
                 </div>
               </div>

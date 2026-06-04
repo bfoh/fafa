@@ -112,9 +112,11 @@ export default function CustomersPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-          <Users className="w-6 h-6 text-brand-500" />
-          Customer Directory
+        <h1 className="text-2xl font-bold text-surface-900 tracking-tight flex items-center gap-2.5" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="w-9 h-9 rounded-xl bg-brand-500/10 flex items-center justify-center">
+            <Users className="w-5 h-5 text-brand-500" />
+          </span>
+          Customers
         </h1>
         <p className="text-surface-500 text-sm mt-1">
           View your restaurant&apos;s regular client base. Customer records are automatically saved during storefront checkouts.
@@ -130,7 +132,7 @@ export default function CustomersPage() {
             placeholder="Search by name, phone or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-surface-200 bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 text-xs shadow-sm"
           />
         </div>
       </div>
