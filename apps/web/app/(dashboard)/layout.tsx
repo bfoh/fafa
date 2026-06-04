@@ -43,7 +43,7 @@ export default async function DashboardLayout({
   const tenantSlug = tenant?.slug || undefined;
 
   return (
-    <div className="min-h-[100dvh] bg-surface-50">
+    <div className="min-h-[100dvh] bg-canvas">
       {/* Desktop sidebar */}
       <Sidebar
         tenantName={tenantName}

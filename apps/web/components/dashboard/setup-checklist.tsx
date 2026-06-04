@@ -258,7 +258,7 @@ export default function SetupChecklist({
   const pct = Math.round((doneCount / steps.length) * 100);
 
   return (
-    <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden animate-fade-in">
+    <div className="bg-white rounded-2xl border border-hairline shadow-card overflow-hidden animate-fade-in">
       {/* Header */}
       <div className="p-5 border-b border-surface-100">
         <div className="flex items-center gap-2">

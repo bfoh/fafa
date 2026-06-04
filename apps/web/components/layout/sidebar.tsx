@@ -106,14 +106,14 @@ export function Sidebar({
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-surface-100">
+      <div className="p-5 border-b border-hairline">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={tenantName || 'Logo'}
-                className="w-9 h-9 rounded-xl object-cover"
+                className="w-9 h-9 rounded-xl object-cover ring-1 ring-black/5"
               />
             ) : (
               <div
@@ -226,7 +226,7 @@ export function Sidebar({
       </nav>
 
       {/* Sign Out */}
-      <div className="p-3 border-t border-surface-100">
+      <div className="p-3 border-t border-hairline">
         <button
           onClick={handleSignOut}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-error-500/10 hover:text-error-600 transition-all w-full group"
@@ -240,7 +240,7 @@ export function Sidebar({
 
   return (
     /* Desktop sidebar only — mobile navigation is handled by <MobileNav />. */
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-surface-100">
+    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-hairline">
       {sidebarContent}
     </aside>
   );

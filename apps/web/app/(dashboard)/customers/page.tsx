@@ -136,7 +136,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Directory table */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card overflow-hidden">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
             <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />

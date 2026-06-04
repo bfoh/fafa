@@ -224,7 +224,7 @@ export default async function DashboardPage() {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900">
+        <h1 className="text-2xl font-bold text-surface-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
           Today&apos;s Overview
         </h1>
         <p className="text-surface-500 mt-1">
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
           return (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl p-5 border border-surface-100 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-2xl p-5 border border-hairline shadow-card lift"
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-xl ${stat.bg}`}>
@@ -264,7 +264,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card">
         <div className="flex items-center justify-between p-5 border-b border-surface-100">
           <h2 className="text-lg font-semibold text-surface-900">
             Recent Orders
@@ -335,7 +335,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Reviews */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card">
         <div className="flex items-center justify-between p-5 border-b border-surface-100">
           <h2 className="text-lg font-semibold text-surface-900 flex items-center gap-2">
             Customer Reviews

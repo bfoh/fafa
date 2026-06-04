@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
           return (
             <div
               key={kpi.label}
-              className="bg-white rounded-2xl p-5 border border-surface-100 shadow-sm flex flex-col justify-between"
+              className="bg-white rounded-2xl p-5 border border-hairline shadow-card flex flex-col justify-between"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-xl ${kpi.bg}`}>

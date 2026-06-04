@@ -206,7 +206,7 @@ export default function PaymentsPage() {
           return (
             <div
               key={kpi.label}
-              className="bg-white rounded-2xl p-5 border border-surface-100 shadow-sm flex flex-col justify-between"
+              className="bg-white rounded-2xl p-5 border border-hairline shadow-card flex flex-col justify-between"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-xl ${kpi.bg}`}>
@@ -224,7 +224,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* Transactions Search and Tabs */}
-      <div className="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-hairline shadow-card overflow-hidden">
         <div className="p-4 border-b border-surface-100 flex flex-col md:flex-row gap-4 justify-between items-center bg-surface-50/50">
           {/* Tabs */}
           <div className="flex gap-1.5 p-1 bg-surface-200/50 rounded-xl w-full md:w-auto">

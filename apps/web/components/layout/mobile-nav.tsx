@@ -67,7 +67,7 @@ export function MobileNav({
   return (
     <>
       {/* ── Slim top app bar ── */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 glass border-b border-surface-100 pt-safe">
+      <header className="lg:hidden fixed top-0 inset-x-0 z-30 glass border-b border-hairline pt-safe">
         <div className="h-14 px-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             {logoUrl ? (
@@ -97,7 +97,7 @@ export function MobileNav({
       </header>
 
       {/* ── Bottom tab bar ── */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-surface-100 pb-safe">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-lg border-t border-hairline pb-safe">
         <div className="grid grid-cols-5 h-16">
           {primaryTabs.map((tab) => {
             const Icon = tab.icon;
@@ -134,7 +134,7 @@ export function MobileNav({
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-surface-300" />
             </div>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-surface-100">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-hairline">
               <h2 className="text-lg font-bold text-surface-900">More</h2>
               <button
                 onClick={() => setMoreOpen(false)}
