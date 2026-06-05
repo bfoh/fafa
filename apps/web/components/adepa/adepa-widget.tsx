@@ -105,8 +105,16 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     rec.lang = 'en-GH';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    rec.onresult = (e: SpeechResultLike) => setInput(e.results[0][0].transcript);
-    rec.onend = () => setListening(false);
+    let finalText = '';
+    rec.onresult = (e: SpeechResultLike) => {
+      finalText = e.results[0][0].transcript;
+      setInput(finalText);
+    };
+    rec.onend = () => {
+      setListening(false);
+      // Auto-send what was heard (transcript captured locally — setInput is async).
+      if (finalText.trim()) send(finalText);
+    };
     rec.onerror = () => setListening(false);
     setListening(true);
     rec.start();
