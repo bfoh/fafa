@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink, Mic } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '@/lib/utils/customer-prefs';
@@ -25,13 +24,11 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [cartN, setCartN] = useState(0);
-  const [added, setAdded] = useState<Record<string, boolean>>({});
   const [firstName, setFirstName] = useState('');
   const [usual, setUsual] = useState('');
   const [listening, setListening] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const convIdRef = useRef<string>('');
-  const router = useRouter();
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
@@ -77,34 +74,32 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     setInput('');
   }
 
-  // After adding, take the customer straight to the cart/checkout. They can
-  // tap back there to add more dishes from the kitchen's menu.
-  function goCheckout() {
-    if (!tenantSlug) return;
-    setAttribution(tenantSlug, convId());
+  // Stage the cart + record the funnel, then close the drawer. Navigation to
+  // checkout is driven by the enclosing <Link> (reliable from this layout-level
+  // component, where router.push did not navigate). Customer can tap back at
+  // checkout to add more dishes from the kitchen's menu.
+  function stageAdd(slug: string, item: Parameters<typeof addToCart>[1]) {
+    const n = addToCart(slug, item);
+    setCartN(n);
+    setAttribution(slug, convId());
+    pingOutcome(convId(), 'added_to_cart');
     pingOutcome(convId(), 'checkout');
     setOpen(false);
-    router.push(`/${tenantSlug}/checkout`);
   }
 
   function handleAdd(d: Dish) {
-    if (!tenantSlug) return;
-    const n = addToCart(tenantSlug, {
+    const slug = tenantSlug || d.tenantSlug || '';
+    if (!slug) return;
+    stageAdd(slug, {
       menuItemId: d.id, name: d.name, price: d.price, quantity: 1, options: [], imageUrl: d.image ?? null,
     });
-    setCartN(n);
-    pingOutcome(convId(), 'added_to_cart');
-    goCheckout();
   }
 
   function handleAddBowl(b: Bowl) {
     if (!tenantSlug) return;
-    const n = addToCart(tenantSlug, {
+    stageAdd(tenantSlug, {
       menuItemId: b.itemId, name: b.name, price: b.basePrice, quantity: 1, options: b.selected, imageUrl: null,
     });
-    setCartN(n);
-    pingOutcome(convId(), 'added_to_cart');
-    goCheckout();
   }
 
   function startVoice() {
@@ -222,18 +217,11 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                     <p className="text-[11px] text-surface-400 truncate">{d.tenantName}</p>
                                   )}
                                 </div>
-                                {tenantSlug ? (
-                                  d.isChopBar ? (
-                                    <Link href={`/${tenantSlug}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
-                                  ) : (
-                                    <button onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
-                                      {added[d.id] ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                      {added[d.id] ? 'Added' : 'Add'}
-                                    </button>
-                                  )
-                                ) : d.tenantSlug ? (
-                                  <Link href={`/${d.tenantSlug}?item=${d.id}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
-                                    Order <ExternalLink className="w-3.5 h-3.5" />
+                                {tenantSlug && d.isChopBar ? (
+                                  <Link href={`/${tenantSlug}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
+                                ) : (tenantSlug || d.tenantSlug) ? (
+                                  <Link href={`/${tenantSlug || d.tenantSlug}/checkout`} onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                    <Plus className="w-4 h-4" /> Add
                                   </Link>
                                 ) : null}
                               </div>
@@ -280,10 +268,9 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                               <p className="mt-1.5 text-[11px] text-amber-600">Not on the menu: {b.unmatched.join(', ')}</p>
                             )}
                             {tenantSlug && (
-                              <button onClick={() => handleAddBowl(b)} className="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
-                                {added[b.itemId] ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                {added[b.itemId] ? 'Added' : 'Add bowl'}
-                              </button>
+                              <Link href={`/${tenantSlug}/checkout`} onClick={() => handleAddBowl(b)} className="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                <Plus className="w-4 h-4" /> Add bowl
+                              </Link>
                             )}
                           </div>
                         );
