@@ -20,6 +20,11 @@ describe('parseMenuCsv', () => {
     expect(parseMenuCsv(csv)).toEqual([{ name: 'Waakye', price: 35, category: '' }]);
   });
 
+  it('reads an optional chop_bar column', () => {
+    const csv = 'name,price,category,chop_bar\nAssorted,20,Mains,yes';
+    expect(parseMenuCsv(csv)[0]).toEqual({ name: 'Assorted', price: 20, category: 'Mains', chopBar: true });
+  });
+
   it('exposes a template string', () => {
     expect(MENU_CSV_TEMPLATE.split('\n')[0]).toBe('name,price,category,description');
   });

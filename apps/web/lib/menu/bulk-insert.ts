@@ -5,6 +5,7 @@ export interface BulkRow {
   price: number;
   description?: string;
   category: string; // resolved category name (may be new)
+  chopBar?: boolean;
 }
 
 /**
@@ -66,6 +67,10 @@ export async function bulkInsertMenu(
     .maybeSingle();
   let sort = (lastItem?.sort_order ?? -1) + 1;
 
+  // Only set is_chop_bar if the column exists (008_chop_bar migration applied).
+  const { error: probe } = await supabase.from('menu_items').select('is_chop_bar').limit(1);
+  const hasChopBarColumn = !probe;
+
   const itemRows = clean.map((r) => ({
     tenant_id: tenantId,
     category_id: byName.get(r.category.trim().toLowerCase()) ?? fallbackId,
@@ -74,6 +79,7 @@ export async function bulkInsertMenu(
     price: r.price,
     is_available: true,
     sort_order: sort++,
+    ...(hasChopBarColumn ? { is_chop_bar: !!r.chopBar } : {}),
   }));
 
   const { error } = await supabase.from('menu_items').insert(itemRows);

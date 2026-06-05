@@ -2,7 +2,11 @@ export interface ParsedItem {
   name: string;
   price: number;
   description?: string;
+  chopBar?: boolean;
 }
+
+// A "(chop bar)" / "(chopbar)" / "[chop]" tag flags a build-your-own item.
+const CHOP_TAG = /\s*[([]\s*chop\s?bar?\s*[)\]]/i;
 export interface ParsedSection {
   category: string | null;
   items: ParsedItem[];
@@ -27,16 +31,18 @@ function extractPrice(line: string): { price: number; rest: string } | null {
   return { price, rest: before };
 }
 
-function cleanName(raw: string): { name: string; description?: string } {
+function cleanName(raw: string): { name: string; description?: string; chopBar?: boolean } {
+  const chopBar = CHOP_TAG.test(raw);
   const cleaned = raw
+    .replace(CHOP_TAG, ' ')
     .replace(/^[-•*\s]+/, '')
     .replace(/[₵$]|ghs|gh¢|cedis?/gi, '')
     .trim();
   const parts = cleaned.split(/\s+[-—:|]\s+/);
   if (parts.length >= 2) {
-    return { name: parts[0].trim(), description: parts.slice(1).join(' - ').trim() };
+    return { name: parts[0].trim(), description: parts.slice(1).join(' - ').trim(), chopBar: chopBar || undefined };
   }
-  return { name: cleaned };
+  return { name: cleaned, chopBar: chopBar || undefined };
 }
 
 export function parseMenuList(text: string, defaultCategory?: string): ParsedSection[] {
@@ -54,14 +60,13 @@ export function parseMenuList(text: string, defaultCategory?: string): ParsedSec
 
     const priced = extractPrice(line);
     if (priced && priced.rest) {
-      const { name, description } = cleanName(priced.rest);
+      const { name, description, chopBar } = cleanName(priced.rest);
       if (!name) continue; // price with no name → skip
       if (!current) ensureSection(defaultCategory ? titleCase(defaultCategory) : null);
-      current!.items.push(
-        description
-          ? { name, price: priced.price, description }
-          : { name, price: priced.price }
-      );
+      const item: ParsedItem = { name, price: priced.price };
+      if (description) item.description = description;
+      if (chopBar) item.chopBar = true;
+      current!.items.push(item);
     } else if (!priced) {
       // No price → a category header.
       ensureSection(titleCase(line));

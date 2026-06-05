@@ -39,6 +39,12 @@ describe('parseMenuList', () => {
     ]);
   });
 
+  it('flags a chop-bar item tagged (chop bar) and strips the tag', () => {
+    expect(parseMenuList('Assorted Rice (chop bar) 20')[0].items[0]).toEqual({
+      name: 'Assorted Rice', price: 20, chopBar: true,
+    });
+  });
+
   it('skips blank and nameless lines', () => {
     const out = parseMenuList('\n  \nJollof 45\n   99');
     expect(out).toEqual([{ category: null, items: [{ name: 'Jollof', price: 45 }] }]);

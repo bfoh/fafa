@@ -38,6 +38,7 @@ export function BulkImportSheet({
         price: it.price,
         description: it.description,
         category: s.category || defaultCategory,
+        chopBar: it.chopBar,
       }))
     );
   }, [pasteText, defaultCategory]);
@@ -77,6 +78,7 @@ export function BulkImportSheet({
       price: r.price,
       description: r.description,
       category: r.category || defaultCategory,
+      chopBar: r.chopBar,
     }));
     setRows(csvRows);
     setEdited(true);
@@ -159,7 +161,7 @@ export function BulkImportSheet({
           {tab === 'paste' && (
             <div className="space-y-2">
               <p className="text-xs text-surface-500">
-                One dish per line, e.g. <span className="font-mono">Jollof Rice 45</span>. A line with no price becomes a category.
+                One dish per line, e.g. <span className="font-mono">Jollof Rice 45</span>. A line with no price becomes a category. Add <span className="font-mono">(chop bar)</span> to a dish to make it build-your-own.
               </p>
               <textarea
                 value={pasteText}
@@ -229,12 +231,22 @@ export function BulkImportSheet({
                     <select
                       value={r.category}
                       onChange={(e) => updateRow(i, { category: e.target.value })}
-                      className="w-28 px-2 py-2 rounded-lg border border-hairline text-sm"
+                      className="w-24 px-2 py-2 rounded-lg border border-hairline text-sm"
                     >
                       {Array.from(new Set([r.category, ...categories.map((c) => c.name)])).filter(Boolean).map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
+                    <label className="flex items-center gap-1 text-[10px] font-semibold text-surface-500 shrink-0 cursor-pointer" title="Chop bar (build-your-own) — add options after">
+                      <input
+                        type="checkbox"
+                        checked={!!r.chopBar}
+                        onChange={(e) => updateRow(i, { chopBar: e.target.checked })}
+                        className="w-3.5 h-3.5 rounded"
+                        style={{ accentColor: '#FF6B35' }}
+                      />
+                      Chop
+                    </label>
                     <button onClick={() => removeRow(i)} className="p-2 text-surface-400 hover:text-error-600" aria-label="Remove">
                       <Trash2 className="w-4 h-4" />
                     </button>
