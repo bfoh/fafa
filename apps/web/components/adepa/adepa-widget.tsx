@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink, Mic } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
@@ -30,6 +31,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [listening, setListening] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const convIdRef = useRef<string>('');
+  const router = useRouter();
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
@@ -75,15 +77,24 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     setInput('');
   }
 
+  // After adding, take the customer straight to the cart/checkout. They can
+  // tap back there to add more dishes from the kitchen's menu.
+  function goCheckout() {
+    if (!tenantSlug) return;
+    setAttribution(tenantSlug, convId());
+    pingOutcome(convId(), 'checkout');
+    setOpen(false);
+    router.push(`/${tenantSlug}/checkout`);
+  }
+
   function handleAdd(d: Dish) {
     if (!tenantSlug) return;
     const n = addToCart(tenantSlug, {
       menuItemId: d.id, name: d.name, price: d.price, quantity: 1, options: [], imageUrl: d.image ?? null,
     });
     setCartN(n);
-    setAdded((p) => ({ ...p, [d.id]: true }));
-    setTimeout(() => setAdded((p) => ({ ...p, [d.id]: false })), 1500);
     pingOutcome(convId(), 'added_to_cart');
+    goCheckout();
   }
 
   function handleAddBowl(b: Bowl) {
@@ -92,9 +103,8 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       menuItemId: b.itemId, name: b.name, price: b.basePrice, quantity: 1, options: b.selected, imageUrl: null,
     });
     setCartN(n);
-    setAdded((p) => ({ ...p, [b.itemId]: true }));
-    setTimeout(() => setAdded((p) => ({ ...p, [b.itemId]: false })), 1500);
     pingOutcome(convId(), 'added_to_cart');
+    goCheckout();
   }
 
   function startVoice() {
@@ -208,7 +218,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{d.name}</p>
                                   <p className="text-xs font-bold text-brand-600">{formatGHS(d.price)}</p>
-                                  {!tenantSlug && d.tenantName && (
+                                  {d.tenantName && (
                                     <p className="text-[11px] text-surface-400 truncate">{d.tenantName}</p>
                                   )}
                                 </div>
