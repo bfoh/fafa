@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { X, Trash2, Download, ClipboardList, Upload, Camera, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ export function BulkImportSheet({
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [err, setErr] = useState('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const defaultCategory = categories[0]?.name || 'Main Dishes';
 
@@ -178,11 +180,19 @@ export function BulkImportSheet({
               <button onClick={downloadTemplate} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600">
                 <Download className="w-4 h-4" /> Download template
               </button>
+              <button
+                type="button"
+                onClick={() => csvInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-hairline text-surface-700 text-sm font-semibold press"
+              >
+                <Upload className="w-4 h-4" /> Choose CSV file
+              </button>
               <input
+                ref={csvInputRef}
                 type="file"
                 accept=".csv,text/csv"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
-                className="block w-full text-sm text-surface-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-600"
+                hidden
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); e.target.value = ''; }}
               />
             </div>
           )}
@@ -192,13 +202,20 @@ export function BulkImportSheet({
               <p className="text-xs text-surface-500">
                 Snap or upload a photo of a printed menu. We&apos;ll read the dishes and prices into the preview for you to check.
               </p>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={extracting}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-semibold press disabled:opacity-50"
+              >
+                <Camera className="w-4 h-4" /> Take or choose a photo
+              </button>
               <input
+                ref={photoInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhoto(f); }}
-                disabled={extracting}
-                className="block w-full text-sm text-surface-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-600 disabled:opacity-50"
+                hidden
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhoto(f); e.target.value = ''; }}
               />
               {extracting && (
                 <p className="inline-flex items-center gap-2 text-sm text-surface-500">
