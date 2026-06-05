@@ -4,11 +4,12 @@ import { buildSystemPrompt } from '@/lib/adepa/system-prompt';
 import { buildTools } from '@/lib/adepa/tools';
 import { isAdepaEnabled, ADEPA_MODEL } from '@/lib/adepa/config';
 import { rateLimit } from '@/lib/adepa/ratelimit';
+import { logTurn } from '@/lib/adepa/analytics';
 import type { AdepaContext } from '@/lib/adepa/types';
 
 export async function POST(req: Request) {
   if (!isAdepaEnabled()) {
-    return Response.json({ error: 'Adepa is not available yet.' }, { status: 503 });
+    return Response.json({ error: 'Fafa is not available yet.' }, { status: 503 });
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'anon';
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
     messages: UIMessage[];
     context?: AdepaContext;
     tenantSlug?: string;
+    conversationId?: string;
   };
   const supabase = createAdminClient();
 
@@ -31,13 +33,18 @@ export async function POST(req: Request) {
   if (body.tenantSlug) {
     const { data: t } = await supabase
       .from('tenants')
-      .select('id, name')
+      .select('id, name, adepa_local_voice')
       .eq('slug', body.tenantSlug)
       .eq('status', 'active')
       .maybeSingle();
     if (t) {
       tenantId = t.id;
-      ctx = { ...ctx, mode: 'storefront', tenantName: t.name };
+      ctx = {
+        ...ctx,
+        mode: 'storefront',
+        tenantName: t.name,
+        localVoice: Boolean(t.adepa_local_voice),
+      };
     }
   }
 
@@ -48,6 +55,21 @@ export async function POST(req: Request) {
     messages: modelMessages,
     tools: buildTools(supabase, tenantId),
     stopWhen: stepCountIs(5),
+    onFinish: ({ steps }) => {
+      // Best-effort observability — never blocks or breaks the stream.
+      if (!body.conversationId) return;
+      const toolsUsed = steps
+        .flatMap((s) => s.toolCalls ?? [])
+        .map((tc) => tc.toolName);
+      void logTurn(supabase, {
+        id: body.conversationId,
+        tenantId,
+        channel: 'web',
+        mode: ctx.mode,
+        model: ADEPA_MODEL,
+        toolsUsed,
+      });
+    },
   });
 
   return result.toUIMessageStreamResponse();

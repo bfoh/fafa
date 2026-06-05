@@ -7,21 +7,31 @@ export async function searchMenu(
 ) {
   let q = supabase
     .from('menu_items')
-    .select('*')
+    .select('*, tenants!inner(slug, name, status)')
     .eq('is_available', true)
+    .eq('tenants.status', 'active')
     .limit(8);
   if (tenantId) q = q.eq('tenant_id', tenantId);
   if (args.query) q = q.ilike('name', `%${args.query}%`);
   if (typeof args.maxPrice === 'number') q = q.lte('price', args.maxPrice);
   const { data } = await q;
-  return (data || []).map((d) => ({
-    id: d.id,
-    name: d.name,
+  return (data || []).map(mapDish);
+}
+
+// Shared dish shape — carries the restaurant so marketplace cards can show and
+// link to the kitchen that sells the dish.
+function mapDish(d: Record<string, unknown>) {
+  const t = d.tenants as { slug?: string; name?: string } | null;
+  return {
+    id: d.id as string,
+    name: d.name as string,
     price: Number(d.price),
-    description: d.description,
-    image: d.image_url,
-    isChopBar: (d as { is_chop_bar?: boolean }).is_chop_bar ?? false,
-  }));
+    description: (d.description as string) ?? null,
+    image: (d.image_url as string) ?? null,
+    isChopBar: (d.is_chop_bar as boolean) ?? false,
+    tenantSlug: t?.slug ?? null,
+    tenantName: t?.name ?? null,
+  };
 }
 
 export async function checkHours(supabase: SupabaseClient, tenantId: string) {
@@ -78,18 +88,12 @@ export async function findKitchens(
 export async function getRecommendations(supabase: SupabaseClient, tenantId: string | null) {
   let q = supabase
     .from('menu_items')
-    .select('*')
+    .select('*, tenants!inner(slug, name, status)')
     .eq('is_available', true)
+    .eq('tenants.status', 'active')
     .order('is_featured', { ascending: false })
     .limit(5);
   if (tenantId) q = q.eq('tenant_id', tenantId);
   const { data } = await q;
-  return (data || []).map((d) => ({
-    id: d.id,
-    name: d.name,
-    price: Number(d.price),
-    description: (d as { description?: string }).description ?? null,
-    image: (d as { image_url?: string }).image_url ?? null,
-    isChopBar: (d as { is_chop_bar?: boolean }).is_chop_bar ?? false,
-  }));
+  return (data || []).map(mapDish);
 }

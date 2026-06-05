@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { OrderTracker, type TrackedOrder, type HistoryEntry } from '@/components/storefront/order-tracker';
+import { AdepaConversion } from '@/components/adepa/adepa-conversion';
 import { verifyTransaction } from '@/lib/paystack/client';
 import { settlePaidOrder } from '@/lib/orders/settle';
 
@@ -67,16 +68,23 @@ export default async function OrderConfirmationPage({
     .single();
 
   return (
-    <OrderTracker
-      initialOrder={order as unknown as TrackedOrder}
-      initialHistory={(history as HistoryEntry[]) || []}
-      slug={slug}
-      tenant={{
-        name: tenant?.name || 'this restaurant',
-        phone: tenant?.phone || null,
-        whatsapp: tenant?.whatsapp || null,
-        primary_color: tenant?.primary_color || '#FF6B35',
-      }}
-    />
+    <>
+      <AdepaConversion
+        slug={slug}
+        orderNumber={order.order_number}
+        total={Number(order.total)}
+      />
+      <OrderTracker
+        initialOrder={order as unknown as TrackedOrder}
+        initialHistory={(history as HistoryEntry[]) || []}
+        slug={slug}
+        tenant={{
+          name: tenant?.name || 'this restaurant',
+          phone: tenant?.phone || null,
+          whatsapp: tenant?.whatsapp || null,
+          primary_color: tenant?.primary_color || '#FF6B35',
+        }}
+      />
+    </>
   );
 }

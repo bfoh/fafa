@@ -2,6 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as exec from './executor';
+import { customiseChopBar } from './chopbar';
 
 export function buildTools(supabase: SupabaseClient, tenantId: string | null) {
   return {
@@ -35,6 +36,15 @@ export function buildTools(supabase: SupabaseClient, tenantId: string | null) {
       description: 'Suggest popular dishes.',
       inputSchema: z.object({}),
       execute: async () => exec.getRecommendations(supabase, tenantId),
+    }),
+    customise_chop_bar: tool({
+      description:
+        "Build a chop-bar bowl from a plain-language request. Use when the customer describes a custom plate (e.g. 'banku with tilapia, extra pepper, no shito'). `item` is the chop-bar dish name (e.g. 'Chop Bar Bowl', 'Banku'); `request` is exactly what they want in it. Returns the grounded selection — only real options are chosen.",
+      inputSchema: z.object({
+        item: z.string().describe('The chop-bar dish to customise.'),
+        request: z.string().describe('The customer\'s plain-language bowl description.'),
+      }),
+      execute: async (a) => customiseChopBar(supabase, tenantId, a),
     }),
   };
 }
