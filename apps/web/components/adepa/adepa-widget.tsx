@@ -3,27 +3,37 @@
 import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Sparkles, X, Send, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink } from 'lucide-react';
+import { formatGHS } from '@/lib/utils/currency';
+import { addToCart, cartCount } from '@/lib/menu/cart-storage';
+import { loadLastOrder } from '@/lib/utils/customer-prefs';
 
 const QUICK_REPLIES = ["What's popular?", 'Something under ₵40', 'Are you open now?', 'Track my order'];
+
+interface Dish { id: string; name: string; price: number; description?: string | null; image?: string | null; isChopBar?: boolean }
+interface Kitchen { name: string; slug: string; deliveryFee: number; openNow?: boolean }
+interface OrderStatus { found: boolean; orderNumber?: string; status?: string; total?: number }
 
 export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [cartN, setCartN] = useState(0);
+  const [added, setAdded] = useState<Record<string, boolean>>({});
   const threadRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
   });
 
-  // Only render once we know Adepa is configured (dormant otherwise).
   useEffect(() => {
-    fetch('/api/adepa/config')
-      .then((r) => r.json())
-      .then((d) => setEnabled(Boolean(d.enabled)))
-      .catch(() => setEnabled(false));
+    fetch('/api/adepa/config').then((r) => r.json()).then((d) => setEnabled(Boolean(d.enabled))).catch(() => setEnabled(false));
   }, []);
+
+  useEffect(() => {
+    if (open && tenantSlug) setCartN(cartCount(tenantSlug));
+  }, [open, tenantSlug, messages]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
@@ -40,16 +50,30 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     setInput('');
   }
 
-  function textOf(m: (typeof messages)[number]): string {
-    return (m.parts || [])
-      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-      .map((p) => p.text)
-      .join('');
+  function handleAdd(d: Dish) {
+    if (!tenantSlug) return;
+    const n = addToCart(tenantSlug, {
+      menuItemId: d.id, name: d.name, price: d.price, quantity: 1, options: [], imageUrl: d.image ?? null,
+    });
+    setCartN(n);
+    setAdded((p) => ({ ...p, [d.id]: true }));
+    setTimeout(() => setAdded((p) => ({ ...p, [d.id]: false })), 1500);
+  }
+
+  function handleReorder() {
+    if (!tenantSlug) return;
+    const last = loadLastOrder(tenantSlug);
+    if (!last || !last.items.length) {
+      send('I want to reorder my last meal');
+      return;
+    }
+    let n = 0;
+    last.items.forEach((it) => { n = addToCart(tenantSlug, it); });
+    setCartN(n);
   }
 
   return (
     <>
-      {/* Floating action button */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
@@ -66,91 +90,138 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
         <>
           <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="fixed z-50 inset-x-0 bottom-0 md:inset-auto md:bottom-6 md:right-6 md:w-[400px] bg-white rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col max-h-[85dvh] md:max-h-[640px] md:h-[640px] animate-slide-up overflow-hidden">
-            {/* Header */}
-            <div
-              className="flex items-center gap-3 px-5 py-3.5 text-white shrink-0"
-              style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
-              </div>
+            <div className="flex items-center gap-3 px-5 py-3.5 text-white shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center"><Sparkles className="w-5 h-5" /></div>
               <div className="min-w-0 flex-1">
                 <p className="font-bold leading-tight">Adepa</p>
-                <p className="text-[11px] text-white/80 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" /> Your food concierge
-                </p>
+                <p className="text-[11px] text-white/80 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-300" /> Your food concierge</p>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15">
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setOpen(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15"><X className="w-5 h-5" /></button>
             </div>
 
-            {/* Thread */}
             <div ref={threadRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-canvas scrollbar-thin">
               {messages.length === 0 && (
                 <div className="text-center py-8">
-                  <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3">
-                    <Sparkles className="w-7 h-7 text-brand-500" />
-                  </div>
+                  <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3"><Sparkles className="w-7 h-7 text-brand-500" /></div>
                   <p className="font-semibold text-surface-900">Hi, I&apos;m Adepa 👋</p>
                   <p className="text-sm text-surface-500 mt-1">Ask me what&apos;s good, find a dish, or track an order.</p>
                 </div>
               )}
+
               {messages.map((m) => {
                 const mine = m.role === 'user';
-                const text = textOf(m);
-                if (!text) return null;
                 return (
-                  <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${
-                        mine ? 'text-white rounded-br-md' : 'bg-white border border-hairline shadow-sm text-surface-800 rounded-bl-md'
-                      }`}
-                      style={mine ? { backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' } : undefined}
-                    >
-                      {text}
-                    </div>
+                  <div key={m.id} className="space-y-2">
+                    {(m.parts || []).map((part, idx) => {
+                      if (part.type === 'text') {
+                        if (!part.text) return null;
+                        return (
+                          <div key={idx} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                            <div
+                              className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${mine ? 'text-white rounded-br-md' : 'bg-white border border-hairline shadow-sm text-surface-800 rounded-bl-md'}`}
+                              style={mine ? { backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' } : undefined}
+                            >
+                              {part.text}
+                            </div>
+                          </div>
+                        );
+                      }
+                      // Tool result cards (grounded data only).
+                      const p = part as { type: string; state?: string; output?: unknown };
+                      if (!p.type.startsWith('tool-') || p.state !== 'output-available') return null;
+
+                      if ((p.type === 'tool-search_menu' || p.type === 'tool-get_recommendations') && Array.isArray(p.output)) {
+                        const dishes = p.output as Dish[];
+                        if (!dishes.length) return null;
+                        return (
+                          <div key={idx} className="space-y-2">
+                            {dishes.map((d) => (
+                              <div key={d.id} className="flex items-center gap-3 bg-white border border-hairline rounded-2xl p-2.5 shadow-sm">
+                                {d.image ? (
+                                  <img src={d.image} alt={d.name} className="w-12 h-12 rounded-xl object-cover" />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">🍽️</div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-surface-900 truncate">{d.name}</p>
+                                  <p className="text-xs font-bold text-brand-600">{formatGHS(d.price)}</p>
+                                </div>
+                                {d.isChopBar ? (
+                                  <Link href={`/${tenantSlug}`} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
+                                ) : (
+                                  <button onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                    {added[d.id] ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                                    {added[d.id] ? 'Added' : 'Add'}
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      if (p.type === 'tool-track_order') {
+                        const o = p.output as OrderStatus;
+                        if (!o?.found) return null;
+                        return (
+                          <div key={idx} className="bg-white border border-hairline rounded-2xl p-3 shadow-sm text-sm">
+                            <p className="font-semibold text-surface-900">Order {o.orderNumber}</p>
+                            <p className="text-surface-600 capitalize">Status: {String(o.status).replace(/_/g, ' ')}</p>
+                            {typeof o.total === 'number' && <p className="text-xs text-surface-500 mt-0.5">{formatGHS(o.total)}</p>}
+                          </div>
+                        );
+                      }
+
+                      if (p.type === 'tool-find_kitchens' && Array.isArray(p.output)) {
+                        const kitchens = p.output as Kitchen[];
+                        if (!kitchens.length) return null;
+                        return (
+                          <div key={idx} className="space-y-2">
+                            {kitchens.map((k) => (
+                              <Link key={k.slug} href={`/${k.slug}`} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-surface-900 truncate">{k.name}</p>
+                                  <p className="text-xs text-surface-500">Delivery {formatGHS(k.deliveryFee)}{k.openNow === false ? ' · closed' : ''}</p>
+                                </div>
+                                <ExternalLink className="w-4 h-4 text-surface-400 shrink-0" />
+                              </Link>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
                 );
               })}
+
               {busy && (
-                <div className="flex justify-start">
-                  <div className="px-3.5 py-2.5 rounded-2xl bg-white border border-hairline">
-                    <Loader2 className="w-4 h-4 animate-spin text-surface-400" />
-                  </div>
-                </div>
+                <div className="flex justify-start"><div className="px-3.5 py-2.5 rounded-2xl bg-white border border-hairline"><Loader2 className="w-4 h-4 animate-spin text-surface-400" /></div></div>
               )}
             </div>
 
-            {/* Quick replies */}
+            {/* Cart bar */}
+            {cartN > 0 && tenantSlug && (
+              <Link href={`/${tenantSlug}/checkout`} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> {cartN} in cart</span>
+                <span>Checkout →</span>
+              </Link>
+            )}
+
             {messages.length === 0 && (
               <div className="px-4 pb-2 flex flex-wrap gap-2 shrink-0">
+                {tenantSlug && (
+                  <button onClick={handleReorder} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-600 press">Reorder my last</button>
+                )}
                 {QUICK_REPLIES.map((q) => (
-                  <button key={q} onClick={() => send(q)} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-100 text-surface-600 press">
-                    {q}
-                  </button>
+                  <button key={q} onClick={() => send(q)} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-100 text-surface-600 press">{q}</button>
                 ))}
               </div>
             )}
 
-            {/* Input */}
-            <form
-              onSubmit={(e) => { e.preventDefault(); send(input); }}
-              className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-hairline shrink-0"
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Adepa…"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
-              />
-              <button
-                type="submit"
-                disabled={busy || !input.trim()}
-                aria-label="Send"
-                className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40"
-                style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
-              >
+            <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-hairline shrink-0">
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Adepa…" className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+              <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <Send className="w-5 h-5" />
               </button>
             </form>
