@@ -206,7 +206,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                 </div>
                                 {tenantSlug ? (
                                   d.isChopBar ? (
-                                    <Link href={`/${tenantSlug}`} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
+                                    <Link href={`/${tenantSlug}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
                                   ) : (
                                     <button onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                                       {added[d.id] ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -214,7 +214,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                     </button>
                                   )
                                 ) : d.tenantSlug ? (
-                                  <Link href={`/${d.tenantSlug}?item=${d.id}`} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                  <Link href={`/${d.tenantSlug}?item=${d.id}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                                     Order <ExternalLink className="w-3.5 h-3.5" />
                                   </Link>
                                 ) : null}
@@ -277,7 +277,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                         return (
                           <div key={idx} className="space-y-2">
                             {kitchens.map((k) => (
-                              <Link key={k.slug} href={`/${k.slug}`} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
+                              <Link key={k.slug} href={`/${k.slug}`} onClick={() => setOpen(false)} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
                                 <div className="min-w-0">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{k.name}</p>
                                   <p className="text-xs text-surface-500">Delivery {formatGHS(k.deliveryFee)}{k.openNow === false ? ' · closed' : ''}</p>
@@ -301,7 +301,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
 
             {/* Cart bar */}
             {cartN > 0 && tenantSlug && (
-              <Link href={`/${tenantSlug}/checkout`} onClick={() => { setAttribution(tenantSlug, convId()); pingOutcome(convId(), 'checkout'); }} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+              <Link href={`/${tenantSlug}/checkout`} onClick={() => { setAttribution(tenantSlug, convId()); pingOutcome(convId(), 'checkout'); setOpen(false); }} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> {cartN} in cart</span>
                 <span>Checkout →</span>
               </Link>
