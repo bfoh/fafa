@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { X, Trash2, Download, ClipboardList, Upload } from 'lucide-react';
+import { X, Trash2, Download, ClipboardList, Upload, Camera, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { parseMenuList } from '@/lib/menu/parse-list';
 import { parseMenuCsv, MENU_CSV_TEMPLATE } from '@/lib/menu/parse-csv';
 import { bulkInsertMenu, type BulkRow } from '@/lib/menu/bulk-insert';
 
-type Tab = 'paste' | 'csv';
+type Tab = 'paste' | 'csv' | 'photo';
 
 export function BulkImportSheet({
   tenantId,
@@ -26,6 +26,7 @@ export function BulkImportSheet({
   const [rows, setRows] = useState<BulkRow[]>([]);
   const [edited, setEdited] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [err, setErr] = useState('');
 
   const defaultCategory = categories[0]?.name || 'Main Dishes';
@@ -81,6 +82,41 @@ export function BulkImportSheet({
     setEdited(true);
   }
 
+  async function handlePhoto(file: File) {
+    setExtracting(true);
+    setErr('');
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1]);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const res = await fetch('/api/menu/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: b64, mediaType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not read the menu.');
+      const mapped: BulkRow[] = (data.sections || []).flatMap(
+        (s: { category: string | null; items: { name: string; price: number; description?: string }[] }) =>
+          (s.items || []).map((it) => ({
+            name: it.name,
+            price: Number(it.price) || 0,
+            description: it.description || undefined,
+            category: s.category || defaultCategory,
+          }))
+      );
+      setRows(mapped);
+      setEdited(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not read the menu.');
+    } finally {
+      setExtracting(false);
+    }
+  }
+
   async function handleSave() {
     setSaving(true);
     setErr('');
@@ -108,7 +144,7 @@ export function BulkImportSheet({
 
         {/* Tabs */}
         <div className="flex gap-2 px-5 pt-3 shrink-0">
-          {([['paste', 'Paste a list', ClipboardList], ['csv', 'Upload CSV', Upload]] as const).map(([key, label, Icon]) => (
+          {([['paste', 'Paste', ClipboardList], ['csv', 'Upload', Upload], ['photo', 'Photo', Camera]] as const).map(([key, label, Icon]) => (
             <button
               key={key}
               onClick={() => { setTab(key); setEdited(false); }}
@@ -146,6 +182,27 @@ export function BulkImportSheet({
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }}
                 className="block w-full text-sm text-surface-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-600"
               />
+            </div>
+          )}
+
+          {tab === 'photo' && (
+            <div className="space-y-3">
+              <p className="text-xs text-surface-500">
+                Snap or upload a photo of a printed menu. We&apos;ll read the dishes and prices into the preview for you to check.
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhoto(f); }}
+                disabled={extracting}
+                className="block w-full text-sm text-surface-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-600 disabled:opacity-50"
+              />
+              {extracting && (
+                <p className="inline-flex items-center gap-2 text-sm text-surface-500">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Reading your menu…
+                </p>
+              )}
             </div>
           )}
 
