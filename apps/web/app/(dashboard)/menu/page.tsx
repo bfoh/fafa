@@ -19,6 +19,7 @@ import {
   ChevronDown,
   UtensilsCrossed,
 } from 'lucide-react';
+import { BulkImportSheet } from '@/components/menu/bulk-import-sheet';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
 /* ─── Types ─────────────────────────────────────────────── */
@@ -286,6 +287,7 @@ export default function MenuPage() {
   // Modals
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   // Category Form
@@ -765,6 +767,12 @@ export default function MenuPage() {
             Manage Categories
           </button>
           <button
+            onClick={() => setBulkOpen(true)}
+            className="px-4 py-2 border border-hairline text-surface-700 font-semibold rounded-xl text-sm hover:bg-surface-50 transition-colors"
+          >
+            Add many
+          </button>
+          <button
             onClick={openNewItemModal}
             className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl text-sm flex items-center gap-2 transition-all active:scale-[0.98]"
           >
@@ -773,6 +781,15 @@ export default function MenuPage() {
           </button>
         </div>
       </div>
+
+      {bulkOpen && tenantId && (
+        <BulkImportSheet
+          tenantId={tenantId}
+          categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+          onClose={() => setBulkOpen(false)}
+          onDone={() => { setBulkOpen(false); fetchMenuData(tenantId); }}
+        />
+      )}
 
       {/* Main layout */}
       <div className="grid lg:grid-cols-4 gap-6">
