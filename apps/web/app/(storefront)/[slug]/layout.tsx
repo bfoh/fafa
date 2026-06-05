@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MessageCircle, Star } from 'lucide-react';
 import { BrandingCache } from '@/components/storefront/branding-cache';
+import { AdepaWidget } from '@/components/adepa/adepa-widget';
 import { waLink } from '@/lib/utils/whatsapp';
 
 function adjustLightness(hex: string, factor: number): string {
@@ -157,6 +158,9 @@ export default async function StorefrontLayout({
           </Link>
         </div>
       </footer>
+
+      {/* AI concierge — self-hides until configured */}
+      <AdepaWidget tenantSlug={slug} />
     </div>
   );
 }
