@@ -214,7 +214,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                     </button>
                                   )
                                 ) : d.tenantSlug ? (
-                                  <Link href={`/${d.tenantSlug}`} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                  <Link href={`/${d.tenantSlug}?item=${d.id}`} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                                     Order <ExternalLink className="w-3.5 h-3.5" />
                                   </Link>
                                 ) : null}

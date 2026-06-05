@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CartProvider, useCart } from '@/hooks/use-cart';
 import { formatGHS } from '@/lib/utils/currency';
 import { Plus, Minus, ShoppingBag, X, ArrowRight, RotateCcw } from 'lucide-react';
@@ -109,7 +109,27 @@ function MenuContent({
   const [activeChopBarItem, setActiveChopBarItem] = useState<MenuItemData | null>(null);
   const [categories, setCategories] = useState(initialCategories);
   const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const deepLinkDone = useRef(false);
   const supabase = createBrowserClient();
+
+  // Deep link from Fafa: /[slug]?item=<id> jumps straight to that dish —
+  // scrolls to it, highlights it, and opens the customizer for chop-bar items.
+  useEffect(() => {
+    if (deepLinkDone.current) return;
+    const itemId = new URLSearchParams(window.location.search).get('item');
+    if (!itemId) return;
+    const found = categories.flatMap((c) => c.menu_items).find((m) => m.id === itemId);
+    if (!found) return; // menu may still be loading — try again on next render
+    deepLinkDone.current = true;
+    setHighlightId(itemId);
+    if (found.is_chop_bar) setActiveChopBarItem(found);
+    requestAnimationFrame(() => {
+      document.getElementById(`item-${itemId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    const t = setTimeout(() => setHighlightId(null), 2600);
+    return () => clearTimeout(t);
+  }, [categories]);
 
   // Pull this device's last order for one-tap reorder.
   useEffect(() => {
@@ -244,7 +264,9 @@ function MenuContent({
               {cat.menu_items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex gap-3.5 p-3 bg-white rounded-2xl border border-hairline shadow-card lift animate-fade-in"
+                  id={`item-${item.id}`}
+                  className="flex gap-3.5 p-3 bg-white rounded-2xl border border-hairline shadow-card lift animate-fade-in scroll-mt-28 transition-shadow duration-500"
+                  style={highlightId === item.id ? { boxShadow: `0 0 0 2px ${tenant.primary_color}, 0 8px 24px ${tenant.primary_color}33` } : undefined}
                 >
                   {/* Image */}
                   {item.image_url ? (
