@@ -4,16 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
-import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink, Mic } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
-import { loadLastOrder } from '@/lib/utils/customer-prefs';
+import { loadLastOrder, loadCustomer } from '@/lib/utils/customer-prefs';
 
 const QUICK_REPLIES = ["What's popular?", 'Something under ₵40', 'Are you open now?', 'Track my order'];
 
 interface Dish { id: string; name: string; price: number; description?: string | null; image?: string | null; isChopBar?: boolean }
 interface Kitchen { name: string; slug: string; deliveryFee: number; openNow?: boolean }
 interface OrderStatus { found: boolean; orderNumber?: string; status?: string; total?: number }
+interface SpeechResultLike { results: Array<Array<{ transcript: string }>> }
+interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: () => void; start: () => void }
 
 export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -21,6 +23,9 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [input, setInput] = useState('');
   const [cartN, setCartN] = useState(0);
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [firstName, setFirstName] = useState('');
+  const [usual, setUsual] = useState('');
+  const [listening, setListening] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status } = useChat({
@@ -34,6 +39,17 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   useEffect(() => {
     if (open && tenantSlug) setCartN(cartCount(tenantSlug));
   }, [open, tenantSlug, messages]);
+
+  // Personalisation from this device (returning customer + last order).
+  useEffect(() => {
+    if (!open) return;
+    const c = loadCustomer();
+    if (c?.name) setFirstName(c.name.trim().split(/\s+/)[0]);
+    if (tenantSlug) {
+      const last = loadLastOrder(tenantSlug);
+      if (last?.items?.length) setUsual(last.items[0].name);
+    }
+  }, [open, tenantSlug]);
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
@@ -58,6 +74,21 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     setCartN(n);
     setAdded((p) => ({ ...p, [d.id]: true }));
     setTimeout(() => setAdded((p) => ({ ...p, [d.id]: false })), 1500);
+  }
+
+  function startVoice() {
+    const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!SR) { send('I want to talk — voice not supported on this device'); return; }
+    const rec = new SR();
+    rec.lang = 'en-GH';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onresult = (e: SpeechResultLike) => setInput(e.results[0][0].transcript);
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    setListening(true);
+    rec.start();
   }
 
   function handleReorder() {
@@ -103,8 +134,10 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3"><Sparkles className="w-7 h-7 text-brand-500" /></div>
-                  <p className="font-semibold text-surface-900">Hi, I&apos;m Adepa 👋</p>
-                  <p className="text-sm text-surface-500 mt-1">Ask me what&apos;s good, find a dish, or track an order.</p>
+                  <p className="font-semibold text-surface-900">{firstName ? `Welcome back, ${firstName} 👋` : "Hi, I'm Adepa 👋"}</p>
+                  <p className="text-sm text-surface-500 mt-1">
+                    {usual ? `Want the usual (${usual}), or something new?` : "Ask me what's good, find a dish, or track an order."}
+                  </p>
                 </div>
               )}
 
@@ -210,8 +243,8 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
 
             {messages.length === 0 && (
               <div className="px-4 pb-2 flex flex-wrap gap-2 shrink-0">
-                {tenantSlug && (
-                  <button onClick={handleReorder} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-600 press">Reorder my last</button>
+                {tenantSlug && usual && (
+                  <button onClick={handleReorder} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-600 press">Order the usual</button>
                 )}
                 {QUICK_REPLIES.map((q) => (
                   <button key={q} onClick={() => send(q)} className="px-3 py-1.5 rounded-full text-xs font-semibold bg-surface-100 text-surface-600 press">{q}</button>
@@ -220,7 +253,10 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
             )}
 
             <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-hairline shrink-0">
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Adepa…" className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+              <button type="button" onClick={startVoice} aria-label="Speak" className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : 'bg-surface-100 text-surface-500'}`}>
+                <Mic className={`w-5 h-5 ${listening ? 'animate-pulse' : ''}`} />
+              </button>
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? 'Listening…' : 'Ask Adepa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
               <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <Send className="w-5 h-5" />
               </button>

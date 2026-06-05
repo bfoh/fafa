@@ -6,6 +6,7 @@ import HeroSearch from '@/components/marketplace/hero-search';
 import CuisineChips from '@/components/marketplace/cuisine-chips';
 import KitchenGrid from '@/components/marketplace/kitchen-grid';
 import { MarketplaceTabBar } from '@/components/marketplace/marketplace-tab-bar';
+import { AdepaWidget } from '@/components/adepa/adepa-widget';
 import type {
   KitchenResult,
   MenuPreview,
@@ -278,6 +279,7 @@ export default async function HomePage({
       </div>
 
       <MarketplaceTabBar />
+      <AdepaWidget />
     </div>
   );
 }
