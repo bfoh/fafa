@@ -9,6 +9,7 @@ import {
   Bell,
   SlidersHorizontal,
   CreditCard,
+  Sparkles,
 } from 'lucide-react';
 
 const tabs = [
@@ -36,6 +37,11 @@ const tabs = [
     label: 'Notifications History',
     href: '/settings/notifications',
     icon: Bell,
+  },
+  {
+    label: 'AI Concierge',
+    href: '/settings/adepa',
+    icon: Sparkles,
   },
 ];
 

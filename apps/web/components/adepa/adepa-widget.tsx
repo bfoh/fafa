@@ -4,16 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
-import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, Check, ExternalLink, Mic } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '@/lib/utils/customer-prefs';
+import { getConversationId, setAttribution, pingOutcome } from '@/lib/adepa/session';
 
-const QUICK_REPLIES = ["What's popular?", 'Something under ₵40', 'Are you open now?', 'Track my order'];
+const QUICK_REPLIES = ["What's popular?", 'Build me a bowl', 'Are you open now?', 'Track my order'];
 
-interface Dish { id: string; name: string; price: number; description?: string | null; image?: string | null; isChopBar?: boolean }
+interface Dish { id: string; name: string; price: number; description?: string | null; image?: string | null; isChopBar?: boolean; tenantSlug?: string | null; tenantName?: string | null }
 interface Kitchen { name: string; slug: string; deliveryFee: number; openNow?: boolean }
 interface OrderStatus { found: boolean; orderNumber?: string; status?: string; total?: number }
+interface Bowl { itemId: string; name: string; basePrice: number; selected: Array<{ name: string; priceModifier: number }>; total: number; unmatched: string[] }
 interface SpeechResultLike { results: Array<Array<{ transcript: string }>> }
 interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: () => void; start: () => void }
 
@@ -22,15 +24,21 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [cartN, setCartN] = useState(0);
-  const [added, setAdded] = useState<Record<string, boolean>>({});
   const [firstName, setFirstName] = useState('');
   const [usual, setUsual] = useState('');
   const [listening, setListening] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const convIdRef = useRef<string>('');
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
   });
+
+  // Stable per-session conversation id (lazily created on the client).
+  function convId(): string {
+    if (!convIdRef.current) convIdRef.current = getConversationId();
+    return convIdRef.current;
+  }
 
   useEffect(() => {
     fetch('/api/adepa/config').then((r) => r.json()).then((d) => setEnabled(Boolean(d.enabled))).catch(() => setEnabled(false));
@@ -62,18 +70,36 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   function send(text: string) {
     const t = text.trim();
     if (!t || busy) return;
-    sendMessage({ text: t });
+    sendMessage({ text: t }, { body: { conversationId: convId() } });
     setInput('');
   }
 
+  // Stage the cart + record the funnel, then close the drawer. Navigation to
+  // checkout is driven by the enclosing <Link> (reliable from this layout-level
+  // component, where router.push did not navigate). Customer can tap back at
+  // checkout to add more dishes from the kitchen's menu.
+  function stageAdd(slug: string, item: Parameters<typeof addToCart>[1]) {
+    const n = addToCart(slug, item);
+    setCartN(n);
+    setAttribution(slug, convId());
+    pingOutcome(convId(), 'added_to_cart');
+    pingOutcome(convId(), 'checkout');
+    setOpen(false);
+  }
+
   function handleAdd(d: Dish) {
-    if (!tenantSlug) return;
-    const n = addToCart(tenantSlug, {
+    const slug = tenantSlug || d.tenantSlug || '';
+    if (!slug) return;
+    stageAdd(slug, {
       menuItemId: d.id, name: d.name, price: d.price, quantity: 1, options: [], imageUrl: d.image ?? null,
     });
-    setCartN(n);
-    setAdded((p) => ({ ...p, [d.id]: true }));
-    setTimeout(() => setAdded((p) => ({ ...p, [d.id]: false })), 1500);
+  }
+
+  function handleAddBowl(b: Bowl) {
+    if (!tenantSlug) return;
+    stageAdd(tenantSlug, {
+      menuItemId: b.itemId, name: b.name, price: b.basePrice, quantity: 1, options: b.selected, imageUrl: null,
+    });
   }
 
   function startVoice() {
@@ -84,8 +110,16 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     rec.lang = 'en-GH';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-    rec.onresult = (e: SpeechResultLike) => setInput(e.results[0][0].transcript);
-    rec.onend = () => setListening(false);
+    let finalText = '';
+    rec.onresult = (e: SpeechResultLike) => {
+      finalText = e.results[0][0].transcript;
+      setInput(finalText);
+    };
+    rec.onend = () => {
+      setListening(false);
+      // Auto-send what was heard (transcript captured locally — setInput is async).
+      if (finalText.trim()) send(finalText);
+    };
     rec.onerror = () => setListening(false);
     setListening(true);
     rec.start();
@@ -101,6 +135,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     let n = 0;
     last.items.forEach((it) => { n = addToCart(tenantSlug, it); });
     setCartN(n);
+    pingOutcome(convId(), 'added_to_cart');
   }
 
   return (
@@ -108,7 +143,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          aria-label="Chat with Adepa"
+          aria-label="Chat with Fafa"
           className="fixed z-40 bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 md:bottom-6 w-14 h-14 rounded-full text-white shadow-xl shadow-black/20 press flex items-center justify-center"
           style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
         >
@@ -124,7 +159,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
             <div className="flex items-center gap-3 px-5 py-3.5 text-white shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center"><Sparkles className="w-5 h-5" /></div>
               <div className="min-w-0 flex-1">
-                <p className="font-bold leading-tight">Adepa</p>
+                <p className="font-bold leading-tight">Fafa</p>
                 <p className="text-[11px] text-white/80 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-300" /> Your food concierge</p>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15"><X className="w-5 h-5" /></button>
@@ -134,7 +169,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3"><Sparkles className="w-7 h-7 text-brand-500" /></div>
-                  <p className="font-semibold text-surface-900">{firstName ? `Welcome back, ${firstName} 👋` : "Hi, I'm Adepa 👋"}</p>
+                  <p className="font-semibold text-surface-900">{firstName ? `Welcome back, ${firstName} 👋` : "Hi, I'm Fafa 👋"}</p>
                   <p className="text-sm text-surface-500 mt-1">
                     {usual ? `Want the usual (${usual}), or something new?` : "Ask me what's good, find a dish, or track an order."}
                   </p>
@@ -178,15 +213,17 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{d.name}</p>
                                   <p className="text-xs font-bold text-brand-600">{formatGHS(d.price)}</p>
+                                  {d.tenantName && (
+                                    <p className="text-[11px] text-surface-400 truncate">{d.tenantName}</p>
+                                  )}
                                 </div>
-                                {d.isChopBar ? (
-                                  <Link href={`/${tenantSlug}`} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
-                                ) : (
-                                  <button onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
-                                    {added[d.id] ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                                    {added[d.id] ? 'Added' : 'Add'}
-                                  </button>
-                                )}
+                                {tenantSlug && d.isChopBar ? (
+                                  <Link href={`/${tenantSlug}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
+                                ) : (tenantSlug || d.tenantSlug) ? (
+                                  <Link href={`/${tenantSlug || d.tenantSlug}/checkout`} onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                    <Plus className="w-4 h-4" /> Add
+                                  </Link>
+                                ) : null}
                               </div>
                             ))}
                           </div>
@@ -205,13 +242,47 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                         );
                       }
 
+                      if (p.type === 'tool-customise_chop_bar') {
+                        const r = p.output as { found?: boolean; bowl?: Bowl };
+                        if (!r?.found || !r.bowl) return null;
+                        const b = r.bowl;
+                        return (
+                          <div key={idx} className="bg-white border border-hairline rounded-2xl p-3 shadow-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-bold text-surface-900">{b.name}</p>
+                              <p className="text-sm font-bold text-brand-600">{formatGHS(b.total)}</p>
+                            </div>
+                            {b.selected.length > 0 ? (
+                              <ul className="mt-1.5 space-y-0.5">
+                                {b.selected.map((o, i) => (
+                                  <li key={i} className="flex items-center justify-between text-xs text-surface-600">
+                                    <span>· {o.name}</span>
+                                    <span className="text-surface-400">{o.priceModifier > 0 ? `+${formatGHS(o.priceModifier)}` : ''}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="mt-1 text-xs text-surface-400">Base bowl — tell me what to add.</p>
+                            )}
+                            {b.unmatched.length > 0 && (
+                              <p className="mt-1.5 text-[11px] text-amber-600">Not on the menu: {b.unmatched.join(', ')}</p>
+                            )}
+                            {tenantSlug && (
+                              <Link href={`/${tenantSlug}/checkout`} onClick={() => handleAddBowl(b)} className="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                                <Plus className="w-4 h-4" /> Add bowl
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      }
+
                       if (p.type === 'tool-find_kitchens' && Array.isArray(p.output)) {
                         const kitchens = p.output as Kitchen[];
                         if (!kitchens.length) return null;
                         return (
                           <div key={idx} className="space-y-2">
                             {kitchens.map((k) => (
-                              <Link key={k.slug} href={`/${k.slug}`} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
+                              <Link key={k.slug} href={`/${k.slug}`} onClick={() => setOpen(false)} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
                                 <div className="min-w-0">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{k.name}</p>
                                   <p className="text-xs text-surface-500">Delivery {formatGHS(k.deliveryFee)}{k.openNow === false ? ' · closed' : ''}</p>
@@ -235,7 +306,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
 
             {/* Cart bar */}
             {cartN > 0 && tenantSlug && (
-              <Link href={`/${tenantSlug}/checkout`} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+              <Link href={`/${tenantSlug}/checkout`} onClick={() => { setAttribution(tenantSlug, convId()); pingOutcome(convId(), 'checkout'); setOpen(false); }} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> {cartN} in cart</span>
                 <span>Checkout →</span>
               </Link>
@@ -256,7 +327,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               <button type="button" onClick={startVoice} aria-label="Speak" className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : 'bg-surface-100 text-surface-500'}`}>
                 <Mic className={`w-5 h-5 ${listening ? 'animate-pulse' : ''}`} />
               </button>
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? 'Listening…' : 'Ask Adepa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? 'Listening…' : 'Ask Fafa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
               <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <Send className="w-5 h-5" />
               </button>
