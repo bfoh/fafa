@@ -27,6 +27,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [firstName, setFirstName] = useState('');
   const [usual, setUsual] = useState('');
   const [listening, setListening] = useState(false);
+  const [handsFree, setHandsFree] = useState(false);
   const [voiceErr, setVoiceErr] = useState('');
   const [speakOn, setSpeakOn] = useState(true);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -34,6 +35,9 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const spokenRef = useRef<Set<string>>(new Set());
   const primedRef = useRef(false);
+  const handsFreeRef = useRef(false); // continuous voice conversation
+  const openRef = useRef(false);
+  const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
@@ -73,10 +77,61 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       if (!synth) return;
       synth.cancel(); // drop any queued/earlier utterance
       const u = new SpeechSynthesisUtterance(speakable(text));
-      u.lang = 'en-GB';
+      const v = voiceRef.current;
+      if (v) u.voice = v;
+      u.lang = v?.lang || 'en-GH';
       u.rate = 1.02;
+      u.pitch = 1.12; // a touch higher — warmer, more feminine
+      // After Fafa finishes speaking, resume listening (hands-free convo).
+      u.onend = () => maybeRelisten();
       synth.speak(u);
     } catch { /* ignore */ }
+  }
+
+  // Choose a warm female English voice, preferring West-African / Ghanaian accents.
+  // Voice names vary wildly across OS/browser; this covers macOS, iOS, Windows, Chrome, Android.
+  function chooseVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    if (!voices.length) return null;
+    // Broad pattern: known female voice names across platforms.
+    const female = (v: SpeechSynthesisVoice) =>
+      /female|woman|samantha|karen|tessa|moira|fiona|serena|amira|zira|aria|sonia|libby|nora|joana|ava|allison|victoria|isha|stephanie|susan|veena|rishi|google uk english female|google us english/i.test(v.name)
+      && !/male(?!.*female)/i.test(v.name); // exclude "male" unless also "female"
+    // "Isha" on macOS is a warm West-African / Ghanaian-accented English voice — ideal.
+    const isIsha = (v: SpeechSynthesisVoice) => /isha/i.test(v.name) && /^en/i.test(v.lang);
+    const byLang = (re: RegExp) =>
+      voices.find((v) => re.test(v.lang) && female(v)) || voices.find((v) => re.test(v.lang));
+    return (
+      // 1. Best match: Isha (macOS West-African voice)
+      voices.find(isIsha) ||
+      // 2. Any en-GH female voice
+      byLang(/^en[-_]GH/i) ||
+      // 3. en-NG (Nigeria — closest common West-African accent)
+      byLang(/^en[-_]NG/i) ||
+      // 4. Any English female voice
+      voices.find((v) => /^en/i.test(v.lang) && female(v)) ||
+      // 5. en-GB fallback (British)
+      byLang(/^en[-_]GB/i) ||
+      // 6. Any English voice
+      byLang(/^en/i) ||
+      // 7. Last resort
+      voices[0] ||
+      null
+    );
+  }
+
+  // Resume listening after a reply, once Fafa stops talking (hands-free mode).
+  function maybeRelisten() {
+    if (!handsFreeRef.current || !openRef.current || recRef.current) return;
+    if (typeof window !== 'undefined' && window.speechSynthesis?.speaking) {
+      setTimeout(maybeRelisten, 400); // still talking — wait
+      return;
+    }
+    beginListen();
+  }
+
+  function setHF(v: boolean) {
+    handsFreeRef.current = v;
+    setHandsFree(v);
   }
 
   function toggleSpeak() {
@@ -97,22 +152,48 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     } catch { /* ignore */ }
   }, []);
 
-  // Read Fafa's replies aloud once each turn finishes (text-to-speech).
+  // Load + pick the spoken voice (voices arrive async on most browsers).
   useEffect(() => {
-    if (!speakOn || !open) return;
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const load = () => { voiceRef.current = chooseVoice(window.speechSynthesis.getVoices()); };
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => { try { window.speechSynthesis.onvoiceschanged = null; } catch { /* ignore */ } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep openRef in sync; tearing down voice when the drawer closes.
+  useEffect(() => {
+    openRef.current = open;
+    if (!open) {
+      setHF(false);
+      setListening(false);
+      if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
+      try { recRef.current?.stop(); recRef.current = null; } catch { /* ignore */ }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // When a turn finishes: speak the reply (which then resumes listening), or —
+  // if muted but hands-free — just resume listening after a short beat.
+  useEffect(() => {
+    if (!open) return;
     if (status === 'submitted' || status === 'streaming') return; // wait until fully streamed
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'assistant') return;
     if (spokenRef.current.has(last.id)) return;
+    spokenRef.current.add(last.id);
     const text = (last.parts || [])
       .filter((p): p is { type: 'text'; text: string } => p.type === 'text' && Boolean((p as { text?: string }).text))
       .map((p) => p.text)
       .join(' ')
       .trim();
-    if (!text) return;
-    spokenRef.current.add(last.id);
-    speak(text);
+    const canTTS = typeof window !== 'undefined' && 'speechSynthesis' in window;
+    if (speakOn && canTTS && text) {
+      speak(text); // maybeRelisten() fires on utterance end
+    } else if (handsFreeRef.current) {
+      setTimeout(maybeRelisten, 600);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, status, speakOn, open]);
 
@@ -175,16 +256,26 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     });
   }
 
-  function startVoice() {
+  // Mic button: toggles the hands-free conversation on/off.
+  function onMicTap() {
     primeSpeech();
-    // Already listening → stop (and let onresult/onend resolve).
     if (recRef.current) {
+      // Listening → user wants to stop the whole conversation loop.
+      setHF(false);
       try { recRef.current.stop(); } catch { /* ignore */ }
       return;
     }
+    setHF(true);
+    beginListen();
+  }
+
+  // Start one listening turn. The conversation loop is driven by maybeRelisten()
+  // after each reply, so this only handles a single capture.
+  function beginListen() {
+    if (recRef.current) return; // already listening
     const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
     const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR) { setVoiceErr('Voice not supported here — type instead.'); return; }
+    if (!SR) { setVoiceErr('Voice not supported here — type instead.'); setHF(false); return; }
 
     let rec: SpeechRecognitionLike;
     try { rec = new SR(); } catch { setVoiceErr('Could not start voice.'); return; }
@@ -215,8 +306,17 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     rec.onerror = (ev?: { error?: string }) => {
       setListening(false);
       recRef.current = null;
-      if (ev?.error && ev.error !== 'no-speech' && ev.error !== 'aborted') {
-        setVoiceErr(ev.error === 'not-allowed' ? 'Mic blocked — enable it in settings.' : 'Voice error — try again.');
+      const err = ev?.error;
+      if (err === 'no-speech' || err === 'aborted') {
+        // In hands-free mode, silence is normal — just keep listening.
+        if (handsFreeRef.current && openRef.current) {
+          setTimeout(() => beginListen(), 300);
+        }
+        return;
+      }
+      if (err) {
+        setHF(false);
+        setVoiceErr(err === 'not-allowed' ? 'Mic blocked — enable it in settings.' : 'Voice error — try again.');
       }
     };
     rec.onend = () => {
@@ -434,10 +534,10 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               <p className="px-4 pt-1 text-[11px] text-error-600 shrink-0">{voiceErr}</p>
             )}
             <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-hairline shrink-0">
-              <button type="button" onClick={startVoice} aria-label={listening ? 'Stop' : 'Speak'} className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : 'bg-surface-100 text-surface-500'}`}>
-                <Mic className={`w-5 h-5 ${listening ? 'animate-pulse' : ''}`} />
+              <button type="button" onClick={onMicTap} aria-label={listening ? 'Stop listening' : handsFree ? 'Stop conversation' : 'Start voice conversation'} className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : handsFree ? 'bg-brand-500/10 text-brand-600 ring-2 ring-brand-500/30' : 'bg-surface-100 text-surface-500'}`}>
+                <Mic className={`w-5 h-5 ${listening ? 'animate-pulse' : handsFree ? 'animate-pulse' : ''}`} />
               </button>
-              <input value={input} onChange={(e) => { setInput(e.target.value); if (voiceErr) setVoiceErr(''); }} placeholder={listening ? 'Listening…' : 'Ask Fafa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+              <input value={input} onChange={(e) => { setInput(e.target.value); if (voiceErr) setVoiceErr(''); }} placeholder={listening ? 'Listening…' : handsFree && busy ? 'Fafa is thinking…' : handsFree ? 'Conversation active…' : 'Ask Fafa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
               <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <Send className="w-5 h-5" />
               </button>
