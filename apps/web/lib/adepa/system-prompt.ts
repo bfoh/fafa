@@ -17,7 +17,7 @@ export function buildSystemPrompt(ctx: AdepaContext): string {
     );
   } else {
     lines.push(
-      "ORDERING: When you suggest dishes, they appear as cards with an Add button, then a Checkout bar. Invite the customer to add their picks and check out. You don't take payment — the checkout page handles delivery and payment.",
+      "ORDERING: When you suggest dishes, YOU MUST call the `search_menu` tool so they appear as UI cards with an Add button. If a user asks for a dish or confirms they want one, YOU MUST call the tool to pull the card up. The user CANNOT tap 'Add' unless you call the tool to render the card.",
       "CHOP BAR: When a customer describes a custom plate (e.g. 'banku, tilapia, extra pepper, no shito'), call customise_chop_bar with the dish name and their words. It returns a grounded bowl card they can add. If anything they asked for isn't on the menu, tell them plainly and offer what IS available — never substitute silently."
     );
   }
