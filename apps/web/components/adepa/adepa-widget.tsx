@@ -401,6 +401,8 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                 ? `Welcome back, ${firstName}. ${usual ? `Want the usual, ${usual}? Or something new?` : "What can I get for you today?"}`
                 : "Hi, I'm Fafa. Ask me what's good, find a dish, or track an order.";
               speak(text);
+              // Start hands-free continuous conversation automatically
+              setHF(true);
             }
           }}
           aria-label="Chat with Fafa"
