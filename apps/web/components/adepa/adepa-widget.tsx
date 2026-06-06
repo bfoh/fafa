@@ -9,6 +9,7 @@ import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '@/lib/utils/customer-prefs';
 import { getConversationId, setAttribution, pingOutcome } from '@/lib/adepa/session';
+import { correctFoodNames } from '@/lib/adepa/food-vocab';
 
 const QUICK_REPLIES = ["What's popular?", 'Build me a bowl', 'Are you open now?', 'Track my order'];
 
@@ -295,10 +296,10 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     // Send as soon as we have any transcript — don't depend on onend, which is
     // unreliable across browsers (notably iOS Safari).
     const fire = (text: string) => {
-      const t = text.trim();
+      const t = correctFoodNames(text.trim());
       if (!t || sent) return;
       sent = true;
-      setInput('');
+      setInput(t);
       send(t);
     };
 
@@ -313,19 +314,26 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       setListening(false);
       recRef.current = null;
       const err = ev?.error;
-      // Only 'not-allowed' is truly fatal — everything else is recoverable
-      // in hands-free mode (no-speech, aborted, network, audio-capture, etc.).
+      // Only 'not-allowed' is truly fatal.
       if (err === 'not-allowed') {
         setHF(false);
         setVoiceErr('Mic blocked — enable it in settings.');
         return;
       }
-      // In hands-free mode, auto-retry on ANY other error.
+      // If user manually stopped it, or it's just silence, don't show a red error.
+      if (err === 'aborted' || err === 'no-speech') {
+        // In hands-free mode, silence ('no-speech') should auto-retry.
+        if (err === 'no-speech' && handsFreeRef.current && openRef.current) {
+          setTimeout(() => beginListen(), 400);
+        }
+        return;
+      }
+      // In hands-free mode, auto-retry on any other network/capture error.
       if (handsFreeRef.current && openRef.current) {
         setTimeout(() => beginListen(), 400);
         return;
       }
-      // Not in hands-free — show error to user.
+      // Show error to user.
       if (err) {
         setVoiceErr('Voice error — try again.');
       }
