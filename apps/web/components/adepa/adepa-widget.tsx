@@ -73,7 +73,9 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       // Strip emojis so TTS doesn't say "waving hand" etc.
       .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '')
       .replace(/\s+/g, ' ')
-      .trim();
+      .trim()
+      // Lowercase everything at the end so the TTS never spells out ALL CAPS acronyms
+      .toLowerCase();
   }
 
   // iOS/Safari only allow speechSynthesis to start from a user gesture; speak a
@@ -398,8 +400,8 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
             setOpen(true);
             if (messages.length === 0 && speakOn) {
               const text = firstName
-                ? `Welcome back, ${firstName}. ${usual ? `Want the usual, ${usual}? Or something new?` : "What can I get for you today?"}`
-                : "Hi, I'm Fafa. Ask me what's good, find a dish, or track an order.";
+                ? `Welcome back to Didi, ${firstName}! ${usual ? `Shall I prepare your usual ${usual}, or are we trying something new today?` : "How can I make your day delicious?"}`
+                : "Hello, I'm Fafa, your personal food concierge on the Didi platform. What are you craving today?";
               speak(text);
               // Start hands-free continuous conversation automatically
               setHF(true);
@@ -432,9 +434,9 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-3"><Sparkles className="w-7 h-7 text-brand-500" /></div>
-                  <p className="font-semibold text-surface-900">{firstName ? `Welcome back, ${firstName} 👋` : "Hi, I'm Fafa 👋"}</p>
+                  <p className="font-semibold text-surface-900">{firstName ? `Welcome back to Didi, ${firstName} 👋` : "Hi, I'm Fafa, your Didi concierge 👋"}</p>
                   <p className="text-sm text-surface-500 mt-1">
-                    {usual ? `Want the usual (${usual}), or something new?` : "Ask me what's good, find a dish, or track an order."}
+                    {usual ? `Shall I prepare your usual (${usual}), or something new?` : "What are you craving today?"}
                   </p>
                 </div>
               )}
