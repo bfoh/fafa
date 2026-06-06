@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
-import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic, Volume2, VolumeX } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { addToCart, cartCount } from '@/lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '@/lib/utils/customer-prefs';
@@ -28,9 +28,12 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [usual, setUsual] = useState('');
   const [listening, setListening] = useState(false);
   const [voiceErr, setVoiceErr] = useState('');
+  const [speakOn, setSpeakOn] = useState(true);
   const threadRef = useRef<HTMLDivElement>(null);
   const convIdRef = useRef<string>('');
   const recRef = useRef<SpeechRecognitionLike | null>(null);
+  const spokenRef = useRef<Set<string>>(new Set());
+  const primedRef = useRef(false);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
@@ -42,9 +45,76 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     return convIdRef.current;
   }
 
+  // Strip markdown so the spoken text sounds natural (no "asterisk asterisk").
+  function speakable(t: string): string {
+    return t
+      .replace(/\*\*|__|[*_`#>]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/GH₵/g, 'cedis ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // iOS/Safari only allow speechSynthesis to start from a user gesture; speak a
+  // silent utterance on the first interaction to unlock later auto-reads.
+  function primeSpeech() {
+    if (primedRef.current || typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+      primedRef.current = true;
+    } catch { /* ignore */ }
+  }
+
+  function speak(text: string) {
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel(); // drop any queued/earlier utterance
+      const u = new SpeechSynthesisUtterance(speakable(text));
+      u.lang = 'en-GB';
+      u.rate = 1.02;
+      synth.speak(u);
+    } catch { /* ignore */ }
+  }
+
+  function toggleSpeak() {
+    primeSpeech();
+    setSpeakOn((on) => {
+      const next = !on;
+      try { localStorage.setItem('fafa_speak', next ? '1' : '0'); } catch { /* ignore */ }
+      if (!next && typeof window !== 'undefined') window.speechSynthesis?.cancel();
+      return next;
+    });
+  }
+
   useEffect(() => {
     fetch('/api/adepa/config').then((r) => r.json()).then((d) => setEnabled(Boolean(d.enabled))).catch(() => setEnabled(false));
+    try {
+      const v = localStorage.getItem('fafa_speak');
+      if (v != null) setSpeakOn(v === '1');
+    } catch { /* ignore */ }
   }, []);
+
+  // Read Fafa's replies aloud once each turn finishes (text-to-speech).
+  useEffect(() => {
+    if (!speakOn || !open) return;
+    if (status === 'submitted' || status === 'streaming') return; // wait until fully streamed
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'assistant') return;
+    if (spokenRef.current.has(last.id)) return;
+    const text = (last.parts || [])
+      .filter((p): p is { type: 'text'; text: string } => p.type === 'text' && Boolean((p as { text?: string }).text))
+      .map((p) => p.text)
+      .join(' ')
+      .trim();
+    if (!text) return;
+    spokenRef.current.add(last.id);
+    speak(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, status, speakOn, open]);
 
   useEffect(() => {
     if (open && tenantSlug) setCartN(cartCount(tenantSlug));
@@ -72,6 +142,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   function send(text: string) {
     const t = text.trim();
     if (!t || busy) return;
+    primeSpeech();
     sendMessage({ text: t }, { body: { conversationId: convId() } });
     setInput('');
   }
@@ -105,6 +176,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   }
 
   function startVoice() {
+    primeSpeech();
     // Already listening → stop (and let onresult/onend resolve).
     if (recRef.current) {
       try { recRef.current.stop(); } catch { /* ignore */ }
@@ -188,7 +260,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
 
       {open && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm" onClick={() => { if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); setOpen(false); }} />
           <div className="fixed z-50 inset-x-0 bottom-0 md:inset-auto md:bottom-6 md:right-6 md:w-[400px] bg-white rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col max-h-[85dvh] md:max-h-[640px] md:h-[640px] animate-slide-up overflow-hidden">
             <div className="flex items-center gap-3 px-5 py-3.5 text-white shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center"><Sparkles className="w-5 h-5" /></div>
@@ -196,7 +268,8 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                 <p className="font-bold leading-tight">Fafa</p>
                 <p className="text-[11px] text-white/80 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-300" /> Your food concierge</p>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15"><X className="w-5 h-5" /></button>
+              <button onClick={toggleSpeak} aria-label={speakOn ? 'Mute voice' : 'Unmute voice'} aria-pressed={speakOn} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15">{speakOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}</button>
+              <button onClick={() => { if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); setOpen(false); }} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/15"><X className="w-5 h-5" /></button>
             </div>
 
             <div ref={threadRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-canvas scrollbar-thin">
