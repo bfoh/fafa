@@ -394,7 +394,15 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            if (messages.length === 0 && speakOn) {
+              const text = firstName
+                ? `Welcome back, ${firstName}. ${usual ? `Want the usual, ${usual}? Or something new?` : "What can I get for you today?"}`
+                : "Hi, I'm Fafa. Ask me what's good, find a dish, or track an order.";
+              speak(text);
+            }
+          }}
           aria-label="Chat with Fafa"
           className="fixed z-40 bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 md:bottom-6 w-14 h-14 rounded-full text-white shadow-xl shadow-black/20 press flex items-center justify-center"
           style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
