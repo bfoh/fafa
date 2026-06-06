@@ -58,6 +58,18 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       // Flip currency so "GH₵ 45" or "GH₵45" becomes "45 cedis"
       .replace(/GH₵\s*([\d.,]+)/g, '$1 cedis')
       .replace(/GH₵/g, 'cedis')
+      // Phonetic spellings for Ghanaian foods so the English TTS pronounces them better
+      .replace(/\bJollof\b/gi, 'Jaw-loff')
+      .replace(/\bWaakye\b/gi, 'Wah-chay')
+      .replace(/\bBanku\b/gi, 'Ban-koo')
+      .replace(/\bKenkey\b/gi, 'Ken-kay')
+      .replace(/\bFufu\b/gi, 'Foo-foo')
+      .replace(/\bShito\b/gi, 'Shee-toe')
+      .replace(/\bKelewele\b/gi, 'Kelly-welly')
+      .replace(/\bTuo Zaafi\b/gi, 'Too-oh Zaa-fee')
+      .replace(/\bKoose\b/gi, 'Koo-say')
+      .replace(/\bAmpesi\b/gi, 'Am-peh-see')
+      .replace(/\bSobolo\b/gi, 'So-bo-lo')
       // Strip emojis so TTS doesn't say "waving hand" etc.
       .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '')
       .replace(/\s+/g, ' ')
