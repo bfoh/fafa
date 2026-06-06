@@ -49,12 +49,14 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     return convIdRef.current;
   }
 
-  // Strip markdown so the spoken text sounds natural (no "asterisk asterisk").
+  // Strip markdown + emojis so the spoken text sounds natural.
   function speakable(t: string): string {
     return t
       .replace(/\*\*|__|[*_`#>]/g, '')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       .replace(/GH₵/g, 'cedis ')
+      // Strip emojis so TTS doesn't say "waving hand" etc.
+      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -278,7 +280,11 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
     if (!SR) { setVoiceErr('Voice not supported here — type instead.'); setHF(false); return; }
 
     let rec: SpeechRecognitionLike;
-    try { rec = new SR(); } catch { setVoiceErr('Could not start voice.'); return; }
+    try { rec = new SR(); } catch {
+      // In hands-free mode, retry after a beat instead of dying.
+      if (handsFreeRef.current && openRef.current) { setTimeout(() => beginListen(), 500); return; }
+      setVoiceErr('Could not start voice.'); return;
+    }
     recRef.current = rec;
     rec.lang = 'en-GH';
     rec.interimResults = true; // show words as they come; pick the final to send
@@ -307,28 +313,46 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
       setListening(false);
       recRef.current = null;
       const err = ev?.error;
-      if (err === 'no-speech' || err === 'aborted') {
-        // In hands-free mode, silence is normal — just keep listening.
-        if (handsFreeRef.current && openRef.current) {
-          setTimeout(() => beginListen(), 300);
-        }
+      // Only 'not-allowed' is truly fatal — everything else is recoverable
+      // in hands-free mode (no-speech, aborted, network, audio-capture, etc.).
+      if (err === 'not-allowed') {
+        setHF(false);
+        setVoiceErr('Mic blocked — enable it in settings.');
         return;
       }
+      // In hands-free mode, auto-retry on ANY other error.
+      if (handsFreeRef.current && openRef.current) {
+        setTimeout(() => beginListen(), 400);
+        return;
+      }
+      // Not in hands-free — show error to user.
       if (err) {
-        setHF(false);
-        setVoiceErr(err === 'not-allowed' ? 'Mic blocked — enable it in settings.' : 'Voice error — try again.');
+        setVoiceErr('Voice error — try again.');
       }
     };
     rec.onend = () => {
       setListening(false);
       recRef.current = null;
       // Fallback: if a final result never flagged isFinal, send the last text.
-      if (!sent) fire(lastText);
+      if (!sent && lastText.trim()) fire(lastText);
+      // In hands-free mode, if nothing was said, keep listening.
+      if (!sent && handsFreeRef.current && openRef.current) {
+        setTimeout(() => beginListen(), 300);
+      }
     };
 
     setVoiceErr('');
     setListening(true);
-    try { rec.start(); } catch { setListening(false); recRef.current = null; }
+    try {
+      rec.start();
+    } catch {
+      setListening(false);
+      recRef.current = null;
+      // On mobile, programmatic start can fail — retry in hands-free mode.
+      if (handsFreeRef.current && openRef.current) {
+        setTimeout(() => beginListen(), 500);
+      }
+    }
   }
 
   function handleReorder() {
