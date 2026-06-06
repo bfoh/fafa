@@ -16,8 +16,8 @@ interface Dish { id: string; name: string; price: number; description?: string |
 interface Kitchen { name: string; slug: string; deliveryFee: number; openNow?: boolean }
 interface OrderStatus { found: boolean; orderNumber?: string; status?: string; total?: number }
 interface Bowl { itemId: string; name: string; basePrice: number; selected: Array<{ name: string; priceModifier: number }>; total: number; unmatched: string[] }
-interface SpeechResultLike { results: Array<Array<{ transcript: string }>> }
-interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: () => void; start: () => void }
+interface SpeechResultLike { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }
+interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: (e?: { error?: string }) => void; start: () => void; stop: () => void }
 
 export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -27,8 +27,10 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const [firstName, setFirstName] = useState('');
   const [usual, setUsual] = useState('');
   const [listening, setListening] = useState(false);
+  const [voiceErr, setVoiceErr] = useState('');
   const threadRef = useRef<HTMLDivElement>(null);
   const convIdRef = useRef<string>('');
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
@@ -103,26 +105,58 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   }
 
   function startVoice() {
+    // Already listening → stop (and let onresult/onend resolve).
+    if (recRef.current) {
+      try { recRef.current.stop(); } catch { /* ignore */ }
+      return;
+    }
     const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
     const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SR) { send('I want to talk — voice not supported on this device'); return; }
-    const rec = new SR();
+    if (!SR) { setVoiceErr('Voice not supported here — type instead.'); return; }
+
+    let rec: SpeechRecognitionLike;
+    try { rec = new SR(); } catch { setVoiceErr('Could not start voice.'); return; }
+    recRef.current = rec;
     rec.lang = 'en-GH';
-    rec.interimResults = false;
+    rec.interimResults = true; // show words as they come; pick the final to send
     rec.maxAlternatives = 1;
-    let finalText = '';
+
+    let sent = false;
+    let lastText = '';
+    // Send as soon as we have any transcript — don't depend on onend, which is
+    // unreliable across browsers (notably iOS Safari).
+    const fire = (text: string) => {
+      const t = text.trim();
+      if (!t || sent) return;
+      sent = true;
+      setInput('');
+      send(t);
+    };
+
     rec.onresult = (e: SpeechResultLike) => {
-      finalText = e.results[0][0].transcript;
-      setInput(finalText);
+      const res = e.results[e.results.length - 1];
+      lastText = res?.[0]?.transcript ?? '';
+      setInput(lastText);
+      // Final result → send immediately.
+      if ((res as { isFinal?: boolean })?.isFinal) fire(lastText);
+    };
+    rec.onerror = (ev?: { error?: string }) => {
+      setListening(false);
+      recRef.current = null;
+      if (ev?.error && ev.error !== 'no-speech' && ev.error !== 'aborted') {
+        setVoiceErr(ev.error === 'not-allowed' ? 'Mic blocked — enable it in settings.' : 'Voice error — try again.');
+      }
     };
     rec.onend = () => {
       setListening(false);
-      // Auto-send what was heard (transcript captured locally — setInput is async).
-      if (finalText.trim()) send(finalText);
+      recRef.current = null;
+      // Fallback: if a final result never flagged isFinal, send the last text.
+      if (!sent) fire(lastText);
     };
-    rec.onerror = () => setListening(false);
+
+    setVoiceErr('');
     setListening(true);
-    rec.start();
+    try { rec.start(); } catch { setListening(false); recRef.current = null; }
   }
 
   function handleReorder() {
@@ -323,11 +357,14 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
               </div>
             )}
 
+            {voiceErr && (
+              <p className="px-4 pt-1 text-[11px] text-error-600 shrink-0">{voiceErr}</p>
+            )}
             <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-center gap-2 px-4 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-hairline shrink-0">
-              <button type="button" onClick={startVoice} aria-label="Speak" className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : 'bg-surface-100 text-surface-500'}`}>
+              <button type="button" onClick={startVoice} aria-label={listening ? 'Stop' : 'Speak'} className={`w-11 h-11 rounded-xl flex items-center justify-center press shrink-0 ${listening ? 'bg-error-500/10 text-error-600' : 'bg-surface-100 text-surface-500'}`}>
                 <Mic className={`w-5 h-5 ${listening ? 'animate-pulse' : ''}`} />
               </button>
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={listening ? 'Listening…' : 'Ask Fafa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
+              <input value={input} onChange={(e) => { setInput(e.target.value); if (voiceErr) setVoiceErr(''); }} placeholder={listening ? 'Listening…' : 'Ask Fafa…'} className="flex-1 px-4 py-2.5 rounded-xl border border-hairline bg-white text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40" />
               <button type="submit" disabled={busy || !input.trim()} aria-label="Send" className="w-11 h-11 rounded-xl text-white flex items-center justify-center press disabled:opacity-40" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
                 <Send className="w-5 h-5" />
               </button>
