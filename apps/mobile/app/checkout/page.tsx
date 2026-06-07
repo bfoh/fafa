@@ -20,6 +20,14 @@ const LocationPicker = dynamic(() => import('../../../web/components/onboarding/
   ssr: false,
 });
 
+function adjustLightness(hex: string, factor: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const adjust = (c: number) => Math.min(255, Math.round(c + (255 - c) * factor));
+  return `rgb(${adjust(r)}, ${adjust(g)}, ${adjust(b)})`;
+}
+
 function CheckoutRoute() {
   const slug = useSearchParams().get('slug') ?? '';
   if (!slug) {
@@ -242,7 +250,7 @@ function CheckoutContent({ slug }: { slug: string }) {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-20 text-center animate-fade-in text-white">
+      <div className="max-w-lg mx-auto px-4 py-20 text-center animate-fade-in text-surface-900">
         <p className="text-surface-400">Your cart is empty</p>
         <Link
           href={`/store/?slug=${slug}`}
@@ -342,354 +350,367 @@ function CheckoutContent({ slug }: { slug: string }) {
   const belowMinLimit = tenant ? subtotal < tenant.min_order_amount : false;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-fade-in text-white">
-      <Link
-        href={`/store/?slug=${slug}`}
-        className="inline-flex items-center gap-1 text-sm text-white/60 hover:text-white mb-6 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to menu
-      </Link>
+    <div
+      className="storefront-root min-h-[100dvh] bg-canvas text-surface-900"
+      style={
+        {
+          '--brand-primary': primaryColor,
+          '--brand-primary-light': adjustLightness(primaryColor, 0.85),
+          '--brand-primary-dark': adjustLightness(primaryColor, -0.2),
+        } as React.CSSProperties
+      }
+    >
+      <div className="max-w-lg mx-auto px-4 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-[calc(1.5rem+env(safe-area-inset-bottom))] animate-fade-in">
+        <Link
+          href={`/store/?slug=${slug}`}
+          className="inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-700 mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to menu
+        </Link>
 
-      <h1 className="text-2xl font-bold text-white mb-6 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Checkout</h1>
+        <h1 className="text-2xl font-bold text-surface-900 mb-6 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Checkout</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {error && (
-          <div className="p-3 rounded-xl bg-error-500/10 text-error-400 text-sm animate-fade-in">
-            {error}
-          </div>
-        )}
-
-        {/* Customer details */}
-        <section className="bg-white/5 rounded-2xl border border-white/10 p-4 space-y-4">
-          <h2 className="text-xs font-bold text-white/45 uppercase tracking-widest">
-            Your Details
-          </h2>
-
-          <div>
-            <label htmlFor="checkout-name" className="block text-sm font-medium text-white/80 mb-1">
-              Name
-            </label>
-            <input
-              id="checkout-name"
-              type="text"
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Your full name"
-              className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm"
-              style={{
-                ['--tw-ring-color' as string]: primaryColor,
-              } as React.CSSProperties}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="checkout-phone" className="block text-sm font-medium text-white/80 mb-1">
-              Phone number
-            </label>
-            <input
-              id="checkout-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              placeholder="024 123 4567"
-              className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm"
-              style={{
-                ['--tw-ring-color' as string]: primaryColor,
-              } as React.CSSProperties}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="checkout-email" className="block text-sm font-medium text-white/80 mb-1">
-              Email <span className="text-white/35">(optional)</span>
-            </label>
-            <input
-              id="checkout-email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm"
-              style={{
-                ['--tw-ring-color' as string]: primaryColor,
-              } as React.CSSProperties}
-            />
-          </div>
-        </section>
-
-        {/* Delivery type */}
-        <section className="bg-white/5 rounded-2xl border border-white/10 p-4 space-y-3">
-          <h2 className="text-xs font-bold text-white/45 uppercase tracking-widest">
-            Delivery Option
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            {(!tenant || tenant.accepts_delivery) && (
-              <button
-                type="button"
-                onClick={() => setDeliveryType('delivery')}
-                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
-                style={{
-                  borderColor: deliveryType === 'delivery' ? primaryColor : 'rgba(255,255,255,0.1)',
-                  backgroundColor: deliveryType === 'delivery' ? `${primaryColor}22` : 'transparent',
-                  color: deliveryType === 'delivery' ? '#white' : 'rgba(255,255,255,0.6)',
-                }}
-              >
-                🚗 Delivery
-              </button>
-            )}
-            {(!tenant || tenant.accepts_pickup) && (
-              <button
-                type="button"
-                onClick={() => setDeliveryType('pickup')}
-                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
-                style={{
-                  borderColor: deliveryType === 'pickup' ? primaryColor : 'rgba(255,255,255,0.1)',
-                  backgroundColor: deliveryType === 'pickup' ? `${primaryColor}22` : 'transparent',
-                  color: deliveryType === 'pickup' ? '#white' : 'rgba(255,255,255,0.6)',
-                }}
-              >
-                🏪 Pickup
-              </button>
-            )}
-          </div>
-
-          {deliveryType === 'delivery' && (
-            <div className="animate-fade-in space-y-3">
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label htmlFor="checkout-city" className="block text-sm font-medium text-white/80 mb-1">
-                    City
-                  </label>
-                  <select
-                    id="checkout-city"
-                    value={selectedCity}
-                    onChange={(e) => {
-                      setSelectedCity(e.target.value);
-                      setSelectedArea('');
-                    }}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border border-white/10 bg-[#151320] text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm cursor-pointer"
-                  >
-                    <option value="">Select city...</option>
-                    {GHANA_CITIES.map((c) => (
-                      <option key={c.name} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="checkout-area" className="block text-sm font-medium text-white/80 mb-1">
-                    Select Your Area
-                  </label>
-                  <select
-                    id="checkout-area"
-                    value={selectedArea}
-                    onChange={(e) => setSelectedArea(e.target.value)}
-                    required
-                    disabled={!selectedCity}
-                    className="w-full px-4 py-3 rounded-xl border border-white/10 bg-[#151320] text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="">Select neighborhood...</option>
-                    {(GHANA_CITIES.find((c) => c.name === selectedCity)?.neighborhoods ?? []).map((n) => (
-                      <option key={n.name} value={n.name}>{n.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {selectedArea && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-white/80">Pinpoint location <span className="text-white/35">(optional)</span></span>
-                    <button
-                      type="button"
-                      onClick={useMyLocation}
-                      className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/15 hover:bg-white/5 transition-colors"
-                      style={{ color: primaryColor }}
-                    >
-                      📍 Use my location
-                    </button>
-                  </div>
-                  {geoError && <p className="text-[11px] text-brand-300">{geoError}</p>}
-                  {(showMap || customerPin) && (
-                    <LocationPicker
-                      center={areaCenter}
-                      value={customerPin}
-                      onChange={(lat, lng) => setCustomerPin({ lat, lng })}
-                    />
-                  )}
-                  {!showMap && !customerPin && (
-                    <button
-                      type="button"
-                      onClick={() => setShowMap(true)}
-                      className="text-xs text-white/55 underline"
-                    >
-                      Or drop a pin on the map
-                    </button>
-                  )}
-                  {customerPin && (
-                    <p className="text-xs text-emerald-400">✓ Using your exact location for a precise fee.</p>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="checkout-address" className="block text-sm font-medium text-white/80 mb-1">
-                  Delivery address
-                </label>
-                <textarea
-                  id="checkout-address"
-                  autoComplete="street-address"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  required
-                  placeholder="House number, street, landmark, area details..."
-                  rows={2}
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm resize-none"
-                  style={{
-                    ['--tw-ring-color' as string]: primaryColor,
-                  } as React.CSSProperties}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="checkout-notes" className="block text-sm font-medium text-white/80 mb-1">
-                  Notes <span className="text-white/35">(optional)</span>
-                </label>
-                <input
-                  id="checkout-notes"
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Call when you arrive, gate code is 1234"
-                  className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand-500/40 transition-all text-sm"
-                  style={{
-                    ['--tw-ring-color' as string]: primaryColor,
-                  } as React.CSSProperties}
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-sm animate-fade-in">
+              {error}
             </div>
           )}
-        </section>
 
-        {/* Payment method */}
-        <section className="bg-white/5 rounded-2xl border border-white/10 p-4 space-y-3">
-          <h2 className="text-xs font-bold text-white/45 uppercase tracking-widest">
-            Payment Method
-          </h2>
+          {/* Customer details */}
+          <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-4">
+            <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
+              Your Details
+            </h2>
 
-          <div className="space-y-2">
-            {paymentMethods.map((method) => {
-              const Icon = method.icon;
-              const isSelected = paymentMethod === method.value;
-              return (
+            <div>
+              <label htmlFor="checkout-name" className="block text-sm font-medium text-surface-700 mb-1">
+                Name
+              </label>
+              <input
+                id="checkout-name"
+                type="text"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Your full name"
+                className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                style={{
+                  ['--tw-ring-color' as string]: primaryColor,
+                } as React.CSSProperties}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="checkout-phone" className="block text-sm font-medium text-surface-700 mb-1">
+                Phone number
+              </label>
+              <input
+                id="checkout-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                placeholder="024 123 4567"
+                className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                style={{
+                  ['--tw-ring-color' as string]: primaryColor,
+                } as React.CSSProperties}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="checkout-email" className="block text-sm font-medium text-surface-700 mb-1">
+                Email <span className="text-surface-400">(optional)</span>
+              </label>
+              <input
+                id="checkout-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com"
+                className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                style={{
+                  ['--tw-ring-color' as string]: primaryColor,
+                } as React.CSSProperties}
+              />
+            </div>
+          </section>
+
+          {/* Delivery type */}
+          <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-3">
+            <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
+              Delivery Option
+            </h2>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(!tenant || tenant.accepts_delivery) && (
                 <button
-                  key={method.value}
                   type="button"
-                  onClick={() => setPaymentMethod(method.value)}
-                  className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer"
+                  onClick={() => setDeliveryType('delivery')}
+                  className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   style={{
-                    borderColor: isSelected ? primaryColor : 'rgba(255,255,255,0.1)',
-                    backgroundColor: isSelected ? `${primaryColor}22` : 'transparent',
+                    borderColor: deliveryType === 'delivery' ? primaryColor : 'var(--surface-200)',
+                    backgroundColor: deliveryType === 'delivery' ? `${primaryColor}10` : 'transparent',
+                    color: deliveryType === 'delivery' ? primaryColor : 'var(--surface-600)',
                   }}
                 >
-                  <Icon
-                    className="w-5 h-5 flex-shrink-0"
-                    style={{
-                      color: isSelected ? primaryColor : undefined,
-                    }}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {method.label}
-                    </p>
-                    <p className="text-xs text-white/45">{method.desc}</p>
-                  </div>
+                  🚗 Delivery
                 </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Order summary */}
-        <section className="bg-white/5 rounded-2xl border border-white/10 p-4 space-y-2">
-          <div className="flex justify-between text-sm text-white/75">
-            <span>Subtotal</span>
-            <span>{formatGHS(subtotal)}</span>
-          </div>
-          {deliveryType === 'delivery' && (
-            <>
-              <div className="flex justify-between text-sm text-white/75">
-                <span>Delivery fee {selectedArea ? `(${selectedArea})` : ''}</span>
-                <span>{formatGHS(deliveryFee)}</span>
-              </div>
-              {feeResult?.source === 'distance' && feeResult.breakdown && (
-                <p className="text-[11px] text-white/45">
-                  {formatGHS(feeResult.fee)} = base {formatGHS(feeResult.breakdown.base)}
-                  {feeResult.breakdown.extraKm === 0
-                    ? ` (within ${tenant?.free_delivery_radius_km ?? 3}km)`
-                    : ` + ${feeResult.breakdown.extraKm}km × ${formatGHS(feeResult.breakdown.perKm)}`}
-                </p>
               )}
-              {etaMinutes != null && (
-                <div className="flex justify-between text-xs text-white/60">
-                  <span>Est. arrival</span>
-                  <span>~{etaMinutes} min</span>
+              {(!tenant || tenant.accepts_pickup) && (
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('pickup')}
+                  className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  style={{
+                    borderColor: deliveryType === 'pickup' ? primaryColor : 'var(--surface-200)',
+                    backgroundColor: deliveryType === 'pickup' ? `${primaryColor}10` : 'transparent',
+                    color: deliveryType === 'pickup' ? primaryColor : 'var(--surface-600)',
+                  }}
+                >
+                  🏪 Pickup
+                </button>
+              )}
+            </div>
+
+            {deliveryType === 'delivery' && (
+              <div className="animate-fade-in space-y-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label htmlFor="checkout-city" className="block text-sm font-medium text-surface-700 mb-1">
+                      City
+                    </label>
+                    <select
+                      id="checkout-city"
+                      value={selectedCity}
+                      onChange={(e) => {
+                        setSelectedCity(e.target.value);
+                        setSelectedArea('');
+                      }}
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer"
+                      style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
+                    >
+                      <option value="">Select city...</option>
+                      {GHANA_CITIES.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="checkout-area" className="block text-sm font-medium text-surface-700 mb-1">
+                      Select Your Area
+                    </label>
+                    <select
+                      id="checkout-area"
+                      value={selectedArea}
+                      onChange={(e) => setSelectedArea(e.target.value)}
+                      required
+                      disabled={!selectedCity}
+                      className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 focus:outline-none focus:ring-2 transition-all text-sm cursor-pointer disabled:opacity-50"
+                      style={{ ['--tw-ring-color' as string]: primaryColor } as React.CSSProperties}
+                    >
+                      <option value="">Select neighborhood...</option>
+                      {(GHANA_CITIES.find((c) => c.name === selectedCity)?.neighborhoods ?? []).map((n) => (
+                        <option key={n.name} value={n.name}>{n.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              )}
-            </>
+
+                {selectedArea && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-surface-700">Pinpoint location <span className="text-surface-400">(optional)</span></span>
+                      <button
+                        type="button"
+                        onClick={useMyLocation}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
+                        style={{ color: primaryColor }}
+                      >
+                        📍 Use my location
+                      </button>
+                    </div>
+                    {geoError && <p className="text-xs text-warning-700">{geoError}</p>}
+                    {(showMap || customerPin) && (
+                      <LocationPicker
+                        center={areaCenter}
+                        value={customerPin}
+                        onChange={(lat, lng) => setCustomerPin({ lat, lng })}
+                      />
+                    )}
+                    {!showMap && !customerPin && (
+                      <button
+                        type="button"
+                        onClick={() => setShowMap(true)}
+                        className="text-xs text-surface-500 underline"
+                      >
+                        Or drop a pin on the map
+                      </button>
+                    )}
+                    {customerPin && (
+                      <p className="text-xs text-success-600">✓ Using your exact location for a precise fee.</p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="checkout-address" className="block text-sm font-medium text-surface-700 mb-1">
+                    Delivery address
+                  </label>
+                  <textarea
+                    id="checkout-address"
+                    autoComplete="street-address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                    placeholder="House number, street, landmark, area details..."
+                    rows={2}
+                    className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm resize-none"
+                    style={{
+                      ['--tw-ring-color' as string]: primaryColor,
+                    } as React.CSSProperties}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="checkout-notes" className="block text-sm font-medium text-surface-700 mb-1">
+                    Notes <span className="text-surface-400">(optional)</span>
+                  </label>
+                  <input
+                    id="checkout-notes"
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g. Call when you arrive, gate code is 1234"
+                    className="w-full px-4 py-3 rounded-xl border border-hairline bg-white text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 transition-all text-sm"
+                    style={{
+                      ['--tw-ring-color' as string]: primaryColor,
+                    } as React.CSSProperties}
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Payment method */}
+          <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-3">
+            <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest">
+              Payment Method
+            </h2>
+
+            <div className="space-y-2">
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                const isSelected = paymentMethod === method.value;
+                return (
+                  <button
+                    key={method.value}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.value)}
+                    className="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer"
+                    style={{
+                      borderColor: isSelected ? primaryColor : 'var(--surface-200)',
+                      backgroundColor: isSelected ? `${primaryColor}10` : 'transparent',
+                    }}
+                  >
+                    <Icon
+                      className="w-5 h-5 flex-shrink-0"
+                      style={{
+                        color: isSelected ? primaryColor : undefined,
+                      }}
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-surface-900">
+                        {method.label}
+                      </p>
+                      <p className="text-xs text-surface-400">{method.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Order summary */}
+          <section className="bg-white rounded-2xl border border-hairline shadow-card p-4 space-y-2">
+            <div className="flex justify-between text-sm text-surface-600">
+              <span>Subtotal</span>
+              <span>{formatGHS(subtotal)}</span>
+            </div>
+            {deliveryType === 'delivery' && (
+              <>
+                <div className="flex justify-between text-sm text-surface-600">
+                  <span>Delivery fee {selectedArea ? `(${selectedArea})` : ''}</span>
+                  <span>{formatGHS(deliveryFee)}</span>
+                </div>
+                {feeResult?.source === 'distance' && feeResult.breakdown && (
+                  <p className="text-[11px] text-surface-400">
+                    {formatGHS(feeResult.fee)} = base {formatGHS(feeResult.breakdown.base)}
+                    {feeResult.breakdown.extraKm === 0
+                      ? ` (within ${tenant?.free_delivery_radius_km ?? 3}km)`
+                      : ` + ${feeResult.breakdown.extraKm}km × ${formatGHS(feeResult.breakdown.perKm)}`}
+                  </p>
+                )}
+                {etaMinutes != null && (
+                  <div className="flex justify-between text-xs text-surface-500">
+                    <span>Est. arrival</span>
+                    <span>~{etaMinutes} min</span>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="border-t border-surface-200 pt-2 flex justify-between font-bold text-surface-900">
+              <span>Total</span>
+              <span>{formatGHS(total)}</span>
+            </div>
+          </section>
+
+          {notDeliverable && (
+            <div className="p-3 rounded-xl bg-error-500/10 text-error-600 text-xs text-center font-medium animate-fade-in">
+              This area is outside the restaurant&apos;s delivery range. Try Pickup or a closer area.
+            </div>
           )}
-          <div className="border-t border-white/10 pt-2 flex justify-between font-bold text-white">
-            <span>Total</span>
-            <span>{formatGHS(total)}</span>
-          </div>
-        </section>
 
-        {notDeliverable && (
-          <div className="p-3 rounded-xl bg-error-500/10 text-brand-300 text-xs text-center font-medium animate-fade-in">
-            This area is outside the restaurant&apos;s delivery range. Try Pickup or a closer area.
-          </div>
-        )}
+          {/* Limit warning */}
+          {belowMinLimit && tenant && (
+            <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in">
+              ⚠️ Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
+            </div>
+          )}
 
-        {/* Limit warning */}
-        {belowMinLimit && tenant && (
-          <div className="p-3 rounded-xl bg-warning-500/10 text-brand-200 text-xs text-center font-medium animate-fade-in">
-            ⚠️ Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
+          {/* Submit */}
+          <div className="fixed inset-x-0 bottom-0 z-30 px-4 pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-canvas via-canvas to-canvas/0 md:static md:p-0 md:bg-none md:z-auto">
+            <div className="max-w-lg mx-auto">
+              <button
+                type="submit"
+                disabled={loading || belowMinLimit || notDeliverable}
+                className="w-full h-14 rounded-2xl text-white font-bold press disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-black/10"
+                style={{ backgroundImage: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)` }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Placing order...
+                  </>
+                ) : paymentMethod === 'cash_on_delivery' ? (
+                  `Place Order — ${formatGHS(total)}`
+                ) : (
+                  `Pay ${formatGHS(total)}`
+                )}
+              </button>
+            </div>
           </div>
-        )}
-
-        {/* Submit */}
-        <div className="fixed inset-x-0 bottom-0 z-30 px-4 pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-canvas via-canvas to-transparent md:static md:p-0 md:bg-none md:z-auto">
-          <div className="max-w-lg mx-auto">
-            <button
-              type="submit"
-              disabled={loading || belowMinLimit || notDeliverable}
-              className="w-full h-14 rounded-2xl text-white font-bold press disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-black/10"
-              style={{ backgroundImage: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)` }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Placing order...
-                </>
-              ) : paymentMethod === 'cash_on_delivery' ? (
-                `Place Order — ${formatGHS(total)}`
-              ) : (
-                `Pay ${formatGHS(total)}`
-              )}
-            </button>
-          </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

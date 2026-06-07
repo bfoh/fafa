@@ -253,7 +253,7 @@ export default function MobileMarketplaceHome() {
                     className="group flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl transition-all duration-300 hover:border-brand-400/30 hover:bg-white/[0.07] active:scale-[0.99]"
                   >
                     {/* Cover Photo */}
-                    <div className="relative h-40 w-full overflow-hidden">
+                    <div className="relative h-40 w-full">
                       {heroImg ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

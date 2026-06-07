@@ -251,22 +251,18 @@ export default function ForRestaurantsPage() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <a
-              href="https://ghdidi.com/login"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/login"
               className="text-sm font-semibold text-surface-400 hover:text-white transition-colors px-4 py-2"
             >
               Sign In
-            </a>
-            <a
-              href="https://ghdidi.com/register"
-              target="_blank"
-              rel="noopener noreferrer"
+            </Link>
+            <Link
+              href="/register"
               className="text-sm font-bold text-white bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-600 hover:to-orange-600 px-5 py-3 rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_25px_rgba(255,107,53,0.4)]"
             >
               Get Started Free
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -289,15 +285,13 @@ export default function ForRestaurantsPage() {
             Accept Mobile Money + Card payments. Manage live orders with native audio chime notifications. Everything your restaurant needs to scale online with Didi.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <a
-              href="https://ghdidi.com/register"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/register"
               className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-orange-500 text-white font-bold text-lg hover:from-brand-600 hover:to-orange-600 transition-all active:scale-[0.98] shadow-lg shadow-brand-500/20 w-full sm:w-auto justify-center"
             >
               Start Free Trial
               <ArrowRight className="w-5 h-5" />
-            </a>
+            </Link>
             <a
               href="#sandbox-demo"
               className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-lg transition-all w-full sm:w-auto text-center cursor-pointer"
@@ -970,15 +964,13 @@ export default function ForRestaurantsPage() {
               ))}
             </div>
 
-            <a
-              href="https://ghdidi.com/register"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/register"
               className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-gradient-to-r from-brand-500 to-orange-500 text-white font-bold text-base hover:from-brand-600 hover:to-orange-600 transition-all active:scale-[0.98] shadow-lg shadow-brand-500/15"
             >
               Get Started Free
               <ArrowRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
         </div>
       </section>
