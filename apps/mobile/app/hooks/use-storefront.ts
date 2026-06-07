@@ -7,7 +7,7 @@ import type {
   VerifyResult,
 } from '@fafa/storefront/payload';
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
 /** Tenant + menu + delivery zones. Stale-while-revalidate: instant cached menu,
  *  silent refresh. Shared by the [slug] layout chrome and page (one network call). */

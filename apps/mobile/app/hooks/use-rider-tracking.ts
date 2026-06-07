@@ -10,7 +10,7 @@ const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
   'BackgroundGeolocation'
 );
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 const FLUSH_EVERY_MS = 15_000;
 const FLUSH_AT_POINTS = 5;
 

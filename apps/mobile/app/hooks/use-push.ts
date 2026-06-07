@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
 /**
  * Registers the device for push (FCM on Android, APNs on iOS) and posts the
