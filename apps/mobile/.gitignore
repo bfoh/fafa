@@ -1,0 +1,17 @@
+# deps / build
+node_modules
+/.next
+/out
+
+# capacitor native projects (added via `cap add`)
+/android
+/ios
+
+# env
+.env
+.env*.local
+
+# misc
+*.log
+.DS_Store
+next-env.d.ts
