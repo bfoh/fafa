@@ -11,13 +11,22 @@
 const ALLOWED = new Set([
   'capacitor://localhost',
   'https://localhost',
-  'http://localhost', // local `next dev` of apps/mobile
+  'http://localhost',
   'https://www.ghdidi.com',
   'https://ghdidi.com',
 ]);
 
+// Any localhost / 127.0.0.1 port — for `next dev` and local static previews of
+// the mobile bundle. Safe: a remote attacker's page can never have a localhost
+// origin, so reflecting it grants no cross-site access on a victim's browser.
+const LOCAL_DEV = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function isAllowed(origin: string): boolean {
+  return ALLOWED.has(origin) || LOCAL_DEV.test(origin);
+}
+
 export function corsHeaders(origin: string | null): Record<string, string> {
-  const allow = origin && ALLOWED.has(origin) ? origin : 'https://www.ghdidi.com';
+  const allow = origin && isAllowed(origin) ? origin : 'https://www.ghdidi.com';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
