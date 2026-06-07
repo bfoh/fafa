@@ -8,6 +8,7 @@ import {
   type HistoryEntry,
 } from '@fafa/storefront';
 import { useOrder, useVerifyOrder } from '@/app/hooks/use-storefront';
+import { RiderMap } from './rider-map';
 
 /** Order tracking screen. orderId is a runtime query param (unbounded — never
  *  known at build), so this lives on a static route, not a [orderId] segment. */
@@ -50,6 +51,11 @@ export function OrderScreen({ slug, orderId }: { slug: string; orderId: string }
         slug={slug}
         tenant={data.tenant}
       />
+      {(data.order as { status?: string }).status === 'out_for_delivery' && (
+        <div className="px-4 pb-6">
+          <RiderMap orderId={orderId} />
+        </div>
+      )}
     </div>
   );
 }

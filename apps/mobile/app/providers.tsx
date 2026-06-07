@@ -19,10 +19,12 @@ import { queryClient } from './query-client';
 type SupabaseClient = ReturnType<typeof createMobileSupabaseClient>;
 const SupabaseCtx = createContext<SupabaseClient | null>(null);
 
-export function useSupabase(): SupabaseClient {
-  const ctx = useContext(SupabaseCtx);
-  if (!ctx) throw new Error('Supabase client unavailable (called during prerender?)');
-  return ctx;
+/**
+ * Null during the static-export prerender (the client is browser-only). On a
+ * real device / hydrated web it is always present. Consumers guard for null.
+ */
+export function useSupabase(): SupabaseClient | null {
+  return useContext(SupabaseCtx);
 }
 
 export function Providers({ children }: { children: ReactNode }) {

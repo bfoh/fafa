@@ -76,7 +76,33 @@ npx cap add android && npx cap add ios
 # Server: set FCM_PROJECT_ID / FCM_CLIENT_EMAIL / FCM_PRIVATE_KEY on apps/web
 ```
 
-## Later (Phase 3)
+## Phase 3 — rider tracking + customer live map (code done, build-verified)
 
-- Transistorsoft background geolocation for riders (battery-tuned foreground service).
+- **Rider app** (`/rider`): Supabase sign-in (uses the Phase 2 persisted session),
+  active-delivery queue from `/api/rider/orders`, and a per-order "Share location"
+  toggle.
+- **Background geolocation**: `app/hooks/use-rider-tracking.ts` wraps
+  `@capacitor-community/background-geolocation` — `distanceFilter: 25m` (battery),
+  Android foreground-service notification, batched upload to
+  `/api/rider/location` (5 points / 15s), requeue on failure.
+- **Customer live map**: `app/order/rider-map.tsx` (Leaflet) subscribes to
+  `rider_locations` via Supabase Realtime; shown on the tracker when the order is
+  `out_for_delivery`.
+- **Server/DB**: migration **024** adds `orders.rider_id` + `rider_locations`
+  (public read by order_id, service-role writes, added to the realtime
+  publication). Routes `/api/rider/{orders,location}` are bearer-authed
+  (`lib/auth/bearer.ts`) and verify rider↔order assignment.
+
+### Native config still required (your machine)
+```bash
+# After `cap add`: declare location usage + background mode
+# iOS Info.plist: NSLocationWhenInUseUsageDescription,
+#   NSLocationAlwaysAndWhenInUseUsageDescription; UIBackgroundModes: location
+# Android: ACCESS_FINE_LOCATION + ACCESS_BACKGROUND_LOCATION + FOREGROUND_SERVICE
+```
+Production hardening: swap the community geolocation plugin for Transistorsoft
+(best iOS background + Android Doze handling) — same start/stop/batch shape.
+
+## Later
+
 - Encrypted secure-storage plugin swap for the Supabase session.

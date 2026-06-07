@@ -5,6 +5,7 @@
  * otherwise their utility classes get purged.
  */
 @import '../../web/app/globals.css';
+@import 'leaflet/dist/leaflet.css';
 
 @source '../../web/components/**/*.{ts,tsx}';
 @source '../../web/hooks/**/*.{ts,tsx}';

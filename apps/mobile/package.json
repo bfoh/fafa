@@ -12,6 +12,7 @@
     "cap:ios": "cap open ios"
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.20",
     "@fafa/storefront": "*",
     "@fafa/types": "*",
     "@supabase/ssr": "^0.10.3",
