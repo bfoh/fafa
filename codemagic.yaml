@@ -46,8 +46,8 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
           keychain add-certificates
-          # Specify the project file explicitly inside the monorepo directory
-          xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
+          # Specify the project file and team ID explicitly inside the monorepo directory
+          xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj --development-team Y6UZX79KB8
           # Debug: list downloaded profiles
           echo "Profiles downloaded:"
           ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles directory found"
