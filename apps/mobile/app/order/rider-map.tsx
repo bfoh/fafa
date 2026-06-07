@@ -1,29 +1,30 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useSupabase } from '../providers';
 
-interface LatLngRow {
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const POLL_MS = 8_000;
+
+interface RiderLocation {
   latitude: number;
   longitude: number;
 }
 
 /**
- * Live rider map for the customer. Loads the latest breadcrumb for the order,
- * then subscribes to rider_locations INSERTs via Supabase Realtime and moves the
- * marker. Leaflet is imported dynamically (it touches `window`) so the static
- * export prerender stays clean. Accra is the default center until a fix arrives.
+ * Live rider map for the customer. Polls /api/orders/[id]/location (service-role
+ * keyed by the unguessable order_id) every few seconds — rider_locations is NOT
+ * exposed to the anon key (see migration 025). Leaflet is imported dynamically
+ * (it touches `window`) so the static-export prerender stays clean. Accra is the
+ * default center until a fix arrives.
  */
 export function RiderMap({ orderId }: { orderId: string }) {
-  const supabase = useSupabase();
   const elRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!supabase) return;
     let mounted = true;
     let map: import('leaflet').Map | undefined;
     let marker: import('leaflet').Marker | undefined;
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    let timer: ReturnType<typeof setInterval> | undefined;
 
     (async () => {
       const L = (await import('leaflet')).default;
@@ -36,44 +37,41 @@ export function RiderMap({ orderId }: { orderId: string }) {
         attribution: '© OpenStreetMap',
       }).addTo(m);
 
-      const place = (row: LatLngRow) => {
+      const place = (row: RiderLocation) => {
         const ll: [number, number] = [row.latitude, row.longitude];
         if (!marker) marker = L.marker(ll).addTo(m);
         else marker.setLatLng(ll);
         m.setView(ll, m.getZoom());
       };
 
-      // Latest known position.
-      const { data } = await supabase
-        .from('rider_locations')
-        .select('latitude, longitude')
-        .eq('order_id', orderId)
-        .order('recorded_at', { ascending: false })
-        .limit(1);
-      if (mounted && data?.[0]) place(data[0] as LatLngRow);
+      const poll = async () => {
+        try {
+          const res = await fetch(`${API}/api/orders/${orderId}/location`);
+          if (!res.ok) return;
+          const { location } = (await res.json()) as {
+            location: RiderLocation | null;
+          };
+          if (mounted && location) place(location);
+        } catch {
+          // offline tick — keep last position
+        }
+      };
 
-      // Live updates.
-      channel = supabase
-        .channel(`rider_${orderId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'rider_locations',
-            filter: `order_id=eq.${orderId}`,
-          },
-          (payload: { new: LatLngRow }) => place(payload.new)
-        )
-        .subscribe();
+      await poll();
+      timer = setInterval(poll, POLL_MS);
     })();
 
     return () => {
       mounted = false;
-      if (channel) supabase.removeChannel(channel);
+      if (timer) clearInterval(timer);
       if (map) map.remove();
     };
-  }, [orderId, supabase]);
+  }, [orderId]);
 
-  return <div ref={elRef} className="h-64 w-full rounded-2xl overflow-hidden border border-hairline" />;
+  return (
+    <div
+      ref={elRef}
+      className="h-64 w-full rounded-2xl overflow-hidden border border-hairline"
+    />
+  );
 }
