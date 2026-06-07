@@ -4,8 +4,8 @@ node_modules
 /out
 
 # capacitor native projects (added via `cap add`)
-/android
-/ios
+# /android
+# /ios
 
 # env
 .env
