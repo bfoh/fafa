@@ -66,3 +66,21 @@ export interface VerifyResult {
   paid: boolean;
   status: 'paid' | 'pending' | 'cash_on_delivery' | 'not_found';
 }
+
+/**
+ * Shape raw `menu_categories` (with nested items) into the client payload:
+ * keep available items only, sort by sort_order, drop empty categories.
+ * Pure — extracted from the storefront route so it can be unit-tested.
+ */
+export function shapeMenuCategories(
+  categories: unknown[] | null | undefined
+): StorefrontCategory[] {
+  return (categories || [])
+    .map((cat: any) => ({
+      ...cat,
+      menu_items: ((cat.menu_items as any[]) || [])
+        .filter((item) => item.is_available)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    }))
+    .filter((cat: any) => cat.menu_items.length > 0);
+}

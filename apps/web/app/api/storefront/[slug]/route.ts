@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { corsHeaders, preflight } from '@/lib/http/cors';
-import type {
-  StorefrontPayload,
-  StorefrontCategory,
+import {
+  shapeMenuCategories,
+  type StorefrontPayload,
 } from '@/lib/storefront/payload';
 
 /* ── Public storefront payload ──────────────────────────────
@@ -69,14 +69,7 @@ export async function GET(
 
     // 4. Keep available items only, sort, drop empty categories
     //    (identical filtering to the former server page).
-    const menuCategories: StorefrontCategory[] = (categories || [])
-      .map((cat: any) => ({
-        ...cat,
-        menu_items: (cat.menu_items || [])
-          .filter((item: any) => item.is_available)
-          .sort((a: any, b: any) => a.sort_order - b.sort_order),
-      }))
-      .filter((cat: any) => cat.menu_items.length > 0);
+    const menuCategories = shapeMenuCategories(categories);
 
     const payload: StorefrontPayload = {
       tenant,
