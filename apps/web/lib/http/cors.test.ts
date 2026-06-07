@@ -14,10 +14,27 @@ describe('corsHeaders', () => {
     }
   });
 
+  it('reflects localhost / 127.0.0.1 on any port (dev + local preview)', () => {
+    for (const origin of [
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:5500',
+      'https://localhost:3000',
+    ]) {
+      expect(corsHeaders(origin)['Access-Control-Allow-Origin']).toBe(origin);
+    }
+  });
+
   it('falls back to the canonical origin for disallowed origins', () => {
-    expect(corsHeaders('https://evil.example.com')['Access-Control-Allow-Origin']).toBe(
-      'https://www.ghdidi.com'
-    );
+    for (const origin of [
+      'https://evil.example.com',
+      'http://localhost.evil.com', // not a real localhost
+      'https://notlocalhost',
+    ]) {
+      expect(corsHeaders(origin)['Access-Control-Allow-Origin']).toBe(
+        'https://www.ghdidi.com'
+      );
+    }
   });
 
   it('falls back when origin is null (non-browser / same-origin)', () => {
