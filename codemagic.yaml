@@ -44,8 +44,8 @@ workflows:
         script: |
           set -e # Exit immediately if any command fails
           keychain initialize
-          # Fetch provisioning profiles and signing certificates using the correct flag
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --platform ios --create
+          # Fetch provisioning profiles and signing certificates using the correct flag (all-caps IOS)
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --create
           keychain add-certificates
           # Specify the project file explicitly inside the monorepo directory
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
