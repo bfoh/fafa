@@ -1,0 +1,70 @@
+# Codemagic CI/CD configuration for Didi Mobile
+# Place this file in the root of your repository
+
+workflows:
+  ios-release:
+    name: Didi iOS Release (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2 # Runs on Apple Silicon Macs in the cloud
+    environment:
+      node: 22.11.0 # Matches your project's Node 22 engine
+      xcode: latest # Uses latest stable Xcode version (Xcode 15/16)
+      cocoapods: default
+      groups:
+        # Define these variables in your Codemagic application settings:
+        # - APP_STORE_CONNECT_PRIVATE_KEY (App Store Connect API key contents)
+        # - APP_STORE_CONNECT_KEY_IDENTIFIER (API Key ID)
+        # - APP_STORE_CONNECT_ISSUER_ID (Issuer ID)
+        # - CERTIFICATE_PRIVATE_KEY (For iOS signing certificate)
+        - app_store_credentials
+      vars:
+        XCODE_WORKSPACE: "apps/mobile/ios/App/App.xcworkspace"
+        XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.ghdidi.app"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Install Monorepo Dependencies
+        script: |
+          npm ci
+      - name: Build Next.js Static Export
+        script: |
+          # Compiles the web app to apps/mobile/out
+          npm run mobile:export
+      - name: Install iOS Native Shell Dependencies
+        script: |
+          # Copy static files to ios folder and run pod install
+          cd apps/mobile
+          npx cap sync ios
+      - name: Set up code signing
+        script: |
+          # Codemagic CLI automatically fetches profile & certificates from Apple Developer
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build iOS IPA (.ipa)
+        script: |
+          # Compiles the signed App ready for App Store upload
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - ebenezer.barning@gmail.com # Replace with your email
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        # Automatically uploads the built IPA to TestFlight / App Store Connect
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true

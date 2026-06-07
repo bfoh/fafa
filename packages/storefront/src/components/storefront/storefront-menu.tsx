@@ -110,7 +110,9 @@ function MenuContent({
   const [categories, setCategories] = useState(initialCategories);
   const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const deepLinkDone = useRef(false);
+  const railRef = useRef<HTMLDivElement>(null);
   const supabase = createBrowserClient();
 
   // Deep link from Fafa: /[slug]?item=<id> jumps straight to that dish —
@@ -168,6 +170,33 @@ function MenuContent({
     };
   }, [tenant.id]);
 
+  // Scrollspy: highlight the category whose section sits at the top of the view.
+  useEffect(() => {
+    const sections = categories
+      .map((c) => document.getElementById(`cat-${c.id}`))
+      .filter((el): el is HTMLElement => !!el);
+    if (sections.length === 0) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveCat(visible[0].target.id.replace('cat-', ''));
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+    );
+    sections.forEach((s) => obs.observe(s));
+    return () => obs.disconnect();
+  }, [categories]);
+
+  // Keep the active pill scrolled into view in the rail.
+  useEffect(() => {
+    if (!activeCat) return;
+    railRef.current
+      ?.querySelector<HTMLElement>(`[data-cat="${activeCat}"]`)
+      ?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }, [activeCat]);
+
   async function refreshMenu() {
     try {
       const { data: cats } = await supabase
@@ -216,16 +245,29 @@ function MenuContent({
     <div className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Category tabs */}
       <div className="sticky top-[calc(57px+env(safe-area-inset-top))] z-20 bg-canvas/90 backdrop-blur-xl border-b border-hairline">
-        <div className="flex gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar snap-rail">
-          {categories.map((cat) => (
-            <a
-              key={cat.id}
-              href={`#cat-${cat.id}`}
-              className="snap-start-item shrink-0 px-4 py-2 min-h-[38px] flex items-center rounded-full text-sm font-semibold press text-surface-600 bg-white border border-hairline shadow-sm hover:bg-surface-50"
-            >
-              {cat.name}
-            </a>
-          ))}
+        <div ref={railRef} className="flex gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar snap-rail">
+          {categories.map((cat) => {
+            const active = activeCat === cat.id;
+            return (
+              <button
+                key={cat.id}
+                data-cat={cat.id}
+                onClick={() =>
+                  document
+                    .getElementById(`cat-${cat.id}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                className={`snap-start-item shrink-0 px-4 py-2 min-h-[38px] flex items-center rounded-full text-sm font-semibold press border transition-colors cursor-pointer ${
+                  active
+                    ? 'text-white border-transparent shadow-sm'
+                    : 'text-surface-600 bg-white border-hairline shadow-sm hover:bg-surface-50'
+                }`}
+                style={active ? { background: tenant.primary_color } : undefined}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 

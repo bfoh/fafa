@@ -117,45 +117,63 @@ export function StorefrontScreen({ slug }: { slug: string }) {
           {/* Hero */}
           <div className="relative">
             {tenant.cover_image_url ? (
-              <div className="h-48 relative overflow-hidden">
+              <div className="h-52 relative overflow-hidden">
                 <img
                   src={tenant.cover_image_url}
                   alt={tenant.name}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
               </div>
             ) : (
               <div
-                className="h-32"
+                className="h-36"
                 style={{
-                  background: `linear-gradient(135deg, ${primaryColor}22, ${primaryColor}08)`,
+                  background: `linear-gradient(135deg, ${primaryColor}26, ${primaryColor}08)`,
                 }}
               />
             )}
 
             <div className="px-4">
-              <div className="-mt-8 relative bg-white rounded-2xl border border-hairline shadow-card p-4 animate-fade-in">
+              <div className="-mt-10 relative bg-white rounded-3xl border border-hairline shadow-card p-5 animate-fade-in">
                 <h1
-                  className="text-xl font-bold text-surface-900 tracking-tight"
+                  className="text-[22px] font-extrabold text-surface-900 tracking-tight leading-tight"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   {tenant.name}
                 </h1>
                 {tenant.description && (
-                  <p className="text-sm text-surface-500 mt-1 line-clamp-2">
+                  <p className="text-sm text-surface-500 mt-1.5 line-clamp-2 leading-snug">
                     {tenant.description}
                   </p>
                 )}
-                <div className="flex flex-wrap items-center gap-2 mt-3">
+
+                {/* Meta row: rating · location */}
+                <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-[13px] font-semibold">
+                  {Number(tenant.rating_count) > 0 && (
+                    <span className="inline-flex items-center gap-1 text-surface-900">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      {Number(tenant.rating_avg).toFixed(1)}
+                      <span className="text-surface-400 font-normal">
+                        ({tenant.rating_count})
+                      </span>
+                    </span>
+                  )}
+                  {Number(tenant.rating_count) > 0 && tenant.city && (
+                    <span className="text-surface-200">•</span>
+                  )}
                   {tenant.city && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                    <span className="inline-flex items-center gap-1 text-surface-500">
                       📍 {tenant.city}
                     </span>
                   )}
+                </div>
+
+                {/* Service pills */}
+                <div className="flex flex-wrap items-center gap-2 mt-3.5">
                   {tenant.accepts_delivery && (
                     <span
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
                       style={{ background: `${primaryColor}14`, color: primaryColor }}
                     >
                       🚗 Delivery{' '}
@@ -165,12 +183,12 @@ export function StorefrontScreen({ slug }: { slug: string }) {
                     </span>
                   )}
                   {tenant.accepts_pickup && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-100 text-surface-600">
                       🏪 Pickup
                     </span>
                   )}
                   {Number(tenant.min_order_amount) > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-100 text-surface-600">
                       Min {formatGHS(Number(tenant.min_order_amount))}
                     </span>
                   )}
