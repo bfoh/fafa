@@ -46,7 +46,11 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
           keychain add-certificates
-          xcode-project use-profiles
+          # Specify the project file explicitly inside the monorepo directory
+          xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
+          # Debug: list downloaded profiles
+          echo "Profiles downloaded:"
+          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles directory found"
       - name: Build iOS IPA (.ipa)
         script: |
           # Compiles the signed App ready for App Store upload
