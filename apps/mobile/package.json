@@ -12,6 +12,7 @@
     "cap:ios": "cap open ios"
   },
   "dependencies": {
+    "@fafa/storefront": "*",
     "@fafa/types": "*",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",

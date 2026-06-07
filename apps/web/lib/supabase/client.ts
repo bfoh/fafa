@@ -1,10 +1,3 @@
-'use client';
-
-import { createBrowserClient as createClient } from '@supabase/ssr';
-
-export function createBrowserClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
-  );
-}
+// Re-export shim → @fafa/storefront. Source moved to packages/storefront
+// during the Phase 1 hoist; this keeps existing @/ import sites working.
+export * from '@fafa/storefront/supabase-client';

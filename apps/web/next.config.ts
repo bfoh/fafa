@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Shared storefront package ships raw TS/TSX — transpile it.
+  transpilePackages: ['@fafa/storefront'],
 };
 
 export default nextConfig;

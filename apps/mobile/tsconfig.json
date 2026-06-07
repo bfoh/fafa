@@ -4,24 +4,10 @@
     "baseUrl": ".",
     "paths": {
       "@/app/*": ["./app/*"],
-      "@/components/*": ["../web/components/*"],
-      "@/hooks/*": ["../web/hooks/*"],
-      "@/lib/*": ["../web/lib/*"],
       "@fafa/types": ["../../packages/types/src/index.ts"]
     },
     "plugins": [{ "name": "next" }]
   },
-  "include": [
-    "next-env.d.ts",
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "../web/components/**/*.ts",
-    "../web/components/**/*.tsx",
-    "../web/hooks/**/*.ts",
-    "../web/hooks/**/*.tsx",
-    "../web/lib/**/*.ts",
-    "../web/lib/**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "out", "android", "ios"]
 }

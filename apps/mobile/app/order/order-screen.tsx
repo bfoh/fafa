@@ -3,10 +3,10 @@
 import { useEffect } from 'react';
 import {
   OrderTracker,
+  AdepaConversion,
   type TrackedOrder,
   type HistoryEntry,
-} from '@/components/storefront/order-tracker';
-import { AdepaConversion } from '@/components/adepa/adepa-conversion';
+} from '@fafa/storefront';
 import { useOrder, useVerifyOrder } from '@/app/hooks/use-storefront';
 
 /** Order tracking screen. orderId is a runtime query param (unbounded — never

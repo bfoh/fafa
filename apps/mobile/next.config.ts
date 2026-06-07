@@ -10,6 +10,7 @@ const config: NextConfig = {
   distDir: 'out', // Capacitor webDir
   trailingSlash: true, // export → folder/index.html routing
   images: { unoptimized: true }, // no image optimizer in export; storefront uses <img>
+  transpilePackages: ['@fafa/storefront'], // shared package ships raw TS/TSX
   env: {
     NEXT_PUBLIC_API_BASE: process.env.NEXT_PUBLIC_API_BASE,
   },

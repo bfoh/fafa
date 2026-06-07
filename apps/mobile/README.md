@@ -1,8 +1,10 @@
 # Didi Mobile — Phase 0 cross-alias spike
 
 Capacitor shell that ships the **customer storefront only** as a static export.
-It reuses `apps/web`'s React/Tailwind components **in place** via tsconfig
-cross-alias (`@/* → ../web/*`) — no files moved, `apps/web` untouched.
+Shared UI/logic lives in **`@fafa/storefront`** (hoisted in Phase 1); both this
+app and `apps/web` consume it (web via re-export shims at the original paths).
+Phase 0 used a tsconfig cross-alias into `apps/web`; that is now replaced by the
+real package boundary.
 
 ## How it fits together
 
@@ -13,10 +15,10 @@ apps/mobile (this)            apps/web (backend, unchanged)
   TanStack Query cache    ──►   Supabase (anon)          (realtime/auth)
 ```
 
-- Heavy UI (`StorefrontMenu`, `OrderTracker`, `AdepaWidget`) resolves cross-alias
-  into `apps/web` — see `tsconfig.json` paths.
+- Heavy UI (`StorefrontMenu`, `OrderTracker`, `AdepaWidget`) imports from
+  `@fafa/storefront` (transpiled via `transpilePackages`).
 - Server-only modules (admin client, Paystack server, settle, notifications) are
-  **banned** from this package by `eslint.config.mjs` → no secrets in the binary.
+  **banned** from this app by `eslint.config.mjs` → no secrets in the binary.
 
 ## First run
 
@@ -53,6 +55,6 @@ npm run mobile:ios
 
 ## Not in Phase 0 (later phases)
 
-- Hoist shared code into `packages/storefront` (Phase 1, with re-export shims).
+- ~~Hoist shared code into `packages/storefront`~~ — done (Phase 1).
 - Capacitor Secure Storage adapter for the Supabase session (Phase 2).
 - Push (FCM/APNs), background geolocation, deep links (Phase 2–3).

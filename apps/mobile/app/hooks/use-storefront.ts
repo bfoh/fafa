@@ -5,7 +5,7 @@ import type {
   StorefrontPayload,
   OrderTrackingPayload,
   VerifyResult,
-} from '@/lib/storefront/payload'; // cross-alias → apps/web types
+} from '@fafa/storefront/payload';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
 

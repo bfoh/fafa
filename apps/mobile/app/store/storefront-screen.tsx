@@ -1,12 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { MessageCircle, Star } from 'lucide-react';
-import { BrandingCache } from '@/components/storefront/branding-cache';
-import { AdepaWidget } from '@/components/adepa/adepa-widget';
-import { StorefrontMenu } from '@/components/storefront/storefront-menu';
-import { waLink } from '@/lib/utils/whatsapp';
-import { formatGHS } from '@/lib/utils/currency';
+import {
+  BrandingCache,
+  AdepaWidget,
+  StorefrontMenu,
+  waLink,
+  formatGHS,
+} from '@fafa/storefront';
 import { useStorefront } from '@/app/hooks/use-storefront';
 
 function adjustLightness(hex: string, factor: number): string {
