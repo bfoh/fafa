@@ -257,69 +257,80 @@ function MenuContent({
       <div className="px-4 pt-4 space-y-6">
         {categories.map((cat) => (
           <section key={cat.id} id={`cat-${cat.id}`} className="scroll-mt-32">
-            <h2 className="text-xs font-bold text-surface-400 uppercase tracking-widest mb-3">
-              {cat.name}
-            </h2>
-            <div className="space-y-3">
+            <div className="flex items-baseline justify-between mb-3">
+              <h2
+                className="text-[19px] font-extrabold text-surface-900 tracking-tight"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                {cat.name}
+              </h2>
+              <span className="text-xs font-semibold text-surface-400 tabular-nums">
+                {cat.menu_items.length}
+              </span>
+            </div>
+            <div className="space-y-2.5">
               {cat.menu_items.map((item) => (
                 <div
                   key={item.id}
                   id={`item-${item.id}`}
-                  className="flex gap-3.5 p-3 bg-white rounded-2xl border border-hairline shadow-card lift animate-fade-in scroll-mt-28 transition-shadow duration-500"
-                  style={highlightId === item.id ? { boxShadow: `0 0 0 2px ${tenant.primary_color}, 0 8px 24px ${tenant.primary_color}33` } : undefined}
+                  className="group relative flex gap-3 p-2.5 bg-white rounded-2xl border border-hairline shadow-card active:scale-[0.99] transition-all duration-300 scroll-mt-28 animate-fade-in"
+                  style={highlightId === item.id ? { boxShadow: `0 0 0 2px ${tenant.primary_color}, 0 10px 30px ${tenant.primary_color}33` } : undefined}
                 >
-                  {/* Image */}
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.name}
-                      className="w-22 h-22 w-[5.5rem] h-[5.5rem] rounded-2xl object-cover flex-shrink-0 ring-1 ring-black/5"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div
-                      className="w-[5.5rem] h-[5.5rem] rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl"
-                      style={{ background: `${tenant.primary_color}12` }}
-                    >
-                      🍽️
-                    </div>
-                  )}
-
-                  {/* Details */}
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    <h3 className="font-semibold text-surface-900 text-[15px] leading-snug">
+                  {/* Details (left) */}
+                  <div className="flex-1 min-w-0 flex flex-col py-1 pl-1.5">
+                    <h3 className="font-bold text-surface-900 text-[15px] leading-snug line-clamp-2">
                       {item.name}
                     </h3>
                     {item.description && (
-                      <p className="text-xs text-surface-500 mt-0.5 line-clamp-2">
+                      <p className="text-[13px] text-surface-500 mt-1 line-clamp-2 leading-snug">
                         {item.description}
                       </p>
                     )}
-                    <div className="flex items-end justify-between mt-auto pt-2 gap-2">
+                    <div className="mt-auto pt-2.5">
                       {item.is_chop_bar ? (
                         <span
-                          className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg tracking-wide min-w-0"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
                           style={{ background: `${tenant.primary_color}14`, color: tenant.primary_color }}
                         >
-                          🍽️ <span className="truncate">Your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}</span>
+                          🍽️ Your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}
                         </span>
                       ) : (
                         <p
-                          className="font-bold text-base"
+                          className="font-extrabold text-[15px] tabular-nums"
                           style={{ color: tenant.primary_color, fontFamily: 'var(--font-display)' }}
                         >
                           {formatGHS(Number(item.price))}
                         </p>
                       )}
-                      <button
-                        onClick={() => handleAddItem(item)}
-                        className="flex items-center gap-1.5 px-4 h-10 rounded-xl text-white text-xs font-semibold press shadow-md shrink-0 cursor-pointer"
-                        style={{ backgroundImage: `linear-gradient(135deg, ${tenant.primary_color}, ${tenant.primary_color}dd)` }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        {item.is_chop_bar ? 'Customize' : 'Add'}
-                      </button>
                     </div>
+                  </div>
+
+                  {/* Photo (right) + floating add — fixed box clips any image size */}
+                  <div className="relative shrink-0 self-center">
+                    {item.image_url ? (
+                      <div className="h-24 w-24 rounded-2xl overflow-hidden ring-1 ring-black/5 bg-surface-100">
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="h-24 w-24 rounded-2xl flex items-center justify-center text-3xl ring-1 ring-black/5"
+                        style={{ background: `linear-gradient(135deg, ${tenant.primary_color}14, ${tenant.primary_color}05)` }}
+                      >
+                        🍽️
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleAddItem(item)}
+                      aria-label={item.is_chop_bar ? `Customize ${item.name}` : `Add ${item.name}`}
+                      className="absolute -bottom-2 -right-2 h-9 w-9 rounded-full bg-white shadow-lg ring-1 ring-black/5 grid place-items-center active:scale-90 transition-transform cursor-pointer"
+                    >
+                      <Plus className="h-5 w-5" strokeWidth={2.75} style={{ color: tenant.primary_color }} />
+                    </button>
                   </div>
                 </div>
               ))}
