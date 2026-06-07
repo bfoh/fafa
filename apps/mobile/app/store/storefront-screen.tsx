@@ -1,6 +1,7 @@
 'use client';
 
-import { MessageCircle, Star } from 'lucide-react';
+import { MessageCircle, Star, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import {
   BrandingCache,
   AdepaWidget,
@@ -50,6 +51,12 @@ export function StorefrontScreen({ slug }: { slug: string }) {
       {/* Sticky glass header */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-hairline pt-safe">
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center gap-3">
+          <Link
+            href="/"
+            className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center text-surface-600 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
           {tenant?.logo_url ? (
             <img
               src={tenant.logo_url}

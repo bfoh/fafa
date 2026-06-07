@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import {
   OrderTracker,
   AdepaConversion,
@@ -39,7 +41,19 @@ export function OrderScreen({ slug, orderId }: { slug: string; orderId: string }
   }
 
   return (
-    <div className="min-h-[100dvh] bg-canvas pt-safe">
+    <div className="min-h-[100dvh] bg-canvas">
+      {/* Sticky Header with Back Link */}
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-hairline pt-safe">
+        <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-surface-600 hover:text-surface-900 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
+          </Link>
+        </div>
+      </header>
       <AdepaConversion
         slug={slug}
         orderNumber={(data.order as any).order_number}

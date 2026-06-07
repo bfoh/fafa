@@ -481,14 +481,41 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                                   {d.tenantName && (
                                     <p className="text-[11px] text-surface-400 truncate">{d.tenantName}</p>
                                   )}
+                                  {tenantSlug && d.isChopBar ? (
+                                    <Link
+                                      href={
+                                        typeof window !== 'undefined' &&
+                                        (window.location.pathname.startsWith('/store') ||
+                                          window.location.pathname.startsWith('/checkout') ||
+                                          window.location.pathname.startsWith('/order') ||
+                                          window.location.pathname.startsWith('/rider'))
+                                          ? `/store/?slug=${tenantSlug}`
+                                          : `/${tenantSlug}`
+                                      }
+                                      onClick={() => setOpen(false)}
+                                      className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700"
+                                    >
+                                      Customise
+                                    </Link>
+                                  ) : (tenantSlug || d.tenantSlug) ? (
+                                    <Link
+                                      href={
+                                        typeof window !== 'undefined' &&
+                                        (window.location.pathname.startsWith('/store') ||
+                                          window.location.pathname.startsWith('/checkout') ||
+                                          window.location.pathname.startsWith('/order') ||
+                                          window.location.pathname.startsWith('/rider'))
+                                          ? `/checkout/?slug=${tenantSlug || d.tenantSlug}`
+                                          : `/${tenantSlug || d.tenantSlug}/checkout`
+                                      }
+                                      onClick={() => handleAdd(d)}
+                                      className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0"
+                                      style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
+                                    >
+                                      <Plus className="w-4 h-4" /> Add
+                                    </Link>
+                                  ) : null}
                                 </div>
-                                {tenantSlug && d.isChopBar ? (
-                                  <Link href={`/${tenantSlug}`} onClick={() => setOpen(false)} className="px-3 h-9 inline-flex items-center rounded-xl border border-hairline text-xs font-semibold text-surface-700">Customise</Link>
-                                ) : (tenantSlug || d.tenantSlug) ? (
-                                  <Link href={`/${tenantSlug || d.tenantSlug}/checkout`} onClick={() => handleAdd(d)} className="px-3 h-9 inline-flex items-center gap-1 rounded-xl text-white text-xs font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
-                                    <Plus className="w-4 h-4" /> Add
-                                  </Link>
-                                ) : null}
                               </div>
                             ))}
                           </div>
@@ -533,7 +560,20 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                               <p className="mt-1.5 text-[11px] text-amber-600">Not on the menu: {b.unmatched.join(', ')}</p>
                             )}
                             {tenantSlug && (
-                              <Link href={`/${tenantSlug}/checkout`} onClick={() => handleAddBowl(b)} className="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1 rounded-xl text-white text-xs font-semibold press" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+                              <Link
+                                href={
+                                  typeof window !== 'undefined' &&
+                                  (window.location.pathname.startsWith('/store') ||
+                                    window.location.pathname.startsWith('/checkout') ||
+                                    window.location.pathname.startsWith('/order') ||
+                                    window.location.pathname.startsWith('/rider'))
+                                    ? `/checkout/?slug=${tenantSlug}`
+                                    : `/${tenantSlug}/checkout`
+                                }
+                                onClick={() => handleAddBowl(b)}
+                                className="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1 rounded-xl text-white text-xs font-semibold press"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
+                              >
                                 <Plus className="w-4 h-4" /> Add bowl
                               </Link>
                             )}
@@ -547,7 +587,20 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
                         return (
                           <div key={idx} className="space-y-2">
                             {kitchens.map((k) => (
-                              <Link key={k.slug} href={`/${k.slug}`} onClick={() => setOpen(false)} className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm">
+                              <Link
+                                key={k.slug}
+                                href={
+                                  typeof window !== 'undefined' &&
+                                  (window.location.pathname.startsWith('/store') ||
+                                    window.location.pathname.startsWith('/checkout') ||
+                                    window.location.pathname.startsWith('/order') ||
+                                    window.location.pathname.startsWith('/rider'))
+                                    ? `/store/?slug=${k.slug}`
+                                    : `/${k.slug}`
+                                }
+                                onClick={() => setOpen(false)}
+                                className="flex items-center justify-between gap-2 bg-white border border-hairline rounded-2xl p-3 shadow-sm"
+                              >
                                 <div className="min-w-0">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{k.name}</p>
                                   <p className="text-xs text-surface-500">Delivery {formatGHS(k.deliveryFee)}{k.openNow === false ? ' · closed' : ''}</p>
@@ -571,7 +624,20 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
 
             {/* Cart bar */}
             {cartN > 0 && tenantSlug && (
-              <Link href={`/${tenantSlug}/checkout`} onClick={() => { setAttribution(tenantSlug, convId()); pingOutcome(convId(), 'checkout'); setOpen(false); }} className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}>
+              <Link
+                href={
+                  typeof window !== 'undefined' &&
+                  (window.location.pathname.startsWith('/store') ||
+                    window.location.pathname.startsWith('/checkout') ||
+                    window.location.pathname.startsWith('/order') ||
+                    window.location.pathname.startsWith('/rider'))
+                    ? `/checkout/?slug=${tenantSlug}`
+                    : `/${tenantSlug}/checkout`
+                }
+                onClick={() => { setAttribution(tenantSlug, convId()); pingOutcome(convId(), 'checkout'); setOpen(false); }}
+                className="mx-4 mb-2 flex items-center justify-between px-4 h-11 rounded-xl text-white text-sm font-semibold press shrink-0"
+                style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
+              >
                 <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> {cartN} in cart</span>
                 <span>Checkout →</span>
               </Link>

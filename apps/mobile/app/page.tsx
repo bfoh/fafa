@@ -120,12 +120,20 @@ export default function MobileMarketplaceHome() {
             </div>
           </div>
 
-          <Link
-            href="/rider"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-xs font-semibold text-white/80"
-          >
-            🏍️ Rider Portal
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/for-restaurants"
+              className="px-3 py-1.5 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-[10px] shadow-[0_4px_12px_-4px_rgba(255,107,53,0.6)] hover:brightness-110 transition-all whitespace-nowrap"
+            >
+              List kitchen ▸
+            </Link>
+            <Link
+              href="/rider"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-semibold text-white/85 whitespace-nowrap"
+            >
+              🏍️ Rider Portal
+            </Link>
+          </div>
         </header>
 
         {/* Hero title */}

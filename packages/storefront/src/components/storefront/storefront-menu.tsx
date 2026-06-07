@@ -571,7 +571,15 @@ function CartDrawer({
           )}
 
           <Link
-            href={`/${tenant.slug}/checkout`}
+            href={
+              typeof window !== 'undefined' &&
+              (window.location.pathname.startsWith('/store') ||
+                window.location.pathname.startsWith('/checkout') ||
+                window.location.pathname.startsWith('/order') ||
+                window.location.pathname.startsWith('/rider'))
+                ? `/checkout/?slug=${tenant.slug}`
+                : `/${tenant.slug}/checkout`
+            }
             onClick={onClose}
             className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-white font-semibold transition-all active:scale-[0.98] hover:opacity-95"
             style={{ background: tenant.primary_color }}

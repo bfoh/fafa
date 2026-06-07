@@ -6,8 +6,18 @@ import { sendOrderNotifications } from '@/lib/notifications/send';
 import { getBaseUrl } from '@/lib/utils';
 import { resolveDeliveryFee } from '@/lib/delivery/resolve';
 import { resolveItemBasePrice } from '@/lib/orders/item-pricing';
+import { corsHeaders, preflight } from '@/lib/http/cors';
+
+export const dynamic = 'force-dynamic';
+
+export async function OPTIONS(req: Request) {
+  return preflight(req);
+}
 
 export async function POST(req: Request) {
+  const origin = req.headers.get('origin');
+  const headers = corsHeaders(origin);
+
   try {
     const body = await req.json();
     const supabase = createAdminClient();
@@ -37,7 +47,7 @@ export async function POST(req: Request) {
     if (tenantErr || !tenant) {
       return NextResponse.json(
         { error: 'Restaurant not found' },
-        { status: 404 }
+        { status: 404, headers }
       );
     }
 
@@ -45,7 +55,7 @@ export async function POST(req: Request) {
     if (!isValidGhanaPhone(customer.phone)) {
       return NextResponse.json(
         { error: 'Please enter a valid Ghana phone number' },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
@@ -62,7 +72,7 @@ export async function POST(req: Request) {
     if (!menuItems || menuItems.length !== items.length) {
       return NextResponse.json(
         { error: 'Some menu items are no longer available' },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
@@ -139,7 +149,7 @@ export async function POST(req: Request) {
       if (!resolved.deliverable) {
         return NextResponse.json(
           { error: 'This address is outside the delivery range for this restaurant.' },
-          { status: 400 }
+          { status: 400, headers }
         );
       }
 
@@ -156,7 +166,7 @@ export async function POST(req: Request) {
         {
           error: `Minimum order is GH₵${Number(tenant.min_order_amount).toFixed(2)}`,
         },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
@@ -217,7 +227,7 @@ export async function POST(req: Request) {
       console.error('Order creation error:', orderError);
       return NextResponse.json(
         { error: 'Failed to create order' },
-        { status: 500 }
+        { status: 500, headers }
       );
     }
 
@@ -268,14 +278,14 @@ export async function POST(req: Request) {
         return NextResponse.json({
           order,
           payment_url: paystackResult.data.authorization_url,
-        });
+        }, { headers });
       } catch (paystackError) {
         console.error('Paystack error:', paystackError);
         // Order created but payment failed — tenant can see it as pending
         return NextResponse.json({
           order,
           payment_error: 'Payment initialization failed. You can retry payment.',
-        });
+        }, { headers });
       }
     }
 
@@ -290,12 +300,12 @@ export async function POST(req: Request) {
       console.error('Failed to send order placed notification:', err);
     });
 
-    return NextResponse.json({ order });
+    return NextResponse.json({ order }, { headers });
   } catch (err) {
     console.error('Order creation error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 }

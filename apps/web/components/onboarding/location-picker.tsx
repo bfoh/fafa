@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
-import { DEFAULT_CENTER } from '@/lib/marketplace/geo';
+import { DEFAULT_CENTER } from '../../lib/marketplace/geo';
 
 export default function LocationPicker({
   center,
