@@ -45,5 +45,14 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Didi accesses your location to select your delivery address and coordinate deliveries.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Didi tracks your delivery coordinates in the background to keep customers updated on their orders.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
