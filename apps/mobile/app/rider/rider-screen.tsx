@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSupabase } from '../providers';
 import { useRiderTracking } from '../hooks/use-rider-tracking';
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
 interface RiderOrder {
   id: string;

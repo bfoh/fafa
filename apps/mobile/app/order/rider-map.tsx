@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://www.ghdidi.com';
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 const POLL_MS = 8_000;
 
 interface RiderLocation {
