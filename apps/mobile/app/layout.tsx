@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { NativeBridge } from './native-bridge';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -31,7 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} pt-safe pb-safe bg-canvas`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <NativeBridge />
+          {children}
+        </Providers>
       </body>
     </html>
   );

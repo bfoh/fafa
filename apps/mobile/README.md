@@ -53,8 +53,30 @@ npm run mobile:ios
    `lib/storefront/payload`).
 5. `npm -w mobile run lint` green → no server/secret module reachable here.
 
-## Not in Phase 0 (later phases)
+## Phase 2 — native integrations (code done, build-verified)
 
-- ~~Hoist shared code into `packages/storefront`~~ — done (Phase 1).
-- Capacitor Secure Storage adapter for the Supabase session (Phase 2).
-- Push (FCM/APNs), background geolocation, deep links (Phase 2–3).
+Implemented (no-ops off-device; need native config + a real device to test):
+
+- **Session storage**: `app/lib/supabase.ts` persists the Supabase session via
+  Capacitor Preferences (encrypted-storage hardening is a follow-up).
+- **Push**: `app/hooks/use-push.ts` registers FCM/APNs and POSTs the token to
+  `/api/devices/register`; taps deep-link into the order tracker. Server send
+  path: `apps/web/lib/push/fcm.ts` (FCM v1, env-gated) wired into the order
+  notification dispatcher — inert until `FCM_*` env is set.
+- **Deep links**: `app/hooks/use-deep-links.ts` maps `ghdidi.com/<slug>` →
+  `/store/?slug=` and `.../order/<id>` → `/order/?id=`. Association files at
+  `apps/web/public/.well-known/{assetlinks.json,apple-app-site-association}`.
+
+### Native config still required (your machine)
+```bash
+npx cap add android && npx cap add ios
+# Android: android/app/google-services.json (Firebase)
+# iOS: Xcode → Push Notifications capability; APNs key in Firebase
+# Fill placeholders in the two .well-known files (SHA256 fingerprint, Team ID)
+# Server: set FCM_PROJECT_ID / FCM_CLIENT_EMAIL / FCM_PRIVATE_KEY on apps/web
+```
+
+## Later (Phase 3)
+
+- Transistorsoft background geolocation for riders (battery-tuned foreground service).
+- Encrypted secure-storage plugin swap for the Supabase session.

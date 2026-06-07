@@ -17,6 +17,11 @@ const config: CapacitorConfig = {
     iosScheme: 'capacitor',
     // No `url` — never load the live site into the WebView.
   },
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
 };
 
 export default config;
