@@ -42,9 +42,10 @@ workflows:
           npx cap sync ios
       - name: Set up code signing
         script: |
-          # Codemagic CLI automatically fetches profile & certificates from Apple Developer
+          set -e # Exit immediately if any command fails
           keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
+          # Fetch provisioning profiles and signing certificates using the correct flag
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --platform ios --create
           keychain add-certificates
           # Specify the project file explicitly inside the monorepo directory
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
