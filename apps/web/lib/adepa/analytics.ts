@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AdepaOutcome } from '@fafa/types';
 
 /**
  * Conversation observability for Adepa. Every helper here is best-effort and
@@ -6,12 +7,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * service-role admin client (RLS-bypassing); the dashboard reads under RLS.
  */
 
-export type AdepaOutcome =
-  | 'browsing'
-  | 'added_to_cart'
-  | 'checkout'
-  | 'ordered'
-  | 'escalated';
+// Re-exported so existing `@/lib/adepa/analytics` importers keep working; the
+// canonical definition now lives in @fafa/types (shared client + server).
+export type { AdepaOutcome };
 
 // Funnel ranking so an outcome only ever moves forward (never downgrade a
 // session that already ordered back to "browsing").

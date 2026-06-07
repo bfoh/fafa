@@ -1,17 +1,3 @@
-/**
- * Format an amount in Ghana Cedis.
- */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-GH', {
-    style: 'currency',
-    currency: 'GHS',
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
-
-/**
- * Format a compact currency display (e.g. "GH₵ 35.00")
- */
-export function formatGHS(amount: number): string {
-  return `GH₵ ${amount.toFixed(2)}`;
-}
+// Re-export shim → @fafa/storefront. Source moved to packages/storefront
+// during the Phase 1 hoist; this keeps existing @/ import sites working.
+export * from '@fafa/storefront/currency';

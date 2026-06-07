@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.199",
+    "@fafa/storefront": "*",
     "@fafa/types": "*",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",

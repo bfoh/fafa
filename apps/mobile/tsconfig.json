@@ -1,0 +1,13 @@
+{
+  "extends": "../web/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/app/*": ["./app/*"],
+      "@fafa/types": ["../../packages/types/src/index.ts"]
+    },
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "out", "android", "ios"]
+}

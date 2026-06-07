@@ -1,0 +1,12 @@
+/*
+ * Reuse the web design system verbatim (brand colours, surfaces, shadow-card,
+ * bg-canvas, animations…) so cross-aliased components render identically.
+ * @source globs make Tailwind v4 scan the web component sources we pull in,
+ * otherwise their utility classes get purged.
+ */
+@import '../../web/app/globals.css';
+@import 'leaflet/dist/leaflet.css';
+
+@source '../../web/components/**/*.{ts,tsx}';
+@source '../../web/hooks/**/*.{ts,tsx}';
+@source './**/*.{ts,tsx}';

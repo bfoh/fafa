@@ -8,10 +8,15 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
+    "build:web": "turbo build --filter=web",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "mobile:export": "turbo build --filter=mobile",
+    "mobile:sync": "npm run mobile:export && npm -w mobile run cap:sync",
+    "mobile:android": "npm run mobile:sync && npm -w mobile run cap:android",
+    "mobile:ios": "npm run mobile:sync && npm -w mobile run cap:ios"
   },
   "devDependencies": {
     "prettier": "^3.3.0",

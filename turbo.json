@@ -4,7 +4,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "out/**"],
+      "env": [
+        "NEXT_PUBLIC_API_BASE",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
