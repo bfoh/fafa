@@ -18,7 +18,7 @@ interface Kitchen { name: string; slug: string; deliveryFee: number; openNow?: b
 interface OrderStatus { found: boolean; orderNumber?: string; status?: string; total?: number }
 interface Bowl { itemId: string; name: string; basePrice: number; selected: Array<{ name: string; priceModifier: number }>; total: number; unmatched: string[] }
 interface SpeechResultLike { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }
-interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: (e?: { error?: string }) => void; start: () => void; stop: () => void }
+interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: (e?: { error?: string }) => void; onstart?: () => void; start: () => void; stop: () => void }
 
 function getApiBaseUrl(): string {
   if (typeof window === 'undefined') return '';
@@ -51,6 +51,7 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
   const spokenRef = useRef<Set<string>>(new Set());
   const primedRef = useRef(false);
   const handsFreeRef = useRef(false); // continuous voice conversation
+  const notAllowedCountRef = useRef(0); // transient 'not-allowed' retries before declaring mic fatal
   const openRef = useRef(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -118,9 +119,12 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
       u.rate = 1.02;
       u.pitch = 1.12; // a touch higher — warmer, more feminine
       // After Fafa finishes speaking, resume listening (hands-free convo).
+      // Wait 600ms so iOS can release the playback audio session before the
+      // recorder grabs the mic — otherwise webkitSpeechRecognition throws
+      // 'not-allowed' on the still-locked hardware.
       u.onend = () => {
         utteranceRef.current = null;
-        maybeRelisten();
+        setTimeout(maybeRelisten, 600);
       };
       synth.speak(u);
     } catch { /* ignore */ }
@@ -310,6 +314,7 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
   // Mic button: toggles the hands-free conversation on/off.
   function onMicTap() {
     primeSpeech();
+    notAllowedCountRef.current = 0; // fresh user intent — clear transient mic-block tally
     if (recRef.current) {
       // Listening → user wants to stop the whole conversation loop.
       setHF(false);
@@ -351,6 +356,9 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
       send(t);
     };
 
+    rec.onstart = () => {
+      notAllowedCountRef.current = 0; // mic actually opened — transient collision cleared
+    };
     rec.onresult = (e: SpeechResultLike) => {
       const res = e.results[e.results.length - 1];
       lastText = res?.[0]?.transcript ?? '';
@@ -362,8 +370,16 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
       setListening(false);
       recRef.current = null;
       const err = ev?.error;
-      // Only 'not-allowed' is truly fatal.
+      // 'not-allowed' on iOS is often transient: the playback audio session
+      // hasn't fully released yet. In hands-free mode, retry up to twice before
+      // treating it as a real permission block.
       if (err === 'not-allowed') {
+        if (handsFreeRef.current && openRef.current && notAllowedCountRef.current < 2) {
+          notAllowedCountRef.current += 1;
+          setTimeout(() => beginListen(), 1000); // let the audio session settle, then retry silently
+          return;
+        }
+        notAllowedCountRef.current = 0;
         setHF(false);
         setVoiceErr('Mic blocked — enable it in settings.');
         return;
@@ -430,6 +446,7 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
         <button
           onClick={() => {
             setOpen(true);
+            notAllowedCountRef.current = 0; // fresh session — clear transient mic-block tally
             if (messages.length === 0 && speakOn) {
               const text = firstName
                 ? `Welcome back to Didi, ${firstName}! ${usual ? `Shall I prepare your usual ${usual}, or are we trying something new today?` : "How can I make your day delicious?"}`
