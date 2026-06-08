@@ -49,17 +49,21 @@ const CUISINES = [
 ];
 
 export default function MobileMarketplaceHome() {
+  const [q, setQ] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('all');
+  const [near, setNear] = useState('');
+  const [locating, setLocating] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['marketplace', searchQuery, selectedCuisine],
+    queryKey: ['marketplace', searchQuery, selectedCuisine, near],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchQuery) params.set('q', searchQuery);
       if (selectedCuisine && selectedCuisine !== 'all') {
         params.set('cuisine', selectedCuisine);
       }
+      if (near) params.set('near', near);
       const res = await fetch(`${API}/api/marketplace?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch marketplace');
       return res.json() as Promise<{ kitchens: KitchenResult[] }>;
@@ -70,6 +74,28 @@ export default function MobileMarketplaceHome() {
 
   const formatGHS = (value: number) => {
     return `GH₵${value.toFixed(2)}`;
+  };
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setSearchQuery(q);
+  };
+
+  const toggleLocation = () => {
+    if (near) {
+      setNear('');
+      return;
+    }
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setNear(`${pos.coords.latitude},${pos.coords.longitude}`);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 8000 }
+    );
   };
 
   return (
@@ -152,18 +178,47 @@ export default function MobileMarketplaceHome() {
           </p>
         </section>
 
-        {/* Search input */}
-        <section className="my-5 relative">
-          <div className="relative flex items-center rounded-2xl border border-white/12 bg-white/5 backdrop-blur-xl focus-within:border-brand-500/50 focus-within:bg-white/8 transition-all duration-300">
-            <Search className="w-5 h-5 text-white/40 absolute left-4 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search dishes or kitchens..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-12 pl-12 pr-4 bg-transparent border-none text-white text-sm placeholder-white/40 focus:outline-none focus:ring-0"
-            />
-          </div>
+        {/* Search input & geolocation actions */}
+        <section className="my-5">
+          <form onSubmit={handleSearchSubmit} className="space-y-3">
+            <div className="relative flex items-center rounded-full border border-white/12 bg-white/5 backdrop-blur-xl focus-within:border-brand-500/50 focus-within:bg-white/8 transition-all duration-300">
+              <Search className="w-5 h-5 text-white/40 absolute left-4 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search jollof, waakye, pizza..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="w-full h-12 pl-12 pr-4 bg-transparent border-none text-white text-sm placeholder-white/40 focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleLocation}
+                className={`flex-1 h-12 rounded-full border flex items-center justify-center gap-2 text-sm font-semibold transition-all backdrop-blur-xl active:scale-[0.98] ${
+                  near
+                    ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300'
+                    : 'bg-white/5 border-white/12 text-white/80 hover:bg-white/8'
+                }`}
+              >
+                {locating ? (
+                  <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                ) : (
+                  <MapPin className="w-4 h-4" />
+                )}
+                {near ? 'Near you' : 'Near me'}
+              </button>
+
+              <button
+                type="submit"
+                className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white flex items-center justify-center shadow-[0_4px_15px_rgba(232,85,32,0.45)] hover:brightness-110 transition-all active:scale-[0.95]"
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          </form>
         </section>
 
         {/* Cuisine horizontal scroll */}
