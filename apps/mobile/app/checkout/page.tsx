@@ -13,6 +13,7 @@ import { GHANA_CITIES } from '../../../web/lib/delivery/ghana-areas';
 import { resolveDeliveryFee } from '../../../web/lib/delivery/resolve';
 import { estimateMinutes, DEFAULT_PREP_MINUTES } from '../../../web/lib/delivery/pricing';
 import dynamic from 'next/dynamic';
+import { Geolocation } from '@capacitor/geolocation';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -228,24 +229,20 @@ function CheckoutContent({ slug }: { slug: string }) {
     return n ? ([n.lat, n.lng] as [number, number]) : undefined;
   }, [selectedCity, selectedArea]);
 
-  function useMyLocation() {
+  async function useMyLocation() {
     setGeoError('');
-    if (!('geolocation' in navigator)) {
-      setGeoError('Location not supported on this device. Drag the map instead.');
+    try {
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
+      setCustomerPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       setShowMap(true);
-      return;
+    } catch (err) {
+      console.warn('Native geolocation failed:', err);
+      setGeoError('Could not get your location. Drag the map to set it.');
+      setShowMap(true);
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCustomerPin({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setShowMap(true);
-      },
-      () => {
-        setGeoError('Could not get your location. Drag the map to set it.');
-        setShowMap(true);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   }
 
   if (items.length === 0) {

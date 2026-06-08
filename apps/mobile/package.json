@@ -13,13 +13,14 @@
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.20",
+    "@capacitor/geolocation": "^6.1.1",
     "@fafa/storefront": "*",
     "@fafa/types": "*",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
+    "@tanstack/query-sync-storage-persister": "^5.62.0",
     "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-query-persist-client": "^5.62.0",
-    "@tanstack/query-sync-storage-persister": "^5.62.0",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
@@ -30,10 +31,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.1.0",
     "@capacitor/app": "^6.0.0",
     "@capacitor/cli": "^6.1.0",
     "@capacitor/core": "^6.1.0",
-    "@capacitor/android": "^6.1.0",
     "@capacitor/ios": "^6.1.0",
     "@capacitor/preferences": "^6.0.0",
     "@capacitor/push-notifications": "^6.0.0",

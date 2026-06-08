@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Star, MapPin, Compass, Clock, Sparkles } from 'lucide-react';
 import { AdepaWidget } from '@fafa/storefront';
+import { Geolocation } from '@capacitor/geolocation';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -81,21 +82,23 @@ export default function MobileMarketplaceHome() {
     setSearchQuery(q);
   };
 
-  const toggleLocation = () => {
+  const toggleLocation = async () => {
     if (near) {
       setNear('');
       return;
     }
-    if (!navigator.geolocation) return;
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNear(`${pos.coords.latitude},${pos.coords.longitude}`);
-        setLocating(false);
-      },
-      () => setLocating(false),
-      { timeout: 8000 }
-    );
+    try {
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 8000,
+      });
+      setNear(`${coordinates.coords.latitude},${coordinates.coords.longitude}`);
+    } catch (err) {
+      console.warn('Native geolocation failed:', err);
+    } finally {
+      setLocating(false);
+    }
   };
 
   return (
