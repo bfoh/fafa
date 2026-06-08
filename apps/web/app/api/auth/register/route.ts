@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { generateSlug } from '@/lib/utils/slug';
 import { getBaseUrl } from '@/lib/utils';
+import { corsHeaders, preflight } from '@/lib/http/cors';
 
 export async function POST(req: Request) {
+  const headers = corsHeaders(req.headers.get('origin'));
   try {
     const {
       email,
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
     if (authError) {
       return NextResponse.json(
         { error: authError.message },
-        { status: 400 }
+        { status: 400, headers }
       );
     }
 
@@ -77,7 +79,7 @@ export async function POST(req: Request) {
       await supabase.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json(
         { error: `Failed to create restaurant: ${tenantError.message}` },
-        { status: 500 }
+        { status: 500, headers }
       );
     }
 
@@ -118,12 +120,16 @@ export async function POST(req: Request) {
     return NextResponse.json({
       tenant,
       storefront_url: `${getBaseUrl()}/${slug}`,
-    });
+    }, { headers });
   } catch (err) {
     console.error('Registration error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
+}
+
+export function OPTIONS(req: Request) {
+  return preflight(req);
 }
