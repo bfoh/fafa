@@ -49,6 +49,10 @@
 	<string>Didi accesses your location to select your delivery address and coordinate deliveries.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Didi tracks your delivery coordinates in the background to keep customers updated on their orders.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Didi uses your microphone to transcribe your voice commands for the Fafa AI concierge.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Didi uses speech recognition to convert your spoken food orders into text.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

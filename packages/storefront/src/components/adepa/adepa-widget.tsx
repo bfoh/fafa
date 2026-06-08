@@ -53,6 +53,7 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
   const handsFreeRef = useRef(false); // continuous voice conversation
   const openRef = useRef(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: `${baseUrl}/api/adepa/chat`, body: { tenantSlug } }),
@@ -110,13 +111,17 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
       if (!synth) return;
       synth.cancel(); // drop any queued/earlier utterance
       const u = new SpeechSynthesisUtterance(speakable(text));
+      utteranceRef.current = u; // Keep a strong reference to prevent garbage collection on iOS/Safari
       const v = voiceRef.current;
       if (v) u.voice = v;
       u.lang = v?.lang || 'en-GH';
       u.rate = 1.02;
       u.pitch = 1.12; // a touch higher — warmer, more feminine
       // After Fafa finishes speaking, resume listening (hands-free convo).
-      u.onend = () => maybeRelisten();
+      u.onend = () => {
+        utteranceRef.current = null;
+        maybeRelisten();
+      };
       synth.speak(u);
     } catch { /* ignore */ }
   }
@@ -430,6 +435,8 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
                 ? `Welcome back to Didi, ${firstName}! ${usual ? `Shall I prepare your usual ${usual}, or are we trying something new today?` : "How can I make your day delicious?"}`
                 : "Hello, I'm Fafa, your personal food concierge on the Didi platform. What are you craving today?";
               speak(text);
+              // Start hands-free continuous conversation automatically
+              setHF(true);
             }
           }}
           aria-label="Chat with Fafa"
