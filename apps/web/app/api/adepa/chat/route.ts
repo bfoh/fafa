@@ -6,6 +6,7 @@ import { isAdepaEnabled, ADEPA_MODEL } from '@/lib/adepa/config';
 import { rateLimit } from '@/lib/adepa/ratelimit';
 import { logTurn } from '@/lib/adepa/analytics';
 import type { AdepaContext } from '@/lib/adepa/types';
+import { corsHeaders, preflight } from '@/lib/http/cors';
 
 export async function POST(req: Request) {
   if (!isAdepaEnabled()) {
@@ -72,5 +73,14 @@ export async function POST(req: Request) {
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  const response = result.toUIMessageStreamResponse();
+  const headers = corsHeaders(req.headers.get('origin'));
+  Object.entries(headers).forEach(([k, v]) => {
+    response.headers.set(k, v);
+  });
+  return response;
+}
+
+export async function OPTIONS(req: Request) {
+  return preflight(req);
 }

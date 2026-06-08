@@ -48,6 +48,18 @@ export function takeAttribution(slug: string): string | null {
   }
 }
 
+function getApiBaseUrl(): string {
+  if (typeof window === 'undefined') return '';
+  const isCapacitor =
+    window.location.origin.startsWith('capacitor://') ||
+    (window.location.origin.startsWith('https://localhost') && !window.location.port) ||
+    window.location.href.includes('capacitor://');
+  if (isCapacitor) {
+    return process.env.NEXT_PUBLIC_API_BASE || 'https://ghdidi.com';
+  }
+  return '';
+}
+
 /** Fire-and-forget funnel beacon. */
 export function pingOutcome(
   conversationId: string,
@@ -56,7 +68,8 @@ export function pingOutcome(
 ) {
   if (!conversationId) return;
   try {
-    void fetch('/api/adepa/events', {
+    const baseUrl = getApiBaseUrl();
+    void fetch(`${baseUrl}/api/adepa/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conversationId, type, ...extra }),

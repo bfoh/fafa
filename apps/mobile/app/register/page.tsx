@@ -94,7 +94,7 @@ export default function MobileRegisterPage() {
             <div className="w-14 h-14 rounded-2xl ring-1 ring-white/15 mb-3.5 bg-white/5 flex items-center justify-center shadow-lg overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/images/didi_favicon.png"
+                src="/images/didi_logo.png"
                 alt="Didi"
                 className="w-full h-full object-cover"
               />

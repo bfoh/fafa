@@ -43,12 +43,20 @@ export default function LoginPage() {
   }, [supabase, router]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tenantParam = params.get('tenant');
+
+    if (!tenantParam) {
+      setBranding(null);
+      return;
+    }
+
     const cached = localStorage.getItem('fafa_last_tenant');
     let cachedSlug = '';
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.slug) {
+        if (parsed && parsed.slug === tenantParam) {
           setTimeout(() => setBranding(parsed), 0);
           cachedSlug = parsed.slug;
         }
@@ -57,17 +65,13 @@ export default function LoginPage() {
       }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const tenantParam = params.get('tenant');
-    const slugToFetch = tenantParam || cachedSlug;
-
-    if (slugToFetch) {
+    if (tenantParam) {
       async function fetchBranding() {
         try {
           const { data: tenant } = await supabase
             .from('tenants')
             .select('name, slug, logo_url, primary_color')
-            .eq('slug', slugToFetch)
+            .eq('slug', tenantParam)
             .eq('status', 'active')
             .single();
 
@@ -81,7 +85,7 @@ export default function LoginPage() {
             setBranding(brandingData);
             localStorage.setItem('fafa_last_tenant', JSON.stringify(brandingData));
             document.cookie = `fafa_last_tenant_slug=${tenant.slug}; path=/; max-age=31536000; SameSite=Lax`;
-          } else if (tenantParam) {
+          } else {
             setBranding(null);
           }
         } catch (err) {
@@ -164,7 +168,7 @@ export default function LoginPage() {
         ) : (
           <>
             <Image
-              src="/images/didi_favicon.png"
+              src="/images/didi_logo.png"
               alt="Didi"
               width={48}
               height={48}

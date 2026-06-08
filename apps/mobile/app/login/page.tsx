@@ -45,12 +45,20 @@ export default function MobileLoginPage() {
   }, [supabase]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tenantParam = params.get('tenant');
+
+    if (!tenantParam) {
+      setBranding(null);
+      return;
+    }
+
     const cached = localStorage.getItem('fafa_last_tenant');
     let cachedSlug = '';
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.slug) {
+        if (parsed && parsed.slug === tenantParam) {
           setTimeout(() => setBranding(parsed), 0);
           cachedSlug = parsed.slug;
         }
@@ -59,17 +67,13 @@ export default function MobileLoginPage() {
       }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const tenantParam = params.get('tenant');
-    const slugToFetch = tenantParam || cachedSlug;
-
-    if (slugToFetch) {
+    if (tenantParam) {
       async function fetchBranding() {
         try {
           const { data: tenant } = await supabase
             .from('tenants')
             .select('name, slug, logo_url, primary_color')
-            .eq('slug', slugToFetch)
+            .eq('slug', tenantParam)
             .eq('status', 'active')
             .single();
 
@@ -83,7 +87,7 @@ export default function MobileLoginPage() {
             setBranding(brandingData);
             localStorage.setItem('fafa_last_tenant', JSON.stringify(brandingData));
             document.cookie = `fafa_last_tenant_slug=${tenant.slug}; path=/; max-age=31536000; SameSite=Lax`;
-          } else if (tenantParam) {
+          } else {
             setBranding(null);
           }
         } catch (err) {
@@ -198,7 +202,7 @@ export default function MobileLoginPage() {
                 <div className="w-14 h-14 rounded-2xl ring-1 ring-white/15 mb-3.5 bg-white/5 flex items-center justify-center shadow-lg overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/images/didi_favicon.png"
+                    src="/images/didi_logo.png"
                     alt="Didi"
                     className="w-full h-full object-cover"
                   />

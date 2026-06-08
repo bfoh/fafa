@@ -20,7 +20,21 @@ interface Bowl { itemId: string; name: string; basePrice: number; selected: Arra
 interface SpeechResultLike { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }
 interface SpeechRecognitionLike { lang: string; interimResults: boolean; maxAlternatives: number; onresult: (e: SpeechResultLike) => void; onend: () => void; onerror: (e?: { error?: string }) => void; start: () => void; stop: () => void }
 
-export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
+function getApiBaseUrl(): string {
+  if (typeof window === 'undefined') return '';
+  const isCapacitor =
+    window.location.origin.startsWith('capacitor://') ||
+    (window.location.origin.startsWith('https://localhost') && !window.location.port) ||
+    window.location.href.includes('capacitor://');
+  if (isCapacitor) {
+    return process.env.NEXT_PUBLIC_API_BASE || 'https://ghdidi.com';
+  }
+  return '';
+}
+
+export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiBase?: string }) {
+  const baseUrl = apiBase || getApiBaseUrl();
+
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -41,7 +55,7 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/adepa/chat', body: { tenantSlug } }),
+    transport: new DefaultChatTransport({ api: `${baseUrl}/api/adepa/chat`, body: { tenantSlug } }),
   });
 
   // Stable per-session conversation id (lazily created on the client).
@@ -164,12 +178,22 @@ export function AdepaWidget({ tenantSlug }: { tenantSlug?: string }) {
   }
 
   useEffect(() => {
-    fetch('/api/adepa/config').then((r) => r.json()).then((d) => setEnabled(Boolean(d.enabled))).catch(() => setEnabled(false));
+    fetch(`${baseUrl}/api/adepa/config`)
+      .then((r) => r.json())
+      .then((d) => setEnabled(Boolean(d.enabled)))
+      .catch(() => {
+        // Fallback to true on mobile origin/Capacitor so the agent works even if config endpoint check fails or is CORS-blocked initially
+        const isCapacitor = typeof window !== 'undefined' && (
+          window.location.origin.startsWith('capacitor://') || 
+          window.location.origin.startsWith('https://localhost')
+        );
+        setEnabled(isCapacitor ? true : false);
+      });
     try {
       const v = localStorage.getItem('fafa_speak');
       if (v != null) setSpeakOn(v === '1');
     } catch { /* ignore */ }
-  }, []);
+  }, [baseUrl]);
 
   // Load + pick the spoken voice (voices arrive async on most browsers).
   useEffect(() => {

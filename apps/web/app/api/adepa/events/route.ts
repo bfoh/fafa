@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdepaEnabled } from '@/lib/adepa/config';
 import { recordOutcome, type AdepaOutcome } from '@/lib/adepa/analytics';
+import { corsHeaders, preflight } from '@/lib/http/cors';
 
 const ALLOWED: AdepaOutcome[] = ['added_to_cart', 'checkout', 'ordered', 'escalated'];
 
@@ -9,8 +10,11 @@ const ALLOWED: AdepaOutcome[] = ['added_to_cart', 'checkout', 'ordered', 'escala
  * conversation's funnel outcome (the chat -> order conversion signal).
  */
 export async function POST(req: Request) {
+  const origin = req.headers.get('origin');
+  const headers = corsHeaders(origin);
+
   if (!isAdepaEnabled()) {
-    return Response.json({ ok: false }, { status: 503 });
+    return Response.json({ ok: false }, { status: 503, headers });
   }
 
   let body: {
@@ -22,11 +26,11 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return Response.json({ ok: false }, { status: 400 });
+    return Response.json({ ok: false }, { status: 400, headers });
   }
 
   if (!body.conversationId || !body.type || !ALLOWED.includes(body.type)) {
-    return Response.json({ ok: false }, { status: 400 });
+    return Response.json({ ok: false }, { status: 400, headers });
   }
 
   const supabase = createAdminClient();
@@ -36,5 +40,9 @@ export async function POST(req: Request) {
       typeof body.orderTotal === 'number' ? body.orderTotal : undefined,
   });
 
-  return Response.json({ ok: true });
+  return Response.json({ ok: true }, { headers });
+}
+
+export function OPTIONS(req: Request) {
+  return preflight(req);
 }

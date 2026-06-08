@@ -226,18 +226,17 @@ export default function ForRestaurantsPage() {
       <div className="absolute top-[30%] left-[-20%] w-[700px] h-[700px] rounded-full bg-[#E85520]/15 blur-[160px] pointer-events-none z-0 animate-pulse-soft" />
       <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-500/5 blur-[140px] pointer-events-none z-0" />
 
-      {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-[#0D0B0A]/60 backdrop-blur-2xl border-b border-white/[0.06] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-1 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Link
               href="/"
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 transition-colors border border-white/10"
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 transition-colors border border-white/10 shrink-0"
             >
               <ChevronLeft className="w-4 h-4" />
             </Link>
-            <Link href="/" className="text-2xl font-black text-white tracking-widest flex items-center gap-2">
-              <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(232,85,32,0.4)] border border-white/10">
+            <Link href="/" className="text-xl sm:text-2xl font-black text-white tracking-widest flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-xl overflow-hidden shadow-[0_0_15px_rgba(232,85,32,0.4)] border border-white/10 shrink-0">
                 <Image
                   src="/images/didi_logo.png"
                   alt="Didi Logo"
@@ -247,19 +246,19 @@ export default function ForRestaurantsPage() {
                   sizes="32px"
                 />
               </div>
-              <span>Didi</span>
+              <span className="hidden sm:inline">Didi</span>
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-4 shrink-0">
             <Link
               href="/login"
-              className="text-sm font-semibold text-surface-400 hover:text-white transition-colors px-4 py-2"
+              className="text-xs sm:text-sm font-semibold text-surface-400 hover:text-white transition-colors px-2.5 sm:px-4 py-2 whitespace-nowrap"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="text-sm font-bold text-white bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-600 hover:to-orange-600 px-5 py-3 rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_25px_rgba(255,107,53,0.4)]"
+              className="text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-brand-500 to-orange-500 hover:from-brand-600 hover:to-orange-600 px-3.5 sm:px-5 py-2 sm:py-3 rounded-xl transition-all active:scale-[0.98] shadow-[0_0_20px_rgba(255,107,53,0.25)] hover:shadow-[0_0_25px_rgba(255,107,53,0.4)] whitespace-nowrap"
             >
               Get Started Free
             </Link>
