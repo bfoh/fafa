@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Star, MapPin, Compass, Clock, Sparkles } from 'lucide-react';
+import { AdepaWidget } from '@fafa/storefront';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -355,6 +356,7 @@ export default function MobileMarketplaceHome() {
           )}
         </section>
       </div>
+      <AdepaWidget apiBase={API} />
     </main>
   );
 }
