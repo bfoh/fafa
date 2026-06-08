@@ -178,17 +178,20 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
   }
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/adepa/config`)
-      .then((r) => r.json())
-      .then((d) => setEnabled(Boolean(d.enabled)))
-      .catch(() => {
-        // Fallback to true on mobile origin/Capacitor so the agent works even if config endpoint check fails or is CORS-blocked initially
-        const isCapacitor = typeof window !== 'undefined' && (
-          window.location.origin.startsWith('capacitor://') || 
-          window.location.origin.startsWith('https://localhost')
-        );
-        setEnabled(isCapacitor ? true : false);
-      });
+    const isCapacitor = typeof window !== 'undefined' && (
+      window.location.origin.startsWith('capacitor://') || 
+      window.location.origin.startsWith('https://localhost') ||
+      window.location.href.includes('capacitor://')
+    );
+
+    if (isCapacitor) {
+      setEnabled(true);
+    } else {
+      fetch(`${baseUrl}/api/adepa/config`)
+        .then((r) => r.json())
+        .then((d) => setEnabled(Boolean(d.enabled)))
+        .catch(() => setEnabled(false));
+    }
     try {
       const v = localStorage.getItem('fafa_speak');
       if (v != null) setSpeakOn(v === '1');

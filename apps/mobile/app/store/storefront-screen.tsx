@@ -2,6 +2,8 @@
 
 import { MessageCircle, Star, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 import {
   BrandingCache,
   AdepaWidget,
@@ -236,7 +238,7 @@ export function StorefrontScreen({ slug }: { slug: string }) {
       </footer>
 
       {/* AI concierge — self-hides until configured */}
-      <AdepaWidget tenantSlug={slug} />
+      <AdepaWidget tenantSlug={slug} apiBase={API} />
     </div>
   );
 }
