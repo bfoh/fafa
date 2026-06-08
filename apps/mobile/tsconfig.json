@@ -4,6 +4,10 @@
     "baseUrl": ".",
     "paths": {
       "@/app/*": ["./app/*"],
+      "@/lib/*": ["../web/lib/*"],
+      "@/components/*": ["../web/components/*"],
+      "@/hooks/*": ["../web/hooks/*"],
+      "@web/*": ["../web/*"],
       "@fafa/types": ["../../packages/types/src/index.ts"]
     },
     "plugins": [{ "name": "next" }]

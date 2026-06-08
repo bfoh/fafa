@@ -37,7 +37,7 @@ export default function MobileLoginPage() {
         if (adminRecord) {
           window.location.href = `${API}/admin`;
         } else {
-          window.location.href = `${API}/dashboard`;
+          window.location.href = '/dashboard/';
         }
       }
     }
@@ -103,31 +103,40 @@ export default function MobileLoginPage() {
     setLoading(true);
     setError('');
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // The Capacitor WebView can't call Supabase Auth directly (CORS → "Load
+      // failed"), so sign in through the web API, then persist the returned
+      // session locally for the in-app dashboard.
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
+      const data = await res.json();
 
-    if (authData?.user) {
-      const { data: adminRecord } = await supabase
-        .from('platform_admins')
-        .select('user_id')
-        .eq('user_id', authData.user.id)
-        .maybeSingle();
-
-      if (adminRecord) {
-        window.location.href = `${API}/admin`;
+      if (!res.ok) {
+        setError(data.error || 'Invalid email or password');
+        setLoading(false);
         return;
       }
-    }
 
-    window.location.href = `${API}/dashboard`;
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) {
+        setError(sessionError.message);
+        setLoading(false);
+        return;
+      }
+
+      window.location.href = data.redirect === 'admin' ? `${API}/admin` : '/dashboard/';
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setLoading(false);
+    }
   }
 
   const accent = branding?.primaryColor || '#FF6B35';
