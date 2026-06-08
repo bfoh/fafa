@@ -430,8 +430,6 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
                 ? `Welcome back to Didi, ${firstName}! ${usual ? `Shall I prepare your usual ${usual}, or are we trying something new today?` : "How can I make your day delicious?"}`
                 : "Hello, I'm Fafa, your personal food concierge on the Didi platform. What are you craving today?";
               speak(text);
-              // Start hands-free continuous conversation automatically
-              setHF(true);
             }
           }}
           aria-label="Chat with Fafa"
