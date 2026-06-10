@@ -8,7 +8,7 @@ workflows:
     instance_type: mac_mini_m2 # Runs on Apple Silicon Macs in the cloud
     environment:
       node: 22.11.0 # Matches your project's Node 22 engine
-      xcode: 16 # Pin to Xcode 16 — 'latest' now resolves to Xcode 26 (beta) which App Store Connect rejects
+      xcode: latest # Use latest stable Xcode — confirmed working for prior TestFlight uploads
       cocoapods: default
       groups:
         # Define these variables in your Codemagic application settings:
@@ -78,8 +78,11 @@ workflows:
           LATEST_TF=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
           LATEST_AS=$(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
           echo "TestFlight latest: '${LATEST_TF:-none}'  App Store latest: '${LATEST_AS:-none}'  CI: '${BUILD_NUMBER:-none}'"
-          BEST=0
-          for v in "$LATEST_TF" "$LATEST_AS" "$BUILD_NUMBER" 55; do
+          # Floor of 200 ensures we never collide with any previously attempted
+          # build numbers, including ones that failed Apple validation (which
+          # still consume the number in App Store Connect's internal tracking).
+          BEST=200
+          for v in "$LATEST_TF" "$LATEST_AS" "$BUILD_NUMBER"; do
             if echo "$v" | grep -Eq '^[0-9]+$' && [ "$v" -gt "$BEST" ]; then BEST="$v"; fi
           done
           NEXT=$(( BEST + 1 ))

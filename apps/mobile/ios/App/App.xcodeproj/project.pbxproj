@@ -183,7 +183,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/App/public\"\nDEST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/public\"\nif [ -d \"$SRC\" ]; then\n  rm -rf \"$DEST\"\n  cp -r \"$SRC\" \"$DEST\"\n  echo \"[cap] Web assets copied to bundle\"\nelse\n  echo \"[cap] ERROR: $SRC missing — run cap sync ios first\"\n  exit 1\nfi\n";
+			shellScript = "SRC=\"${SRCROOT}/App/public\"\nDEST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/public\"\nif [ -d \"$SRC\" ]; then\n  rm -rf \"$DEST\"\n  cp -r \"$SRC\" \"$DEST\"\n  # Normalize permissions: web resource files must not have the executable\n  # bit set or Apple's iris validator will reject the IPA (iris-code 90382).\n  find \"$DEST\" -type f | xargs chmod 644\n  find \"$DEST\" -type d | xargs chmod 755\n  echo \"[cap] Web assets copied to bundle\"\nelse\n  echo \"[cap] ERROR: $SRC missing — run cap sync ios first\"\n  exit 1\nfi\n";
 		};
 		6634F4EFEBD30273BCE97C65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
