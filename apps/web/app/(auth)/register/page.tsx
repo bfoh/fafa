@@ -58,13 +58,15 @@ export default function RegisterPage() {
     <div>
       {/* Brand mark — register always wears Didi */}
       <div className="mb-6 flex flex-col items-center text-center lg:items-start lg:text-left">
-        <Image
-          src="/images/didi_favicon.png"
-          alt="Didi"
-          width={48}
-          height={48}
-          className="rounded-2xl ring-1 ring-white/15 mb-3"
-        />
+        <Link href="/" aria-label="Back to marketplace" className="mb-3 inline-block">
+          <Image
+            src="/images/didi_favicon.png"
+            alt="Didi"
+            width={48}
+            height={48}
+            className="rounded-2xl ring-1 ring-white/15 hover:ring-white/30 transition"
+          />
+        </Link>
         <h2
           className="text-2xl font-extrabold text-white"
           style={{ fontFamily: 'var(--font-display)' }}

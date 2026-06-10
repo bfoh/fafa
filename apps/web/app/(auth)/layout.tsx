@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Bricolage_Grotesque } from 'next/font/google';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -120,13 +121,13 @@ export default async function AuthLayout({
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3.5">
+            <Link href="/" aria-label="Back to Didi marketplace" className="flex items-center gap-3.5 group w-fit">
               <Image
                 src="/images/didi_favicon.png"
                 alt="Didi"
                 width={56}
                 height={56}
-                className="rounded-2xl ring-1 ring-white/15 shadow-xl"
+                className="rounded-2xl ring-1 ring-white/15 shadow-xl group-hover:ring-white/30 transition"
               />
               <div>
                 <h1
@@ -137,7 +138,7 @@ export default async function AuthLayout({
                 </h1>
                 <p className="text-white/55 mt-0.5">Food Ordering Made Simple</p>
               </div>
-            </div>
+            </Link>
           )}
 
           {/* Feature cards */}
@@ -172,9 +173,19 @@ export default async function AuthLayout({
       </div>
 
       {/* Right — form */}
-      <div className="relative z-10 flex-1 flex items-center justify-center overflow-y-auto px-6 lg:px-12 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.05] backdrop-blur-2xl shadow-[0_24px_70px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-9">
-          {children}
+      <div className="relative z-10 flex-1 flex flex-col overflow-y-auto px-6 lg:px-12 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <div className="w-full max-w-md mx-auto">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white/55 hover:text-white transition-colors"
+          >
+            <span aria-hidden>←</span> Back to marketplace
+          </Link>
+        </div>
+        <div className="flex-1 flex items-center justify-center py-5">
+          <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-white/[0.05] backdrop-blur-2xl shadow-[0_24px_70px_-20px_rgba(0,0,0,0.7)] p-7 sm:p-9">
+            {children}
+          </div>
         </div>
       </div>
     </div>

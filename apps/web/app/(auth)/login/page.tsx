@@ -140,21 +140,23 @@ export default function LoginPage() {
       <div className="mb-7 flex flex-col items-center text-center lg:items-start lg:text-left">
         {branding ? (
           <>
-            {branding.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={branding.logoUrl}
-                alt={branding.name}
-                className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/20 mb-3"
-              />
-            ) : (
-              <div
-                className="w-14 h-14 rounded-2xl grid place-items-center text-white font-bold text-xl mb-3"
-                style={{ backgroundColor: accent }}
-              >
-                {branding.name.charAt(0)}
-              </div>
-            )}
+            <Link href="/" aria-label="Back to marketplace" className="mb-3 inline-block">
+              {branding.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={branding.logoUrl}
+                  alt={branding.name}
+                  className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/20 hover:ring-white/40 transition"
+                />
+              ) : (
+                <div
+                  className="w-14 h-14 rounded-2xl grid place-items-center text-white font-bold text-xl"
+                  style={{ backgroundColor: accent }}
+                >
+                  {branding.name.charAt(0)}
+                </div>
+              )}
+            </Link>
             <h2
               className="text-2xl font-extrabold text-white leading-tight"
               style={{ fontFamily: 'var(--font-display)' }}
@@ -167,13 +169,15 @@ export default function LoginPage() {
           </>
         ) : (
           <>
-            <Image
-              src="/images/didi_logo.png"
-              alt="Didi"
-              width={48}
-              height={48}
-              className="rounded-2xl ring-1 ring-white/15 mb-3"
-            />
+            <Link href="/" aria-label="Back to marketplace" className="mb-3 inline-block">
+              <Image
+                src="/images/didi_logo.png"
+                alt="Didi"
+                width={48}
+                height={48}
+                className="rounded-2xl ring-1 ring-white/15 hover:ring-white/30 transition"
+              />
+            </Link>
             <h2
               className="text-2xl font-extrabold text-white"
               style={{ fontFamily: 'var(--font-display)' }}
