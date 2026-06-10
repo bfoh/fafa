@@ -1,31 +1,26 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Ships the static `out/` bundle inside the binary and serves it over Capacitor's
- * embedded localhost scheme (NOT raw file://, NOT a remote server.url) — keeps the
- * app offline-first, store-compliant (Apple 4.2), and shows the custom mobile UI.
+ * Didi native shell. The iOS/Android apps ARE the live platform: the WebView
+ * loads https://ghdidi.com directly (server.url), so the apps always run the
+ * real, fully-functional web app with zero UI divergence.
  *
- *   iOS     → capacitor://localhost
- *   Android → https://localhost
+ * This is a genuine native app — native iOS/Android projects, store-distributed
+ * binaries, and native device APIs via Capacitor plugins (push, geolocation,
+ * etc., invoked from the web app guarded by Capacitor.isNativePlatform()).
  *
- * GOTCHA — `window.location.origin` is the string "null" here (capacitor:// is a
- * non-special URL scheme, and iosScheme can't be 'https': WebKit reserves it so
- * Capacitor reverts to 'capacitor'). That means Next.js App Router client
- * navigation (which builds URLs with `new URL(path, location.origin)`) breaks with
- * WebKit error 102 on any cross-route-group hop. RULE: navigate in-app with hard
- * `window.location.assign('/path/')` (resolves against the document base URL, not
- * origin → a valid capacitor://localhost/path/ that Capacitor allows), NOT the
- * Next router. Session is stored in Capacitor Preferences, so after a hard nav the
- * destination guard must tolerate the async read (session-grace) before bouncing.
+ * A real origin (https://ghdidi.com) is also what makes routing/auth reliable:
+ * the earlier offline-bundle attempt served over capacitor://localhost, whose
+ * window.location.origin is "null", which broke Next.js App Router navigation.
  */
 const config: CapacitorConfig = {
   appId: 'com.ghdidi.app',
   appName: 'Didi',
   webDir: 'out',
   server: {
+    url: 'https://ghdidi.com',
     androidScheme: 'https',
-    iosScheme: 'capacitor',
-    // No `url` — never load the live site into the WebView.
+    iosScheme: 'https',
   },
   plugins: {
     PushNotifications: {
