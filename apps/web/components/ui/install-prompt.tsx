@@ -16,6 +16,13 @@ export function InstallPrompt() {
   const [iosHint, setIosHint] = useState(false);
 
   useEffect(() => {
+    // Inside the native Capacitor shell the app is ALREADY installed — a PWA
+    // "Add to Home Screen" prompt makes no sense there and it was covering the
+    // Fafa concierge button. Never show it in the native app.
+    const isNative = !!(
+      window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }
+    ).Capacitor?.isNativePlatform?.();
+    if (isNative) return;
     try {
       if (localStorage.getItem(DISMISS_KEY)) return;
     } catch {
