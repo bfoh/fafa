@@ -8,7 +8,7 @@ workflows:
     instance_type: mac_mini_m2 # Runs on Apple Silicon Macs in the cloud
     environment:
       node: 22.11.0 # Matches your project's Node 22 engine
-      xcode: latest # Uses latest stable Xcode version (Xcode 15/16)
+      xcode: 16 # Pin to Xcode 16 — 'latest' now resolves to Xcode 26 (beta) which App Store Connect rejects
       cocoapods: default
       groups:
         # Define these variables in your Codemagic application settings:
