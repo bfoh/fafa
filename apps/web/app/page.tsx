@@ -158,14 +158,14 @@ export default async function HomePage({
             </Link>
             <nav className="flex items-center gap-3 text-sm">
               <Link
-                href="/for-restaurants"
+                href="/register"
                 className="px-4 py-2 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-xs shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)] hover:brightness-110 transition-all"
               >
                 List your kitchen ▸
               </Link>
               <Link
                 href="/login"
-                className="px-3 py-2 rounded-full text-white/70 font-medium hover:text-white hover:bg-white/10 transition-colors"
+                className="px-4 py-2 rounded-full border border-white/15 bg-white/[0.04] text-white/85 font-semibold text-xs hover:bg-white/10 hover:text-white transition-colors"
               >
                 Sign in
               </Link>
@@ -234,7 +234,7 @@ export default async function HomePage({
               </p>
             </div>
             <Link
-              href="/for-restaurants"
+              href="/register"
               className="relative px-6 py-3 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-sm shadow-[0_8px_28px_-8px_rgba(255,107,53,0.8)] hover:brightness-110 transition-all"
             >
               List your kitchen →
