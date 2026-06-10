@@ -199,7 +199,9 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
       fetch(`${baseUrl}/api/adepa/config`)
         .then((r) => r.json())
         .then((d) => setEnabled(Boolean(d.enabled)))
-        .catch(() => setEnabled(false));
+        // Don't hide the concierge just because the config probe failed
+        // (network blip / WebView quirk). Only an explicit {enabled:false} hides it.
+        .catch(() => {});
     }
     try {
       const v = localStorage.getItem('fafa_speak');
@@ -271,7 +273,10 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, status]);
 
-  if (!enabled) return null;
+  // Show by default; hide only when the config probe explicitly reports disabled.
+  // (Starting hidden-until-fetch made the button never appear when the probe was
+  // slow/blocked in the native WebView.)
+  if (enabled === false) return null;
 
   const busy = status === 'submitted' || status === 'streaming';
 
