@@ -21,12 +21,10 @@ workflows:
         XCODE_WORKSPACE: "apps/mobile/ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.ghdidi.app"
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
+    # MANUAL builds only. Auto-building on every push to main floods TestFlight
+    # uploads and hits Apple's per-app upload limit (altool error 90382
+    # "Upload limit reached"). Trigger this workflow by hand from the Codemagic
+    # UI when you actually want to ship a build.
     scripts:
       - name: Install Monorepo Dependencies
         script: |
@@ -59,10 +57,14 @@ workflows:
           PUB=ios/App/App/public
           test -s "$PUB/index.html" || { echo "ERROR: $PUB/index.html missing after cap sync"; exit 1; }
           echo "cap sync OK — $PUB has $(find "$PUB" -type f | wc -l) files"
-          # Guarantee correct runtime config — iosScheme must be 'capacitor'
-          # and server.url must be absent, otherwise the WebView fails to load
-          # the initial page before any JavaScript runs.
-          node -e "var fs=require('fs'),p='ios/App/App/capacitor.config.json',c={appId:'com.ghdidi.app',appName:'Didi',webDir:'out',server:{iosScheme:'capacitor',androidScheme:'https'},plugins:{PushNotifications:{presentationOptions:['badge','sound','alert']}}};fs.writeFileSync(p,JSON.stringify(c,null,2)+'\n');console.log('capacitor.config.json:',JSON.stringify(c.server));"
+          # Guarantee correct runtime config. iosScheme MUST be 'https' (NOT
+          # 'capacitor'): a capacitor:// origin is a non-special scheme, so
+          # window.location.origin === "null", which makes Next.js App Router's
+          # new URL(path, location.origin) throw → a malformed top-level nav that
+          # Capacitor cancels → WebKit error 102 ("This page couldn't load") right
+          # after the first screen. https://localhost has a real origin so routing
+          # works. server.url must remain absent (offline bundle).
+          node -e "var fs=require('fs'),p='ios/App/App/capacitor.config.json',c={appId:'com.ghdidi.app',appName:'Didi',webDir:'out',server:{iosScheme:'https',androidScheme:'https'},plugins:{PushNotifications:{presentationOptions:['badge','sound','alert']}}};fs.writeFileSync(p,JSON.stringify(c,null,2)+'\n');console.log('capacitor.config.json:',JSON.stringify(c.server));"
       - name: Set up code signing
         script: |
           set -e # Exit immediately if any command fails
