@@ -31,27 +31,63 @@ workflows:
       - name: Install Monorepo Dependencies
         script: |
           npm ci
+      - name: Write mobile build env (.env.local)
+        script: |
+          # Inline public client keys so the Capacitor bundle has working
+          # Supabase URLs. These are safe to commit — the anon key is
+          # RLS-protected and already ships in the web bundle.
+          cat > apps/mobile/.env.local <<EOF
+          NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE:-https://ghdidi.com}
+          NEXT_PUBLIC_URL=${NEXT_PUBLIC_URL:-https://ghdidi.com}
+          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://qldpbkfaouvtsbvwtqji.supabase.co}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsZHBia2Zhb3V2dHNidnd0cWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODIwOTgsImV4cCI6MjA5NTU1ODA5OH0.xK2OGn7TK1Z5iGbs_oFjbs2Vm7A8eBKLIKkns2SzIMI}
+          EOF
+          echo "Wrote apps/mobile/.env.local"
       - name: Build Next.js Static Export
         script: |
+          set -e
           # Compiles the web app to apps/mobile/out
           npm run mobile:export
+          test -s apps/mobile/out/index.html || { echo "ERROR: index.html missing after export"; exit 1; }
+          echo "Export OK — $(find apps/mobile/out -type f | wc -l) files"
       - name: Install iOS Native Shell Dependencies
         script: |
+          set -e
           # Copy static files to ios folder and run pod install
           cd apps/mobile
           npx cap sync ios
+          PUB=ios/App/App/public
+          test -s "$PUB/index.html" || { echo "ERROR: $PUB/index.html missing after cap sync"; exit 1; }
+          echo "cap sync OK — $PUB has $(find "$PUB" -type f | wc -l) files"
+          # Guarantee correct runtime config — iosScheme must be 'capacitor'
+          # and server.url must be absent, otherwise the WebView fails to load
+          # the initial page before any JavaScript runs.
+          node -e "var fs=require('fs'),p='ios/App/App/capacitor.config.json',c={appId:'com.ghdidi.app',appName:'Didi',webDir:'out',server:{iosScheme:'capacitor',androidScheme:'https'},plugins:{PushNotifications:{presentationOptions:['badge','sound','alert']}}};fs.writeFileSync(p,JSON.stringify(c,null,2)+'\n');console.log('capacitor.config.json:',JSON.stringify(c.server));"
       - name: Set up code signing
         script: |
           set -e # Exit immediately if any command fails
           keychain initialize
-          # Fetch App Store provisioning profiles and signing certificates (avoids requiring testing devices)
+          # Fetch App Store provisioning profiles and signing certificates
           app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create
           keychain add-certificates
-          # Specify the project file explicitly inside the monorepo directory
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
-          # Debug: list downloaded profiles
-          echo "Profiles downloaded:"
-          ls -la ~/Library/MobileDevice/Provisioning\ Profiles/ || echo "No profiles directory found"
+      - name: Set build number (auto-increment)
+        script: |
+          set -e
+          # Pick a build number higher than any already in TestFlight/App Store.
+          LATEST_TF=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
+          LATEST_AS=$(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
+          echo "TestFlight latest: '${LATEST_TF:-none}'  App Store latest: '${LATEST_AS:-none}'  CI: '${BUILD_NUMBER:-none}'"
+          BEST=0
+          for v in "$LATEST_TF" "$LATEST_AS" "$BUILD_NUMBER" 55; do
+            if echo "$v" | grep -Eq '^[0-9]+$' && [ "$v" -gt "$BEST" ]; then BEST="$v"; fi
+          done
+          NEXT=$(( BEST + 1 ))
+          echo "Using build number $NEXT"
+          PBX=apps/mobile/ios/App/App.xcodeproj/project.pbxproj
+          sed -i.bak -E "s/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = $NEXT;/g" "$PBX"
+          rm -f "$PBX.bak"
+          echo "CURRENT_PROJECT_VERSION set to $NEXT"
       - name: Build iOS IPA (.ipa)
         script: |
           # Compiles the signed App ready for App Store upload
@@ -63,12 +99,11 @@ workflows:
     publishing:
       email:
         recipients:
-          - ebenezer.barning@gmail.com # Replace with your email
+          - ebenezer.barning@gmail.com
         notify:
           success: true
           failure: true
       app_store_connect:
-        # Automatically uploads the built IPA to TestFlight / App Store Connect
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID

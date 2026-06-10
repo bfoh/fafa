@@ -106,6 +106,7 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				CAE100000000000000CAE001 /* Copy Web Assets to Bundle */,
 			);
 			buildRules = (
 			);
@@ -169,6 +170,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		CAE100000000000000CAE001 /* Copy Web Assets to Bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${SRCROOT}/App/public",
+			);
+			name = "Copy Web Assets to Bundle";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/App/public\"\nDEST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/public\"\nif [ -d \"$SRC\" ]; then\n  rm -rf \"$DEST\"\n  cp -r \"$SRC\" \"$DEST\"\n  echo \"[cap] Web assets copied to bundle\"\nelse\n  echo \"[cap] ERROR: $SRC missing — run cap sync ios first\"\n  exit 1\nfi\n";
+		};
 		6634F4EFEBD30273BCE97C65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
