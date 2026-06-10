@@ -101,16 +101,21 @@ export default function MobileLoginPage() {
     setLoading(true);
     setError('');
 
+    // TEMP diagnostic: track which step throws so the on-screen banner names the
+    // real failure (fetch/json/setSession) instead of a generic message.
+    let step = 'start';
     try {
       // The Capacitor WebView can't call Supabase Auth directly (CORS → "Load
       // failed"), so sign in through the web API, then persist the returned
       // session locally for the in-app dashboard.
+      step = `fetch ${API}/api/auth/login`;
       const res = await fetch(`${API}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
+      step = `json (HTTP ${res.status})`;
       const data = await res.json();
 
       if (!res.ok) {
@@ -119,20 +124,22 @@ export default function MobileLoginPage() {
         return;
       }
 
+      step = 'setSession';
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token,
       });
 
       if (sessionError) {
-        setError(sessionError.message);
+        setError(`setSession failed: ${sessionError.message}`);
         setLoading(false);
         return;
       }
 
       window.location.href = data.redirect === 'admin' ? `${API}/admin` : '/dashboard/';
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Login error [${step}]: ${msg}`);
       setLoading(false);
     }
   }
