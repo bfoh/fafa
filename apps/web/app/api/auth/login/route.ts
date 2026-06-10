@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { corsHeaders, preflight } from '@/lib/http/cors';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Mobile sign-in. The Capacitor bundle cannot reach Supabase Auth directly from
- * the `capacitor://localhost` origin (the request fails with WebKit's "Load
- * failed"), so the app posts credentials here — same pattern as registration —
- * and we verify them server-side, returning the session tokens for the app to
- * persist via `supabase.auth.setSession(...)`.
+ * Mobile sign-in proxy. The Capacitor bundle cannot reach Supabase Auth
+ * directly from the `capacitor://localhost` origin (WebKit blocks it), so the
+ * app posts credentials here and we authenticate server-side, returning the
+ * session tokens for the app to persist via `supabase.auth.setSession(...)`.
+ *
+ * Uses the admin client (service-role key) so this route works even when
+ * NEXT_PUBLIC_SUPABASE_ANON_KEY is only available at build-time in the client
+ * bundle and not in the server runtime environment.
  */
 export async function POST(req: Request) {
   const headers = corsHeaders(req.headers.get('origin'));
@@ -23,12 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Anon client — verifies the password and returns a real user session.
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -38,11 +36,10 @@ export async function POST(req: Request) {
     if (error || !data.session || !data.user) {
       return NextResponse.json(
         { error: error?.message || 'Invalid email or password' },
-        { status: 400, headers }
+        { status: 401, headers }
       );
     }
 
-    // Decide where the app should land: platform admins vs kitchen owners.
     const { data: adminRecord } = await supabase
       .from('platform_admins')
       .select('user_id')
@@ -58,9 +55,10 @@ export async function POST(req: Request) {
       { headers }
     );
   } catch (err) {
-    console.error('Login error:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[api/auth/login] error:', msg);
     return NextResponse.json(
-      { error: 'Something went wrong. Please try again.' },
+      { error: `Sign-in failed: ${msg}` },
       { status: 500, headers }
     );
   }
