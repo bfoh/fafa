@@ -457,7 +457,10 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
             }
           }}
           aria-label="Chat with Fafa"
-          className="fixed z-40 bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 md:bottom-6 w-14 h-14 rounded-full text-white shadow-xl shadow-black/20 press flex items-center justify-center"
+          // Sits ABOVE the bottom chrome: the install-prompt banner (z-55,
+          // bottom ~4.75rem) and the marketplace tab bar were covering it, so it
+          // floats higher (9.5rem) with a z-index above the banner.
+          className="fixed z-[60] bottom-[calc(env(safe-area-inset-bottom)+9.5rem)] right-4 md:bottom-6 w-14 h-14 rounded-full text-white shadow-xl shadow-black/20 press flex items-center justify-center"
           style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
         >
           <Sparkles className="w-6 h-6" />
