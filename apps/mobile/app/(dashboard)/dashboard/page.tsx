@@ -11,7 +11,8 @@ import {
   ChevronRight,
   Loader2,
 } from 'lucide-react';
-import { createBrowserClient, formatGHS } from '@fafa/storefront';
+import { formatGHS } from '@fafa/storefront';
+import { createMobileSupabaseClient } from '../../lib/supabase';
 import { timeAgo } from '@/lib/utils';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 import { VISIBLE_ORDER_FILTER } from '@/lib/orders/visibility';
@@ -45,7 +46,7 @@ export default function MobileDashboardHome() {
   useEffect(() => {
     let active = true;
     async function load() {
-      const supabase = createBrowserClient();
+      const supabase = createMobileSupabaseClient();
       const {
         data: { session },
       } = await supabase.auth.getSession();

@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { createBrowserClient } from '@fafa/storefront';
+import { createMobileSupabaseClient } from '../lib/supabase';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -21,8 +20,7 @@ export default function MobileLoginPage() {
     primaryColor: string;
   } | null>(null);
 
-  const router = useRouter();
-  const supabase = useMemo(() => createBrowserClient(), []);
+  const supabase = useMemo(() => createMobileSupabaseClient(), []);
 
   useEffect(() => {
     async function checkExistingSession() {
@@ -307,7 +305,7 @@ export default function MobileLoginPage() {
                 localStorage.removeItem('fafa_last_tenant');
                 document.cookie =
                   'fafa_last_tenant_slug=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                router.replace('/login');
+                window.location.href = '/login/';
               }}
               className="text-xs text-white/45 hover:text-white/70 underline mt-4 block mx-auto text-center cursor-pointer font-medium"
             >

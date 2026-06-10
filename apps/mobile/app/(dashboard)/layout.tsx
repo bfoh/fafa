@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { createBrowserClient } from '@fafa/storefront';
+import { createMobileSupabaseClient } from '../lib/supabase';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 
@@ -19,7 +18,6 @@ export default function MobileDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [ready, setReady] = useState(false);
   const [tenant, setTenant] = useState<{
     name?: string;
@@ -31,20 +29,19 @@ export default function MobileDashboardLayout({
   useEffect(() => {
     let active = true;
     async function boot() {
-      const supabase = createBrowserClient();
+      const supabase = createMobileSupabaseClient();
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       if (!session) {
-        router.replace('/login/');
+        window.location.href = '/login/';
         return;
       }
 
       const tenantId = await getResolvedTenantIdClient(supabase, session);
       if (!tenantId) {
-        // No kitchen yet → send them to register.
-        router.replace('/register/');
+        window.location.href = '/register/';
         return;
       }
 
@@ -67,7 +64,7 @@ export default function MobileDashboardLayout({
     return () => {
       active = false;
     };
-  }, [router]);
+  }, []);
 
   if (!ready) {
     return (
