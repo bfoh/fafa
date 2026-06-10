@@ -73,21 +73,16 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
-      - name: Set build number (auto-increment)
+      - name: Set build number (timestamp — collision-proof)
         script: |
           set -e
-          # Pick a build number higher than any already in TestFlight/App Store.
-          LATEST_TF=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
-          LATEST_AS=$(app-store-connect get-latest-app-store-build-number "$BUNDLE_ID" --platform IOS 2>/dev/null || true)
-          echo "TestFlight latest: '${LATEST_TF:-none}'  App Store latest: '${LATEST_AS:-none}'  CI: '${BUILD_NUMBER:-none}'"
-          # Floor of 200 ensures we never collide with any previously attempted
-          # build numbers, including ones that failed Apple validation (which
-          # still consume the number in App Store Connect's internal tracking).
-          BEST=200
-          for v in "$LATEST_TF" "$LATEST_AS" "$BUILD_NUMBER"; do
-            if echo "$v" | grep -Eq '^[0-9]+$' && [ "$v" -gt "$BEST" ]; then BEST="$v"; fi
-          done
-          NEXT=$(( BEST + 1 ))
+          # Apple CONSUMES a build number even when an upload fails validation,
+          # so any "latest TestFlight/App Store + 1" scheme eventually collides
+          # ("the provided entity includes an attribute with a value that has
+          # already been used"). A Unix-epoch timestamp is strictly monotonic and
+          # unique across every run, and fits CFBundleVersion's uint32 limit
+          # (epoch ~1.7e9 < 4.29e9). No API query needed.
+          NEXT=$(date +%s)
           echo "Using build number $NEXT"
           PBX=apps/mobile/ios/App/App.xcodeproj/project.pbxproj
           sed -i.bak -E "s/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = $NEXT;/g" "$PBX"
