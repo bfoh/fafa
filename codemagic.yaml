@@ -57,14 +57,16 @@ workflows:
           PUB=ios/App/App/public
           test -s "$PUB/index.html" || { echo "ERROR: $PUB/index.html missing after cap sync"; exit 1; }
           echo "cap sync OK — $PUB has $(find "$PUB" -type f | wc -l) files"
-          # Guarantee correct runtime config. iosScheme MUST be 'https' (NOT
-          # 'capacitor'): a capacitor:// origin is a non-special scheme, so
-          # window.location.origin === "null", which makes Next.js App Router's
-          # new URL(path, location.origin) throw → a malformed top-level nav that
-          # Capacitor cancels → WebKit error 102 ("This page couldn't load") right
-          # after the first screen. https://localhost has a real origin so routing
-          # works. server.url must remain absent (offline bundle).
-          node -e "var fs=require('fs'),p='ios/App/App/capacitor.config.json',c={appId:'com.ghdidi.app',appName:'Didi',webDir:'out',server:{iosScheme:'https',androidScheme:'https'},plugins:{PushNotifications:{presentationOptions:['badge','sound','alert']}}};fs.writeFileSync(p,JSON.stringify(c,null,2)+'\n');console.log('capacitor.config.json:',JSON.stringify(c.server));"
+          # Do NOT hand-write capacitor.config.json here. `cap sync` already
+          # generates it from capacitor.config.ts AND auto-fills packageClassList
+          # (the list of native plugins to register on iOS). A hand-written config
+          # dropped packageClassList, so every plugin — Preferences, Push, Geo —
+          # became "not implemented on ios" at runtime (setSession crashed because
+          # the Supabase session storage uses the Preferences plugin). Verify the
+          # generated config kept the plugin registrations instead.
+          CFG=ios/App/App/capacitor.config.json
+          grep -q "PreferencesPlugin" "$CFG" || { echo "ERROR: PreferencesPlugin missing from $CFG"; cat "$CFG"; exit 1; }
+          echo "capacitor.config.json OK — packageClassList present"
       - name: Set up code signing
         script: |
           set -e # Exit immediately if any command fails
