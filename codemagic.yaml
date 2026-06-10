@@ -21,10 +21,16 @@ workflows:
         XCODE_WORKSPACE: "apps/mobile/ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.ghdidi.app"
-    # MANUAL builds only. Auto-building on every push to main floods TestFlight
-    # uploads and hits Apple's per-app upload limit (altool error 90382
-    # "Upload limit reached"). Trigger this workflow by hand from the Codemagic
-    # UI when you actually want to ship a build.
+    # Build ONLY on a pushed git tag matching build-* — NOT on every push.
+    # Auto-building each commit floods TestFlight uploads → Apple upload limit
+    # (altool 90382). Tag-triggering gives intentional, on-demand builds:
+    #   git tag build-1 && git push origin build-1
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'build-*'
+          include: true
     scripts:
       - name: Install Monorepo Dependencies
         script: |
