@@ -212,7 +212,7 @@ export async function PATCH(
       else if (status === 'cancelled') eventType = 'order_cancelled';
 
       if (eventType) {
-        sendOrderNotifications(
+        await sendOrderNotifications(
           {
             order: updatedOrder,
             tenant,
