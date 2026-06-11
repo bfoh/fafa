@@ -18,7 +18,18 @@ export async function OPTIONS(req: Request) {
 export async function POST(req: Request) {
   const headers = corsHeaders(req.headers.get('origin'));
   try {
-    const { orderId, token } = (await req.json()) as { orderId?: string; token?: string };
+    const { orderId, token, debug } = (await req.json()) as {
+      orderId?: string;
+      token?: string;
+      debug?: string;
+    };
+
+    // Client-side diagnostics from the (uninspectable) native WebView.
+    if (debug) {
+      console.error('[live-activity] client debug:', orderId, debug.slice(0, 500));
+      return NextResponse.json({ ok: true }, { headers });
+    }
+
     if (!orderId || !token || !/^[a-f0-9]{32,200}$/i.test(token)) {
       return NextResponse.json(
         { error: 'orderId and hex token required' },

@@ -45,10 +45,22 @@ export function LiveActivityBridge({
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
     if (TERMINAL.includes(status)) return;
 
+    // Failures surface server-side ([live-activity] in Vercel logs): release
+    // WebViews aren't inspectable, so this is the only window into the device.
+    const report = (debug: string) =>
+      fetch('/api/live-activity/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, debug }),
+      }).catch(() => {});
+
     (async () => {
       try {
         const { available } = await LiveActivity.isAvailable();
-        if (!available) return;
+        if (!available) {
+          void report('isAvailable=false');
+          return;
+        }
         const { token } = await LiveActivity.start({
           orderId,
           orderNumber,
@@ -63,9 +75,11 @@ export function LiveActivityBridge({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId, token }),
           });
+        } else {
+          void report('start resolved without token');
         }
-      } catch {
-        // Plugin missing (web build) or Live Activities disabled — fine.
+      } catch (err) {
+        void report(`start failed: ${err instanceof Error ? err.message : String(err)}`);
       }
     })();
   }, [orderId, orderNumber, tenantName, slug, deliveryType, status]);
