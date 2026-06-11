@@ -12,6 +12,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let cls = NSClassFromString("FIRApp") as? NSObject.Type {
             cls.perform(NSSelectorFromString("configure"))
         }
+        // Cold-start notification tap: capture the order deep link now, before
+        // the bridge view controller's loadView() reads it, so the web view's
+        // FIRST load is the tracker page (no landing-page flash + JS redirect).
+        if let payload = launchOptions?[.remoteNotification] as? [AnyHashable: Any] {
+            NotificationLaunch.pendingURL = NotificationLaunch.orderTrackerURL(from: payload)
+        }
         return true
     }
 
@@ -63,4 +69,41 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+}
+
+/// Order deep link captured from a cold-start notification tap. Our order
+/// pushes (apps/web/lib/notifications/push.ts) carry { orderId, slug } in the
+/// FCM data payload; the tracker lives at /<slug>/order/<orderId> on the live
+/// origin the shell loads (capacitor.config server.url).
+enum NotificationLaunch {
+    static var pendingURL: String?
+
+    static func orderTrackerURL(from payload: [AnyHashable: Any]) -> String? {
+        guard let orderId = payload["orderId"] as? String,
+              let slug = payload["slug"] as? String,
+              isSafeSegment(orderId), isSafeSegment(slug) else { return nil }
+        return "https://ghdidi.com/\(slug)/order/\(orderId)"
+    }
+
+    // Only path-safe ids reach the URL — push data rides in OS-level payloads,
+    // so never trust it to build a load target unvalidated.
+    private static func isSafeSegment(_ value: String) -> Bool {
+        return !value.isEmpty && value.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil
+    }
+}
+
+/// Referenced from Main.storyboard in place of CAPBridgeViewController.
+/// instanceDescriptor() runs in loadView(), after didFinishLaunching has
+/// stashed any notification deep link — overriding serverURL here makes the
+/// tracker the first page the web view ever loads on a notification launch.
+@objc(NotificationLaunchViewController)
+class NotificationLaunchViewController: CAPBridgeViewController {
+    override func instanceDescriptor() -> InstanceDescriptor {
+        let descriptor = super.instanceDescriptor()
+        if let url = NotificationLaunch.pendingURL {
+            NotificationLaunch.pendingURL = nil
+            descriptor.serverURL = url
+        }
+        return descriptor
+    }
 }
