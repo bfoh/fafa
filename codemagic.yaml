@@ -83,6 +83,8 @@ workflows:
           keychain initialize
           # Fetch App Store provisioning profiles and signing certificates
           app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create
+          # Widget extension needs its own bundle id + provisioning profile
+          app-store-connect fetch-signing-files "$BUNDLE_ID.DidiWidgets" --platform IOS --type IOS_APP_STORE --create
           keychain add-certificates
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
       - name: Set build number (timestamp — collision-proof)
