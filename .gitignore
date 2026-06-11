@@ -41,3 +41,6 @@ supabase/.temp/
 
 # Visual brainstorm mockups
 .superpowers/
+
+# Apple push keys — never commit
+*.p8
