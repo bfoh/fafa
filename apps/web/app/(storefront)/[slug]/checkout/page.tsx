@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { useCart } from '@/hooks/use-cart';
 import { saveCustomer, loadCustomer, saveLastOrder } from '@/lib/utils/customer-prefs';
 import { formatGHS } from '@/lib/utils/currency';
@@ -285,6 +287,25 @@ function CheckoutContent({ slug }: { slug: string }) {
 
       // Remember this device's details + last order for prefill & reorder.
       saveCustomer({ name, phone, address: deliveryType === 'delivery' ? address : undefined });
+
+      // Link this device's push token to the customer phone so notifications reach them.
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { receive } = await PushNotifications.checkPermissions();
+          if (receive === 'granted') {
+            await new Promise<void>((resolve) => {
+              PushNotifications.addListener('registration', async (token) => {
+                await fetch('/api/devices/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform(), customerPhone: phone }),
+                }).catch(() => {});
+                resolve();
+              }).then(() => PushNotifications.register());
+            });
+          }
+        } catch { /* best-effort */ }
+      }
       if (data.order?.order_number) {
         saveLastOrder(slug, data.order.order_number, items);
       }

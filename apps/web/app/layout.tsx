@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { SwRegister } from '@/components/ui/sw-register';
 import { InstallPrompt } from '@/components/ui/install-prompt';
+import { NativeBridge } from '@/components/native-bridge';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -66,6 +67,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         {children}
+        <NativeBridge />
         <SwRegister />
         <InstallPrompt />
       </body>
