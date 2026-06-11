@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { userFromBearer } from '@/lib/auth/bearer';
 import { corsHeaders, preflight } from '@/lib/http/cors';
+import { updateLiveActivity } from '@/lib/live-activity/update';
 
 /* ── Rider GPS breadcrumb ingest (CORS, bearer-authed) ───────
    The rider app batches location fixes and posts them here. We verify the rider
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
     // Authorization: the rider must be the one assigned to this order.
     const { data: order } = await supabase
       .from('orders')
-      .select('id, rider_id')
+      .select('*, tenant:tenants(*)')
       .eq('id', orderId)
       .single();
 
@@ -78,6 +79,17 @@ export async function POST(req: Request) {
 
     const { error } = await supabase.from('rider_locations').insert(rows);
     if (error) throw error;
+
+    // Lock-screen progress update from the freshest fix — fire-and-forget,
+    // throttled inside updateLiveActivity.
+    const latest = rows[rows.length - 1];
+    if (order.tenant) {
+      void updateLiveActivity({ order, tenant: order.tenant }, 'rider', {
+        latitude: latest.latitude,
+        longitude: latest.longitude,
+        speed: latest.speed,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true, inserted: rows.length }, { headers });
   } catch (err) {

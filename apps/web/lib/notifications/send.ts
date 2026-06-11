@@ -8,6 +8,7 @@ import { sendSMS } from '@/lib/arkesel/client';
 import { sendEmail } from '@/lib/brevio/client';
 import { sendWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/client';
 import { sendOrderPush } from '@/lib/notifications/push';
+import { updateLiveActivity } from '@/lib/live-activity/update';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatGHS } from '@/lib/utils/currency';
 import { getBaseUrl } from '@/lib/utils';
@@ -244,6 +245,10 @@ export async function sendOrderNotifications(
   // 4. Push to the customer's registered mobile devices. Env-gated (no FCM
   //    creds → no-op), so this is inert until the mobile app ships.
   notifications.push(sendOrderPush(ctx, event));
+
+  // 5. Lock-screen live activity (iOS Live Activity / Android ongoing
+  //    notification). Env-gated and best-effort like push.
+  notifications.push(updateLiveActivity(ctx, 'status'));
 
   await Promise.allSettled(notifications);
 }
