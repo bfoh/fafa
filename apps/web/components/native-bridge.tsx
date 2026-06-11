@@ -8,28 +8,36 @@ const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
 export function NativeBridge() {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
     const handles: Array<{ remove: () => Promise<void> }> = [];
     let cancelled = false;
 
     (async () => {
+      alert(`[native-bridge] isNative=${Capacitor.isNativePlatform()} platform=${Capacitor.getPlatform()}`);
+      if (!Capacitor.isNativePlatform()) return;
+
       let perm = await PushNotifications.checkPermissions();
+      alert(`[push] permission: ${perm.receive}`);
       if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
         perm = await PushNotifications.requestPermissions();
+        alert(`[push] after request: ${perm.receive}`);
       }
-      if (perm.receive !== 'granted' || cancelled) return;
+      if (perm.receive !== 'granted' || cancelled) {
+        alert(`[push] not granted — stopping`);
+        return;
+      }
 
       handles.push(
         await PushNotifications.addListener('registrationError', (err) => {
-          console.error('[push] registration error:', JSON.stringify(err));
+          alert(`[push] ERROR: ${JSON.stringify(err)}`);
         })
       );
 
+      alert('[push] calling register()');
       await PushNotifications.register();
 
       handles.push(
         await PushNotifications.addListener('registration', async (token) => {
+          alert(`[push] got token: ${token.value.slice(0, 20)}…`);
           try {
             await fetch(`${API}/api/devices/register`, {
               method: 'POST',
