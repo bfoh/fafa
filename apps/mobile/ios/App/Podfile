@@ -16,7 +16,6 @@ def capacitor_pods
   pod 'CapacitorApp', :path => '../../../../node_modules/@capacitor/app'
   pod 'CapacitorPreferences', :path => '../../../../node_modules/@capacitor/preferences'
   pod 'CapacitorPushNotifications', :path => '../../../../node_modules/@capacitor/push-notifications'
-  pod 'Firebase/Core'
 end
 
 target 'App' do
