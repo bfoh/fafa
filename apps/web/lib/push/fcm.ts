@@ -88,7 +88,7 @@ export async function sendPush(
   try {
     accessToken = await getAccessToken();
   } catch (err) {
-    console.error('[push] FCM auth failed:', err, '| key starts with:', PRIVATE_KEY?.slice(0, 27), '| key len:', PRIVATE_KEY?.length);
+    console.error('FCM auth failed:', err);
     return 0;
   }
 
@@ -123,8 +123,8 @@ export async function sendPush(
     })
   );
 
-  results.forEach((r, i) => {
-    if (r.status === 'rejected') console.error(`[push] token[${i}] failed:`, r.reason?.message ?? r.reason);
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.error('FCM send failed:', r.reason?.message ?? r.reason);
   });
   if (stale.length) await pruneStaleTokens(stale);
   return results.filter((r) => r.status === 'fulfilled').length;
