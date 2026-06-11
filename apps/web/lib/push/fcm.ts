@@ -116,10 +116,16 @@ export async function sendPush(
         stale.push(token);
         throw new Error('stale token');
       }
-      if (!res.ok) throw new Error(`FCM send ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`FCM send ${res.status}: ${body}`);
+      }
     })
   );
 
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.error(`[push] token[${i}] failed:`, r.reason?.message ?? r.reason);
+  });
   if (stale.length) await pruneStaleTokens(stale);
   return results.filter((r) => r.status === 'fulfilled').length;
 }
