@@ -12,7 +12,11 @@ import crypto from 'crypto';
 
 const PROJECT_ID = process.env.FCM_PROJECT_ID;
 const CLIENT_EMAIL = process.env.FCM_CLIENT_EMAIL;
-const PRIVATE_KEY = process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const PRIVATE_KEY = process.env.FCM_PRIVATE_KEY
+  ?.replace(/^["']|["']$/g, '')   // strip surrounding quotes if pasted from JSON
+  ?.replace(/\\n/g, '\n')          // literal \n → real newline
+  ?.replace(/\\r/g, '')            // strip stray \r
+  ?.trim();
 
 export function isPushConfigured(): boolean {
   return !!(PROJECT_ID && CLIENT_EMAIL && PRIVATE_KEY);
@@ -81,7 +85,7 @@ export async function sendPush(
   try {
     accessToken = await getAccessToken();
   } catch (err) {
-    console.error('[push] FCM auth failed:', err);
+    console.error('[push] FCM auth failed:', err, '| key starts with:', PRIVATE_KEY?.slice(0, 27), '| key len:', PRIVATE_KEY?.length);
     return 0;
   }
 
