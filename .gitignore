@@ -28,6 +28,11 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Firebase credentials — handled via Codemagic/Vercel env vars
+GoogleService-Info.plist
+google-services.json
+*-firebase-adminsdk-*.json
+
 # TypeScript
 *.tsbuildinfo
 

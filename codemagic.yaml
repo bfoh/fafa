@@ -73,6 +73,10 @@ workflows:
           CFG=ios/App/App/capacitor.config.json
           grep -q "PreferencesPlugin" "$CFG" || { echo "ERROR: PreferencesPlugin missing from $CFG"; cat "$CFG"; exit 1; }
           echo "capacitor.config.json OK — packageClassList present"
+      - name: Write GoogleService-Info.plist
+        script: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > apps/mobile/ios/App/App/GoogleService-Info.plist
+          echo "GoogleService-Info.plist written"
       - name: Set up code signing
         script: |
           set -e # Exit immediately if any command fails
