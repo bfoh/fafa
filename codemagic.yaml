@@ -120,3 +120,99 @@ workflows:
         key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
+
+  android-release:
+    name: Didi Android Release (Play Store)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      node: 22.11.0
+      java: 17 # AGP 8.2 requires JDK 17
+      groups:
+        # Define these variables in Codemagic app settings (group: android_credentials):
+        # - GOOGLE_SERVICES_JSON       (contents of Firebase google-services.json for com.ghdidi.app)
+        # - ANDROID_KEYSTORE_BASE64    (base64 of the upload keystore .jks)
+        # - ANDROID_KEYSTORE_PASSWORD
+        # - ANDROID_KEY_ALIAS
+        # - ANDROID_KEY_PASSWORD
+        # Until they exist the build still succeeds: debug-signed (sideload-only)
+        # and, without GOOGLE_SERVICES_JSON, with push notifications disabled.
+        - android_credentials
+    # Tag-triggered like iOS, with a distinct prefix so platforms release
+    # independently:  git tag android-1 && git push origin android-1
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'android-*'
+          include: true
+    scripts:
+      - name: Install Monorepo Dependencies
+        script: |
+          npm ci
+      - name: Write mobile build env (.env.local)
+        script: |
+          # Inline public client keys so the Capacitor bundle has working
+          # Supabase URLs. These are safe to commit — the anon key is
+          # RLS-protected and already ships in the web bundle.
+          cat > apps/mobile/.env.local <<EOF
+          NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE:-https://ghdidi.com}
+          NEXT_PUBLIC_URL=${NEXT_PUBLIC_URL:-https://ghdidi.com}
+          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://qldpbkfaouvtsbvwtqji.supabase.co}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsZHBia2Zhb3V2dHNidnd0cWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5ODIwOTgsImV4cCI6MjA5NTU1ODA5OH0.xK2OGn7TK1Z5iGbs_oFjbs2Vm7A8eBKLIKkns2SzIMI}
+          EOF
+          echo "Wrote apps/mobile/.env.local"
+      - name: Build Next.js Static Export
+        script: |
+          set -e
+          # Compiles the web app to apps/mobile/out
+          npm run mobile:export
+          test -s apps/mobile/out/index.html || { echo "ERROR: index.html missing after export"; exit 1; }
+          echo "Export OK — $(find apps/mobile/out -type f | wc -l) files"
+      - name: Sync Capacitor Android Shell
+        script: |
+          set -e
+          cd apps/mobile
+          npx cap sync android
+      - name: Write google-services.json (FCM push)
+        script: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > apps/mobile/android/app/google-services.json
+            echo "google-services.json written ($(wc -c < apps/mobile/android/app/google-services.json) bytes)"
+          else
+            echo "WARNING: GOOGLE_SERVICES_JSON not set — push notifications will NOT work in this build"
+          fi
+      - name: Set up release keystore
+        script: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/didi-upload.jks
+            {
+              echo "CM_KEYSTORE_PATH=/tmp/didi-upload.jks"
+              echo "CM_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+              echo "CM_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+              echo "CM_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+            } >> $CM_ENV
+            echo "Release keystore configured"
+          else
+            echo "WARNING: no keystore configured — output will be DEBUG-signed (sideload-only, not Play-uploadable)"
+          fi
+      - name: Build Android APK + AAB
+        script: |
+          set -e
+          # Timestamp versionCode: monotonically newer on every build, well
+          # under Play's 2100000000 cap.
+          export ANDROID_VERSION_CODE=$(date +%s)
+          export ANDROID_VERSION_NAME="1.0.$(date +%Y%m%d%H%M)"
+          cd apps/mobile/android
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease
+    artifacts:
+      - apps/mobile/android/app/build/outputs/apk/release/*.apk
+      - apps/mobile/android/app/build/outputs/bundle/release/*.aab
+    publishing:
+      email:
+        recipients:
+          - ebenezer.barning@gmail.com
+        notify:
+          success: true
+          failure: true
