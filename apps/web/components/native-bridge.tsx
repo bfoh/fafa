@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { orderTrackingUrl } from '@/lib/push/notification-url';
@@ -16,6 +17,8 @@ async function registerToken(token: string, customerPhone: string | null) {
 }
 
 export function NativeBridge() {
+  const router = useRouter();
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -23,6 +26,19 @@ export function NativeBridge() {
     let cancelled = false;
 
     (async () => {
+      // Attach the tap handler before any permission/token round trips: a tap
+      // that cold-started the app is queued by the native layer and delivered
+      // the moment this listener registers, so every await before this line is
+      // time the customer spends staring at the landing page. Client-side
+      // router navigation (vs location.assign) avoids a second full page load.
+      handles.push(
+        await FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
+          const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
+          const url = orderTrackingUrl(data);
+          if (url) router.push(url);
+        })
+      );
+
       let perm = await FirebaseMessaging.requestPermissions();
       if (perm.receive !== 'granted' || cancelled) return;
 
@@ -36,21 +52,13 @@ export function NativeBridge() {
           try { await registerToken(t, null); } catch { }
         })
       );
-
-      handles.push(
-        await FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
-          const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
-          const url = orderTrackingUrl(data);
-          if (url) window.location.assign(url);
-        })
-      );
     })();
 
     return () => {
       cancelled = true;
       handles.forEach((h) => void h.remove());
     };
-  }, []);
+  }, [router]);
 
   return null;
 }
