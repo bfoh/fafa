@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { useCart } from '@/hooks/use-cart';
 import { saveCustomer, loadCustomer, saveLastOrder } from '@/lib/utils/customer-prefs';
 import { formatGHS } from '@/lib/utils/currency';
@@ -288,21 +288,19 @@ function CheckoutContent({ slug }: { slug: string }) {
       // Remember this device's details + last order for prefill & reorder.
       saveCustomer({ name, phone, address: deliveryType === 'delivery' ? address : undefined });
 
-      // Link this device's push token to the customer phone so notifications reach them.
+      // Link this device's FCM token to the customer phone so order notifications reach them.
       if (Capacitor.isNativePlatform()) {
         try {
-          const { receive } = await PushNotifications.checkPermissions();
+          const { receive } = await FirebaseMessaging.checkPermissions();
           if (receive === 'granted') {
-            await new Promise<void>((resolve) => {
-              PushNotifications.addListener('registration', async (token) => {
-                await fetch('/api/devices/register', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform(), customerPhone: phone }),
-                }).catch(() => {});
-                resolve();
-              }).then(() => PushNotifications.register());
-            });
+            const { token } = await FirebaseMessaging.getToken();
+            if (token) {
+              await fetch('/api/devices/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, platform: Capacitor.getPlatform(), customerPhone: phone }),
+              }).catch(() => {});
+            }
           }
         } catch { /* best-effort */ }
       }

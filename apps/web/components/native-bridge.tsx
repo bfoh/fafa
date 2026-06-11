@@ -2,9 +2,17 @@
 
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
+
+async function registerToken(token: string, customerPhone: string | null) {
+  await fetch(`${API}/api/devices/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, platform: Capacitor.getPlatform(), customerPhone }),
+  });
+}
 
 export function NativeBridge() {
   useEffect(() => {
@@ -14,46 +22,29 @@ export function NativeBridge() {
     let cancelled = false;
 
     (async () => {
-      let perm = await PushNotifications.checkPermissions();
-      if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
-        perm = await PushNotifications.requestPermissions();
-      }
+      let perm = await FirebaseMessaging.requestPermissions();
       if (perm.receive !== 'granted' || cancelled) return;
 
+      const { token } = await FirebaseMessaging.getToken();
+      if (!token || cancelled) return;
+
+      try { await registerToken(token, null); } catch { }
+
       handles.push(
-        await PushNotifications.addListener('registration', async (token) => {
-          try {
-            await fetch(`${API}/api/devices/register`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                token: token.value,
-                platform: Capacitor.getPlatform(),
-                customerPhone: null,
-              }),
-            });
-          } catch {
-            // best-effort; retried on next launch
-          }
+        await FirebaseMessaging.addListener('tokenReceived', async ({ token: t }) => {
+          try { await registerToken(t, null); } catch { }
         })
       );
 
       handles.push(
-        await PushNotifications.addListener(
-          'pushNotificationActionPerformed',
-          (action) => {
-            const data = action.notification.data as
-              | { orderId?: string; slug?: string }
-              | undefined;
-            if (data?.orderId) {
-              const slug = data.slug ? `&slug=${data.slug}` : '';
-              window.location.assign(`/order/?id=${data.orderId}${slug}`);
-            }
+        await FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
+          const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
+          if (data?.orderId) {
+            const slug = data.slug ? `&slug=${data.slug}` : '';
+            window.location.assign(`/order/?id=${data.orderId}${slug}`);
           }
-        )
+        })
       );
-
-      await PushNotifications.register();
     })();
 
     return () => {
