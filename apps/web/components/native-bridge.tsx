@@ -8,34 +8,20 @@ const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
 export function NativeBridge() {
   useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
     const handles: Array<{ remove: () => Promise<void> }> = [];
     let cancelled = false;
 
     (async () => {
-      alert(`[native-bridge] isNative=${Capacitor.isNativePlatform()} platform=${Capacitor.getPlatform()}`);
-      if (!Capacitor.isNativePlatform()) return;
-
       let perm = await PushNotifications.checkPermissions();
-      alert(`[push] permission: ${perm.receive}`);
       if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
         perm = await PushNotifications.requestPermissions();
-        alert(`[push] after request: ${perm.receive}`);
       }
-      if (perm.receive !== 'granted' || cancelled) {
-        alert(`[push] not granted — stopping`);
-        return;
-      }
+      if (perm.receive !== 'granted' || cancelled) return;
 
-      handles.push(
-        await PushNotifications.addListener('registrationError', (err) => {
-          alert(`[push] ERROR: ${JSON.stringify(err)}`);
-        })
-      );
-
-      // Add registration listener BEFORE calling register() to avoid race
       handles.push(
         await PushNotifications.addListener('registration', async (token) => {
-          alert(`[push] got token: ${token.value.slice(0, 20)}…`);
           try {
             await fetch(`${API}/api/devices/register`, {
               method: 'POST',
@@ -52,13 +38,6 @@ export function NativeBridge() {
         })
       );
 
-      alert('[push] calling register()');
-      await PushNotifications.register();
-      alert('[push] register() returned — waiting for event…');
-
-      // Timeout: if no event fires within 8 seconds, something is wrong
-      setTimeout(() => alert('[push] TIMEOUT — no registration event after 8s'), 8000);
-
       handles.push(
         await PushNotifications.addListener(
           'pushNotificationActionPerformed',
@@ -73,6 +52,8 @@ export function NativeBridge() {
           }
         )
       );
+
+      await PushNotifications.register();
     })();
 
     return () => {
