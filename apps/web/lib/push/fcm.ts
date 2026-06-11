@@ -81,7 +81,7 @@ export async function sendPush(
   try {
     accessToken = await getAccessToken();
   } catch (err) {
-    console.error('FCM auth failed:', err);
+    console.error('[push] FCM auth failed:', err);
     return 0;
   }
 

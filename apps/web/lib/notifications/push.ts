@@ -34,6 +34,7 @@ export async function sendOrderPush(
   event: NotificationEvent
 ): Promise<void> {
   const { order, tenant } = ctx;
+  console.log('[push] sendOrderPush called', { event, phone: order.customer_phone, configured: isPushConfigured() });
   if (!isPushConfigured() || !order.customer_phone) return;
 
   const body = pushBody(event, tenant.name);
@@ -46,15 +47,17 @@ export async function sendOrderPush(
       .select('token')
       .eq('customer_phone', order.customer_phone);
 
+    console.log('[push] tokens found:', rows?.length ?? 0, 'for phone:', order.customer_phone);
     const tokens = (rows || []).map((r) => r.token as string);
     if (tokens.length === 0) return;
 
-    await sendPush(tokens, {
+    const sent = await sendPush(tokens, {
       title: `Order #${order.order_number}`,
       body,
       data: { orderId: order.id, slug: tenant.slug },
     });
+    console.log('[push] sendPush result:', sent, '/', tokens.length, 'delivered');
   } catch (err) {
-    console.error('sendOrderPush failed:', err);
+    console.error('[push] sendOrderPush failed:', err);
   }
 }
