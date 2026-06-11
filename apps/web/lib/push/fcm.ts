@@ -64,7 +64,10 @@ async function getAccessToken(): Promise<string> {
       assertion,
     }),
   });
-  if (!res.ok) throw new Error(`FCM token exchange ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`FCM token exchange ${res.status}: ${body}`);
+  }
   const json = (await res.json()) as { access_token: string; expires_in: number };
   cachedToken = { value: json.access_token, exp: now + json.expires_in };
   return json.access_token;
