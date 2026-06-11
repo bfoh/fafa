@@ -130,6 +130,58 @@ export async function sendPush(
   return results.filter((r) => r.status === 'fulfilled').length;
 }
 
+/**
+ * Data-only message (no notification block): Android delivers it silently to
+ * the native MessagingService, which renders/updates the ongoing order-tracking
+ * notification. Same best-effort + stale-token pruning as sendPush.
+ */
+export async function sendDataPush(
+  tokens: string[],
+  data: Record<string, string>
+): Promise<number> {
+  if (!isPushConfigured() || tokens.length === 0) return 0;
+
+  let accessToken: string;
+  try {
+    accessToken = await getAccessToken();
+  } catch (err) {
+    console.error('FCM auth failed:', err);
+    return 0;
+  }
+
+  const url = `https://fcm.googleapis.com/v1/projects/${PROJECT_ID}/messages:send`;
+  const stale: string[] = [];
+
+  const results = await Promise.allSettled(
+    tokens.map(async (token) => {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: { token, data, android: { priority: 'high' } },
+        }),
+      });
+      if (res.status === 404 || res.status === 410) {
+        stale.push(token);
+        throw new Error('stale token');
+      }
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`FCM send ${res.status}: ${body}`);
+      }
+    })
+  );
+
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.error('FCM data send failed:', r.reason?.message ?? r.reason);
+  });
+  if (stale.length) await pruneStaleTokens(stale);
+  return results.filter((r) => r.status === 'fulfilled').length;
+}
+
 // Imported lazily to avoid a server/admin dep at module load in non-push paths.
 async function pruneStaleTokens(tokens: string[]): Promise<void> {
   try {
