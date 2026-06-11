@@ -7,6 +7,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Configure Firebase via ObjC runtime — avoids Swift module import issues
+        // while still initialising Firebase before the push plugin needs it.
+        if let cls = NSClassFromString("FIRApp") as? NSObject.Type {
+            cls.perform(NSSelectorFromString("configure"))
+        }
         return true
     }
 

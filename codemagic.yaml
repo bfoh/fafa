@@ -75,8 +75,8 @@ workflows:
           echo "capacitor.config.json OK — packageClassList present"
       - name: Write GoogleService-Info.plist
         script: |
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > apps/mobile/ios/App/App/GoogleService-Info.plist
-          echo "GoogleService-Info.plist written"
+          printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > apps/mobile/ios/App/App/GoogleService-Info.plist
+          echo "GoogleService-Info.plist written ($(wc -c < apps/mobile/ios/App/App/GoogleService-Info.plist) bytes)"
       - name: Set up code signing
         script: |
           set -e # Exit immediately if any command fails
