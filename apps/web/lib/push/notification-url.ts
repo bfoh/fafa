@@ -10,3 +10,20 @@ export function orderTrackingUrl(
   if (!data?.orderId || !data.slug) return null;
   return `/${encodeURIComponent(data.slug)}/order/${encodeURIComponent(data.orderId)}`;
 }
+
+/**
+ * Maps a tracker universal link (Live Activity widget tap) to an in-app path:
+ * https://ghdidi.com/<slug>/order/<orderId> → /<slug>/order/<orderId>.
+ * Returns null for anything else.
+ */
+export function trackerPathFromUrl(url: string): string | null {
+  try {
+    const parts = new URL(url).pathname.split('/').filter(Boolean);
+    if (parts.length === 3 && parts[1] === 'order') {
+      return `/${parts[0]}/order/${parts[2]}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

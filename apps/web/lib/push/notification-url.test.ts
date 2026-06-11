@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { orderTrackingUrl } from './notification-url';
+import { orderTrackingUrl, trackerPathFromUrl } from './notification-url';
 
 describe('orderTrackingUrl', () => {
   it('maps orderId + slug to the storefront tracker route', () => {
@@ -24,5 +24,19 @@ describe('orderTrackingUrl', () => {
     expect(orderTrackingUrl({ orderId: 'a/b', slug: 's p' })).toBe(
       '/s%20p/order/a%2Fb'
     );
+  });
+});
+
+describe('trackerPathFromUrl', () => {
+  it('maps a tracker universal link to its path', () => {
+    expect(trackerPathFromUrl('https://ghdidi.com/mama-chops/order/abc-123')).toBe(
+      '/mama-chops/order/abc-123'
+    );
+  });
+
+  it('returns null for non-tracker links', () => {
+    expect(trackerPathFromUrl('https://ghdidi.com/mama-chops')).toBeNull();
+    expect(trackerPathFromUrl('https://ghdidi.com/')).toBeNull();
+    expect(trackerPathFromUrl('not a url')).toBeNull();
   });
 });

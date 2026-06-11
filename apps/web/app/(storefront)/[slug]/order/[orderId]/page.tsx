@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { OrderTracker, type TrackedOrder, type HistoryEntry } from '@/components/storefront/order-tracker';
+import { LiveActivityBridge } from '@/components/live-activity-bridge';
 import { AdepaConversion } from '@/components/adepa/adepa-conversion';
 import { verifyTransaction } from '@/lib/paystack/client';
 import { settlePaidOrder } from '@/lib/orders/settle';
@@ -73,6 +74,14 @@ export default async function OrderConfirmationPage({
         slug={slug}
         orderNumber={order.order_number}
         total={Number(order.total)}
+      />
+      <LiveActivityBridge
+        orderId={order.id}
+        orderNumber={order.order_number}
+        tenantName={tenant?.name || 'this restaurant'}
+        slug={slug}
+        deliveryType={order.delivery_type}
+        status={order.status}
       />
       <OrderTracker
         initialOrder={order as unknown as TrackedOrder}

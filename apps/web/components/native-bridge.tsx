@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
-import { orderTrackingUrl } from '@/lib/push/notification-url';
+import { App as CapApp } from '@capacitor/app';
+import { orderTrackingUrl, trackerPathFromUrl } from '@/lib/push/notification-url';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -36,6 +37,14 @@ export function NativeBridge() {
           const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
           const url = orderTrackingUrl(data);
           if (url) router.push(url);
+        })
+      );
+
+      // Widget taps arrive as universal links (Live Activity widgetURL).
+      handles.push(
+        await CapApp.addListener('appUrlOpen', ({ url }) => {
+          const path = trackerPathFromUrl(url);
+          if (path) router.push(path);
         })
       );
 
