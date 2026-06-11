@@ -23,15 +23,28 @@ export function usePush(customerPhone?: string) {
 
     (async () => {
       let perm = await PushNotifications.checkPermissions();
+      console.log('[push] permission status:', perm.receive);
       if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
         perm = await PushNotifications.requestPermissions();
+        console.log('[push] after request:', perm.receive);
       }
-      if (perm.receive !== 'granted' || cancelled) return;
+      if (perm.receive !== 'granted' || cancelled) {
+        console.log('[push] not granted, aborting');
+        return;
+      }
 
+      handles.push(
+        await PushNotifications.addListener('registrationError', (err) => {
+          console.error('[push] registration error:', JSON.stringify(err));
+        })
+      );
+
+      console.log('[push] calling register()');
       await PushNotifications.register();
 
       handles.push(
         await PushNotifications.addListener('registration', async (token) => {
+          console.log('[push] got token:', token.value.slice(0, 20) + '…');
           try {
             await fetch(`${API}/api/devices/register`, {
               method: 'POST',
