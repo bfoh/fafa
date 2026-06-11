@@ -16,6 +16,13 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* GoogleService-Info.plist */; };
+		DD1A000000000000000000B1 /* OrderActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F1 /* OrderActivityAttributes.swift */; };
+		DD1A000000000000000000B2 /* LiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F2 /* LiveActivityPlugin.swift */; };
+		DD1A000000000000000000B3 /* LiveActivityPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F3 /* LiveActivityPlugin.m */; };
+		DD1A000000000000000000B4 /* OrderActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F1 /* OrderActivityAttributes.swift */; };
+		DD1A000000000000000000B5 /* DidiWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F5 /* DidiWidgetsBundle.swift */; };
+		DD1A000000000000000000B6 /* OrderLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F6 /* OrderLiveActivity.swift */; };
+		DD1A000000000000000000B7 /* DidiWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F7 /* DidiWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +39,13 @@
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		DD1A000000000000000000F1 /* OrderActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderActivityAttributes.swift; sourceTree = "<group>"; };
+		DD1A000000000000000000F2 /* LiveActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityPlugin.swift; sourceTree = "<group>"; };
+		DD1A000000000000000000F3 /* LiveActivityPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LiveActivityPlugin.m; sourceTree = "<group>"; };
+		DD1A000000000000000000F5 /* DidiWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DidiWidgetsBundle.swift; sourceTree = "<group>"; };
+		DD1A000000000000000000F6 /* OrderLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderLiveActivity.swift; sourceTree = "<group>"; };
+		DD1A000000000000000000F7 /* DidiWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DidiWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD1A000000000000000000F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +54,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD1A000000000000000000C8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -58,6 +79,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3061FED79650016851F /* App */,
+				DD1A000000000000000000C1 /* DidiWidgets */,
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
@@ -68,8 +90,19 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				DD1A000000000000000000F7 /* DidiWidgets.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		DD1A000000000000000000C1 /* DidiWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				DD1A000000000000000000F5 /* DidiWidgetsBundle.swift */,
+				DD1A000000000000000000F6 /* OrderLiveActivity.swift */,
+				DD1A000000000000000000F8 /* Info.plist */,
+			);
+			path = DidiWidgets;
 			sourceTree = "<group>";
 		};
 		504EC3061FED79650016851F /* App */ = {
@@ -77,6 +110,9 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				DD1A000000000000000000F1 /* OrderActivityAttributes.swift */,
+				DD1A000000000000000000F2 /* LiveActivityPlugin.swift */,
+				DD1A000000000000000000F3 /* LiveActivityPlugin.m */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -110,17 +146,68 @@
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
 				CAE100000000000000CAE001 /* Copy Web Assets to Bundle */,
+				DD1A000000000000000000C2 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DD1A000000000000000000C3 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
+		DD1A000000000000000000C5 /* DidiWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD1A000000000000000000C6 /* Build configuration list for PBXNativeTarget "DidiWidgets" */;
+			buildPhases = (
+				DD1A000000000000000000C7 /* Sources */,
+				DD1A000000000000000000C8 /* Frameworks */,
+				DD1A000000000000000000C9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DidiWidgets;
+			productName = DidiWidgets;
+			productReference = DD1A000000000000000000F7 /* DidiWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DD1A000000000000000000C2 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DD1A000000000000000000B7 /* DidiWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		DD1A000000000000000000C4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD1A000000000000000000C5;
+			remoteInfo = DidiWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		DD1A000000000000000000C3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD1A000000000000000000C5 /* DidiWidgets */;
+			targetProxy = DD1A000000000000000000C4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		504EC2FC1FED79650016851F /* Project object */ = {
@@ -152,6 +239,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				DD1A000000000000000000C5 /* DidiWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -168,6 +256,13 @@
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				A1B2C3D4E5F6A7B8C9D0E1F3 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD1A000000000000000000C9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +325,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				DD1A000000000000000000B1 /* OrderActivityAttributes.swift in Sources */,
+				DD1A000000000000000000B2 /* LiveActivityPlugin.swift in Sources */,
+				DD1A000000000000000000B3 /* LiveActivityPlugin.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD1A000000000000000000C7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD1A000000000000000000B4 /* OrderActivityAttributes.swift in Sources */,
+				DD1A000000000000000000B5 /* DidiWidgetsBundle.swift in Sources */,
+				DD1A000000000000000000B6 /* OrderLiveActivity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -403,6 +511,51 @@
 			};
 			name = Release;
 		};
+		DD1A000000000000000000D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 15;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DidiWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghdidi.app.DidiWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DD1A000000000000000000D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 15;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DidiWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghdidi.app.DidiWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -420,6 +573,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD1A000000000000000000C6 /* Build configuration list for PBXNativeTarget "DidiWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD1A000000000000000000D1 /* Debug */,
+				DD1A000000000000000000D2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
