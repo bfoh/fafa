@@ -32,9 +32,7 @@ export function NativeBridge() {
         })
       );
 
-      alert('[push] calling register()');
-      await PushNotifications.register();
-
+      // Add registration listener BEFORE calling register() to avoid race
       handles.push(
         await PushNotifications.addListener('registration', async (token) => {
           alert(`[push] got token: ${token.value.slice(0, 20)}…`);
@@ -53,6 +51,13 @@ export function NativeBridge() {
           }
         })
       );
+
+      alert('[push] calling register()');
+      await PushNotifications.register();
+      alert('[push] register() returned — waiting for event…');
+
+      // Timeout: if no event fires within 8 seconds, something is wrong
+      setTimeout(() => alert('[push] TIMEOUT — no registration event after 8s'), 8000);
 
       handles.push(
         await PushNotifications.addListener(
