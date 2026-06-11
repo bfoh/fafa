@@ -25,13 +25,18 @@ export async function POST(req: Request) {
     }
 
     const supabase = createAdminClient();
+    // Only include customer_phone when provided — omitting it on upsert
+    // preserves the existing value so a plain app-launch re-registration
+    // (which sends customerPhone: null) never wipes a phone linked at checkout.
+    const payload: Record<string, unknown> = {
+      token,
+      platform,
+      last_seen_at: new Date().toISOString(),
+    };
+    if (customerPhone) payload.customer_phone = customerPhone;
+
     const { error } = await supabase.from('device_tokens').upsert(
-      {
-        token,
-        platform,
-        customer_phone: customerPhone ?? null,
-        last_seen_at: new Date().toISOString(),
-      },
+      payload,
       { onConflict: 'token' }
     );
 
