@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
+import { orderTrackingUrl } from '@/lib/push/notification-url';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -39,10 +40,8 @@ export function NativeBridge() {
       handles.push(
         await FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
           const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
-          if (data?.orderId) {
-            const slug = data.slug ? `&slug=${data.slug}` : '';
-            window.location.assign(`/order/?id=${data.orderId}${slug}`);
-          }
+          const url = orderTrackingUrl(data);
+          if (url) window.location.assign(url);
         })
       );
     })();
