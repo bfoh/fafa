@@ -14,6 +14,7 @@
     "@ai-sdk/react": "^3.0.199",
     "@capacitor/core": "^6.2.1",
     "@capacitor-firebase/messaging": "^6.0.0",
+    "firebase": "^10.9.0",
     "@fafa/storefront": "*",
     "@fafa/types": "*",
     "@supabase/ssr": "^0.10.3",
