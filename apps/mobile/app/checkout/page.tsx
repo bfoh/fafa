@@ -14,6 +14,8 @@ import { resolveDeliveryFee } from '../../../web/lib/delivery/resolve';
 import { estimateMinutes, DEFAULT_PREP_MINUTES } from '../../../web/lib/delivery/pricing';
 import dynamic from 'next/dynamic';
 import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -299,6 +301,26 @@ function CheckoutContent({ slug }: { slug: string }) {
 
       // Remember this device's details + last order for prefill & reorder.
       saveCustomer({ name, phone, address: deliveryType === 'delivery' ? address : undefined });
+
+      // Link this device's push token to the customer's phone so order
+      // status notifications reach the right device.
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { receive } = await PushNotifications.checkPermissions();
+          if (receive === 'granted') {
+            await new Promise<void>((resolve) => {
+              PushNotifications.addListener('registration', async (token) => {
+                await fetch(`${API}/api/devices/register`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform(), customerPhone: phone }),
+                }).catch(() => {});
+                resolve();
+              }).then(() => PushNotifications.register());
+            });
+          }
+        } catch { /* best-effort */ }
+      }
       if (data.order?.order_number) {
         saveLastOrder(slug, data.order.order_number, items);
       }
