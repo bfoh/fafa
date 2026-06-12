@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '../../lib/supabase/client';
 import { formatGHS } from '../../lib/utils/currency';
 import { waLink } from '../../lib/utils/whatsapp';
-import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star } from 'lucide-react';
+import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star, RotateCcw } from 'lucide-react';
 import { saveRecentOrder } from '../../lib/utils/customer-prefs';
+import { replaceCart } from '../../lib/menu/cart-storage';
+import type { CartItem } from '../../hooks/use-cart';
 
 interface OrderItem {
   id: string;
@@ -118,6 +121,11 @@ export function OrderTracker({
   const [stars, setStars] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  // Reorder
+  const router = useRouter();
+  const [reordering, setReordering] = useState(false);
+  const [reorderError, setReorderError] = useState<string | null>(null);
 
   // Remember this order on the device so it shows in the marketplace "Orders" sheet.
   useEffect(() => {
@@ -265,6 +273,35 @@ export function OrderTracker({
     };
   }, [order.id, order.status]);
 
+  // Rebuild this order in the cart (validated against the live menu) and
+  // head to the storefront to check out.
+  async function reorder() {
+    if (reordering) return;
+    setReordering(true);
+    setReorderError(null);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/reorder`, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Reorder unavailable');
+      const data = (await res.json()) as { items: CartItem[]; skipped: string[] };
+      if (!data.items.length) {
+        setReorderError('Those items are no longer on the menu.');
+        return;
+      }
+      replaceCart(slug, data.items);
+      if (data.skipped.length) {
+        setReorderError(`Added to cart — but no longer available: ${data.skipped.join(', ')}.`);
+        // Brief pause so the notice is readable before navigating.
+        setTimeout(() => router.push(`/${slug}`), 1800);
+        return;
+      }
+      router.push(`/${slug}`);
+    } catch {
+      setReorderError('Could not rebuild your order. Please try again.');
+    } finally {
+      setReordering(false);
+    }
+  }
+
   async function submitReview() {
     if (!stars || reviewSubmitting) return;
     setReviewSubmitting(true);
@@ -351,6 +388,25 @@ export function OrderTracker({
         )}
         {eta && <p className="text-xs font-semibold mt-2" style={{ color: accent }}>{eta}</p>}
       </div>
+
+      {/* ── Reorder (once the order is done) ── */}
+      {(isDelivered || isCancelled) && (
+        <div className="mb-5">
+          <button
+            type="button"
+            onClick={reorder}
+            disabled={reordering}
+            className="w-full py-3.5 rounded-2xl text-white font-semibold transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-card"
+            style={{ background: accent }}
+          >
+            {reordering ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+            Reorder this meal
+          </button>
+          {reorderError && (
+            <p className="text-xs text-center text-warning-600 font-medium mt-2">{reorderError}</p>
+          )}
+        </div>
+      )}
 
       {/* ── Rate your order (after delivery) ── */}
       {isDelivered && (

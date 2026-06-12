@@ -39,6 +39,12 @@ export function addToCart(slug: string, item: CartItem): number {
   return next.reduce((n, i) => n + i.quantity, 0);
 }
 
+// Reorder: the customer is deliberately recreating a past order, so the
+// rebuilt items replace whatever was in the cart rather than merging.
+export function replaceCart(slug: string, items: CartItem[]) {
+  write(slug, items);
+}
+
 export function cartCount(slug: string): number {
   return read(slug).reduce((n, i) => n + i.quantity, 0);
 }
