@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { CartProvider, useCart } from '../../hooks/use-cart';
 import { formatGHS } from '../../lib/utils/currency';
-import { Plus, Minus, ShoppingBag, X, ArrowRight, RotateCcw } from 'lucide-react';
+import { Plus, Minus, ShoppingBag, X, ArrowRight, RotateCcw, UtensilsCrossed, Check, AlertTriangle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '../../lib/supabase/client';
 import { loadLastOrder, type LastOrder } from '../../lib/utils/customer-prefs';
@@ -311,12 +311,17 @@ function MenuContent({
               </span>
             </div>
             <div className="space-y-2.5">
-              {cat.menu_items.map((item) => (
+              {cat.menu_items.map((item, itemIdx) => (
                 <div
                   key={item.id}
                   id={`item-${item.id}`}
-                  className="group relative flex gap-3 p-2.5 bg-white rounded-2xl border border-hairline shadow-card active:scale-[0.99] transition-all duration-300 scroll-mt-28 animate-fade-in"
-                  style={highlightId === item.id ? { boxShadow: `0 0 0 2px ${tenant.primary_color}, 0 10px 30px ${tenant.primary_color}33` } : undefined}
+                  className="group relative flex gap-3 p-2.5 bg-white rounded-2xl border border-hairline shadow-card active:scale-[0.99] transition-all duration-300 scroll-mt-28 stagger-item"
+                  style={{
+                    '--stagger-i': itemIdx,
+                    ...(highlightId === item.id
+                      ? { boxShadow: `0 0 0 2px ${tenant.primary_color}, 0 10px 30px ${tenant.primary_color}33` }
+                      : null),
+                  } as React.CSSProperties}
                 >
                   {/* Details (left) */}
                   <div className="flex-1 min-w-0 flex flex-col py-1 pl-1.5">
@@ -334,7 +339,8 @@ function MenuContent({
                           className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg"
                           style={{ background: `${tenant.primary_color}14`, color: tenant.primary_color }}
                         >
-                          🍽️ Your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}
+                          <Sparkles className="w-3 h-3" />
+                          Your way{Number(item.price) > 0 ? ` · from ${formatGHS(Number(item.price))}` : ''}
                         </span>
                       ) : (
                         <p
@@ -360,10 +366,10 @@ function MenuContent({
                       </div>
                     ) : (
                       <div
-                        className="h-24 w-24 rounded-2xl flex items-center justify-center text-3xl ring-1 ring-black/5"
+                        className="h-24 w-24 rounded-2xl flex items-center justify-center ring-1 ring-black/5"
                         style={{ background: `linear-gradient(135deg, ${tenant.primary_color}14, ${tenant.primary_color}05)` }}
                       >
-                        🍽️
+                        <UtensilsCrossed className="w-8 h-8 opacity-60" style={{ color: tenant.primary_color }} />
                       </div>
                     )}
                     <button
@@ -493,10 +499,10 @@ function CartDrawer({
                   />
                 ) : (
                   <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center text-xl"
+                    className="w-14 h-14 rounded-xl flex items-center justify-center"
                     style={{ background: `${tenant.primary_color}15` }}
                   >
-                    🍽️
+                    <UtensilsCrossed className="w-5 h-5 opacity-60" style={{ color: tenant.primary_color }} />
                   </div>
                 )}
 
@@ -870,8 +876,9 @@ function ChopBarCustomizer({
               </div>
             </div>
             {isBasePriceInvalid && (
-              <p className="text-[10px] font-extrabold text-error-600 mt-1.5 animate-fade-in uppercase tracking-wider">
-                ⚠️ Minimum amount required for this item is {formatGHS(minBasePrice)}
+              <p className="inline-flex items-center gap-1 text-[10px] font-extrabold text-error-600 mt-1.5 animate-fade-in uppercase tracking-wider">
+                <AlertTriangle className="w-3 h-3 shrink-0" />
+                Minimum amount required for this item is {formatGHS(minBasePrice)}
               </p>
             )}
           </div>
@@ -897,7 +904,7 @@ function ChopBarCustomizer({
                       }`}
                     >
                       <span className="truncate">{soup.name}</span>
-                      {isChecked && <span className="text-success-600 text-xs">✓</span>}
+                      {isChecked && <Check className="w-3.5 h-3.5 shrink-0 text-success-600" strokeWidth={3} />}
                     </button>
                   );
                 })}
@@ -1047,8 +1054,9 @@ function ChopBarCustomizer({
                                 </div>
                               </div>
                               {error && (
-                                <p className="text-[10px] font-bold text-error-600 animate-fade-in">
-                                  ⚠️ {error}
+                                <p className="inline-flex items-center gap-1 text-[10px] font-bold text-error-600 animate-fade-in">
+                                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                                  {error}
                                 </p>
                               )}
                             </>
@@ -1102,7 +1110,7 @@ function ChopBarCustomizer({
                           </div>
                         </div>
                         {isChecked && (
-                          <span className="text-success-600 text-xs">✓</span>
+                          <Check className="w-3.5 h-3.5 shrink-0 text-success-600" strokeWidth={3} />
                         )}
                       </div>
 

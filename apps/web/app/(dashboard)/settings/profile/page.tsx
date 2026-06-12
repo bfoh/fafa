@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { CUISINES } from '@/lib/marketplace/cuisines';
 import { CITY_COORDS } from '@/lib/marketplace/geo';
@@ -275,7 +275,10 @@ export default function ProfileSettingsPage() {
               onChange={(lat, lng) => setLoc({ lat, lng })}
             />
             {loc && (
-              <p className="text-[11px] text-success-600 mt-1">Location set ✓</p>
+              <p className="inline-flex items-center gap-1 text-[11px] text-success-600 mt-1">
+                Location set
+                <Check className="w-3 h-3" strokeWidth={3} />
+              </p>
             )}
           </div>
         </div>

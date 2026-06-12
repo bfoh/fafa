@@ -8,7 +8,7 @@ import { saveCustomer, loadCustomer, saveLastOrder } from '@/lib/utils/customer-
 import { formatGHS } from '@/lib/utils/currency';
 import { useParams, useRouter } from 'next/navigation';
 import { CartProvider } from '@/hooks/use-cart';
-import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2, Bike, Store, MapPin, Check, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { GHANA_CITIES } from '@/lib/delivery/ghana-areas';
@@ -239,10 +239,11 @@ function CheckoutContent({ slug }: { slug: string }) {
         <p className="text-surface-500">Your cart is empty</p>
         <Link
           href={`/${slug}`}
-          className="inline-block mt-4 text-sm font-semibold hover:underline"
+          className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold hover:underline"
           style={{ color: primaryColor }}
         >
-          ← Back to menu
+          <ArrowLeft className="w-4 h-4" />
+          Back to menu
         </Link>
       </div>
     );
@@ -446,26 +447,28 @@ function CheckoutContent({ slug }: { slug: string }) {
               <button
                 type="button"
                 onClick={() => setDeliveryType('delivery')}
-                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
+                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer inline-flex items-center justify-center gap-1.5"
                 style={{
                   borderColor: deliveryType === 'delivery' ? primaryColor : 'var(--surface-200)',
                   backgroundColor: deliveryType === 'delivery' ? `${primaryColor}10` : 'transparent',
                 }}
               >
-                🚗 Delivery
+                <Bike className="w-4 h-4" style={deliveryType === 'delivery' ? { color: primaryColor } : undefined} />
+                Delivery
               </button>
             )}
             {(!tenant || tenant.accepts_pickup) && (
               <button
                 type="button"
                 onClick={() => setDeliveryType('pickup')}
-                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer"
+                className="p-3 rounded-xl border-2 text-center text-sm font-medium transition-all cursor-pointer inline-flex items-center justify-center gap-1.5"
                 style={{
                   borderColor: deliveryType === 'pickup' ? primaryColor : 'var(--surface-200)',
                   backgroundColor: deliveryType === 'pickup' ? `${primaryColor}10` : 'transparent',
                 }}
               >
-                🏪 Pickup
+                <Store className="w-4 h-4" style={deliveryType === 'pickup' ? { color: primaryColor } : undefined} />
+                Pickup
               </button>
             )}
           </div>
@@ -523,10 +526,11 @@ function CheckoutContent({ slug }: { slug: string }) {
                     <button
                       type="button"
                       onClick={useMyLocation}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
                       style={{ color: primaryColor }}
                     >
-                      📍 Use my location
+                      <MapPin className="w-3.5 h-3.5" />
+                      Use my location
                     </button>
                   </div>
                   {geoError && <p className="text-xs text-warning-700">{geoError}</p>}
@@ -547,7 +551,10 @@ function CheckoutContent({ slug }: { slug: string }) {
                     </button>
                   )}
                   {customerPin && (
-                    <p className="text-xs text-success-600">✓ Using your exact location for a precise fee.</p>
+                    <p className="inline-flex items-center gap-1 text-xs text-success-600">
+                      <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
+                      Using your exact location for a precise fee.
+                    </p>
                   )}
                 </div>
               )}
@@ -672,8 +679,9 @@ function CheckoutContent({ slug }: { slug: string }) {
 
         {/* Limit warning */}
         {belowMinLimit && tenant && (
-          <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in">
-            ⚠️ Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
+          <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in inline-flex w-full items-center justify-center gap-1.5">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
           </div>
         )}
 

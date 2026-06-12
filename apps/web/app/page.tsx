@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bricolage_Grotesque } from 'next/font/google';
+import { ArrowRight } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
 import HeroSearch from '@/components/marketplace/hero-search';
 import CuisineChips from '@/components/marketplace/cuisine-chips';
@@ -11,12 +11,6 @@ import type {
   KitchenResult,
   MenuPreview,
 } from '@/components/marketplace/kitchen-card';
-
-const display = Bricolage_Grotesque({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  variable: '--font-display',
-});
 
 export const dynamic = 'force-dynamic';
 
@@ -118,7 +112,7 @@ export default async function HomePage({
 
   return (
     <div
-      className={`${display.variable} relative min-h-[100dvh] text-white antialiased overflow-x-hidden`}
+      className="relative min-h-[100dvh] text-white antialiased overflow-x-hidden"
       style={{
         backgroundColor: '#0b0910',
         backgroundImage: [
@@ -159,9 +153,10 @@ export default async function HomePage({
             <nav className="flex items-center gap-3 text-sm">
               <Link
                 href="/register"
-                className="px-4 py-2 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-xs shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)] hover:brightness-110 transition-all"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-xs shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)] hover:brightness-110 transition-all"
               >
-                List your kitchen ▸
+                List your kitchen
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
                 href="/login"
@@ -235,9 +230,10 @@ export default async function HomePage({
             </div>
             <Link
               href="/register"
-              className="relative px-6 py-3 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-sm shadow-[0_8px_28px_-8px_rgba(255,107,53,0.8)] hover:brightness-110 transition-all"
+              className="relative inline-flex items-center gap-1.5 px-6 py-3 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-sm shadow-[0_8px_28px_-8px_rgba(255,107,53,0.8)] hover:brightness-110 transition-all"
             >
-              List your kitchen →
+              List your kitchen
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </section>

@@ -6,7 +6,25 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '../../lib/supabase/client';
 import { formatGHS } from '../../lib/utils/currency';
 import { waLink } from '../../lib/utils/whatsapp';
-import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star, RotateCcw } from 'lucide-react';
+import {
+  CheckCircle,
+  Clock,
+  Phone,
+  Send,
+  MessageCircle,
+  Loader2,
+  Star,
+  RotateCcw,
+  Receipt,
+  ChefHat,
+  Package,
+  Bike,
+  PartyPopper,
+  XCircle,
+  MapPin,
+  ArrowLeft,
+  type LucideIcon,
+} from 'lucide-react';
 import { saveRecentOrder } from '../../lib/utils/customer-prefs';
 import { replaceCart } from '../../lib/menu/cart-storage';
 import type { CartItem } from '../../hooks/use-cart';
@@ -57,7 +75,7 @@ interface Stage {
   key: string;
   label: string;
   desc: string;
-  emoji: string;
+  icon: LucideIcon;
 }
 
 const TERMINAL = new Set(['delivered', 'cancelled']);
@@ -65,23 +83,23 @@ const TERMINAL = new Set(['delivered', 'cancelled']);
 function getStages(deliveryType: string): Stage[] {
   const pickup = deliveryType === 'pickup';
   return [
-    { key: 'pending', label: 'Order placed', desc: 'We’ve received your order.', emoji: '🧾' },
-    { key: 'confirmed', label: 'Confirmed', desc: 'The kitchen accepted your order.', emoji: '✅' },
-    { key: 'preparing', label: 'Preparing your food', desc: 'Your meal is being cooked.', emoji: '👨‍🍳' },
+    { key: 'pending', label: 'Order placed', desc: 'We’ve received your order.', icon: Receipt },
+    { key: 'confirmed', label: 'Confirmed', desc: 'The kitchen accepted your order.', icon: CheckCircle },
+    { key: 'preparing', label: 'Preparing your food', desc: 'Your meal is being cooked.', icon: ChefHat },
     {
       key: 'ready',
       label: pickup ? 'Ready for pickup' : 'Ready',
       desc: pickup ? 'Come grab it while it’s hot!' : 'Packed and waiting for the courier.',
-      emoji: '📦',
+      icon: Package,
     },
     ...(pickup
       ? []
-      : [{ key: 'out_for_delivery', label: 'On the way', desc: 'The courier is heading to you.', emoji: '🛵' }]),
+      : [{ key: 'out_for_delivery', label: 'On the way', desc: 'The courier is heading to you.', icon: Bike }]),
     {
       key: 'delivered',
       label: pickup ? 'Picked up' : 'Delivered',
-      desc: 'Enjoy your meal! 🎉',
-      emoji: '🎉',
+      desc: 'Enjoy your meal!',
+      icon: PartyPopper,
     },
   ];
 }
@@ -357,10 +375,17 @@ export function OrderTracker({
       {/* ── Live status hero ── */}
       <div className="text-center mb-6">
         <div
-          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl relative"
+          className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 relative"
           style={{ background: isCancelled ? 'rgb(239 68 68 / 0.1)' : `${accent}15` }}
         >
-          {isCancelled ? '❌' : stages[Math.max(0, currentIndex)]?.emoji ?? '🧾'}
+          {isCancelled ? (
+            <XCircle className="w-9 h-9 text-error-500" />
+          ) : (
+            (() => {
+              const HeroIcon = stages[Math.max(0, currentIndex)]?.icon ?? Receipt;
+              return <HeroIcon className="w-9 h-9" style={{ color: accent }} />;
+            })()
+          )}
           {isLive && (
             <span
               className="absolute inset-0 rounded-full animate-ping opacity-30"
@@ -449,7 +474,7 @@ export function OrderTracker({
             {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {review ? 'Update rating' : 'Submit rating'}
           </button>
-          {review && <p className="text-xs text-success-600 font-semibold mt-2">Thanks for your feedback! 🙏</p>}
+          {review && <p className="text-xs text-success-600 font-semibold mt-2">Thanks for your feedback!</p>}
           {review?.owner_reply && (
             <div className="mt-3 text-left rounded-xl bg-surface-50 border border-surface-100 p-3">
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accent }}>
@@ -489,10 +514,8 @@ export function OrderTracker({
                     >
                       {done ? (
                         <CheckCircle className="w-4 h-4" />
-                      ) : current ? (
-                        <span className="text-[15px] leading-none">{stage.emoji}</span>
                       ) : (
-                        <span className="text-[15px] leading-none opacity-50 grayscale">{stage.emoji}</span>
+                        <stage.icon className={`w-4 h-4 ${current ? '' : 'opacity-50'}`} />
                       )}
                     </div>
                     {current && (
@@ -656,7 +679,10 @@ export function OrderTracker({
           </div>
 
           <div className="flex items-center gap-2 mt-2 text-sm text-surface-500">
-            <span>📍 {order.delivery_type === 'pickup' ? 'Pickup' : 'Delivery'}</span>
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="w-4 h-4 shrink-0" />
+              {order.delivery_type === 'pickup' ? 'Pickup' : 'Delivery'}
+            </span>
             {order.delivery_address && <span className="truncate">· {order.delivery_address}</span>}
           </div>
         </div>
@@ -690,8 +716,12 @@ export function OrderTracker({
       )}
 
       <div className="mt-4 text-center space-y-2">
-        <Link href={`/${slug}`} className="block text-sm text-surface-400 hover:text-surface-600 transition-colors">
-          ← Order more from {tenant.name}
+        <Link
+          href={`/${slug}`}
+          className="inline-flex items-center justify-center gap-1.5 text-sm text-surface-400 hover:text-surface-600 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Order more from {tenant.name}
         </Link>
         <Link href="/" className="block text-sm font-semibold transition-colors" style={{ color: accent }}>
           Browse more restaurants on Didi

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import Link from 'next/link';
-import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, X, Send, Loader2, Plus, ShoppingBag, ExternalLink, Mic, Volume2, VolumeX, UtensilsCrossed, ArrowRight } from 'lucide-react';
 import { formatGHS } from '../../lib/utils/currency';
 import { addToCart, cartCount } from '../../lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '../../lib/utils/customer-prefs';
@@ -530,7 +530,9 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
                                 {d.image ? (
                                   <img src={d.image} alt={d.name} className="w-12 h-12 rounded-xl object-cover" />
                                 ) : (
-                                  <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg">🍽️</div>
+                                  <div className="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center">
+                                    <UtensilsCrossed className="w-5 h-5 text-brand-400" />
+                                  </div>
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-semibold text-surface-900 truncate">{d.name}</p>
@@ -696,7 +698,10 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
                 style={{ backgroundImage: 'linear-gradient(135deg, #FF8243, #E85520)' }}
               >
                 <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4" /> {cartN} in cart</span>
-                <span>Checkout →</span>
+                <span className="flex items-center gap-1">
+                  Checkout
+                  <ArrowRight className="w-4 h-4" />
+                </span>
               </Link>
             )}
 

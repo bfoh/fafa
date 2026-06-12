@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageCircle, Star, ArrowLeft } from 'lucide-react';
+import { MessageCircle, Star, ArrowLeft, MapPin, Bike, Store } from 'lucide-react';
 import Link from 'next/link';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
@@ -173,7 +173,8 @@ export function StorefrontScreen({ slug }: { slug: string }) {
                   )}
                   {tenant.city && (
                     <span className="inline-flex items-center gap-1 text-surface-500">
-                      📍 {tenant.city}
+                      <MapPin className="w-3.5 h-3.5" />
+                      {tenant.city}
                     </span>
                   )}
                 </div>
@@ -185,7 +186,8 @@ export function StorefrontScreen({ slug }: { slug: string }) {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
                       style={{ background: `${primaryColor}14`, color: primaryColor }}
                     >
-                      🚗 Delivery{' '}
+                      <Bike className="w-3.5 h-3.5" />
+                      Delivery{' '}
                       {Number(tenant.delivery_fee) > 0
                         ? `from ${formatGHS(Number(tenant.delivery_fee))}`
                         : 'available'}
@@ -193,7 +195,8 @@ export function StorefrontScreen({ slug }: { slug: string }) {
                   )}
                   {tenant.accepts_pickup && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-surface-100 text-surface-600">
-                      🏪 Pickup
+                      <Store className="w-3.5 h-3.5" />
+                      Pickup
                     </span>
                   )}
                   {Number(tenant.min_order_amount) > 0 && (

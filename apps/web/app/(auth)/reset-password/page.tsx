@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function ResetPasswordPage() {
@@ -104,7 +105,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="text-center animate-fade-in">
         <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-400/25 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-3xl">✅</span>
+          <CheckCircle className="w-8 h-8 text-emerald-400" />
         </div>
         <h2 className="text-2xl font-extrabold text-white">Password updated</h2>
         <p className="text-white/55 mt-2">Redirecting you to sign in…</p>
@@ -117,7 +118,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="text-center animate-fade-in">
         <div className="w-16 h-16 bg-rose-500/15 border border-rose-400/25 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-3xl">⚠️</span>
+          <AlertTriangle className="w-8 h-8 text-rose-400" />
         </div>
         <h2 className="text-2xl font-extrabold text-white">Link expired or invalid</h2>
         <p className="text-white/55 mt-2">

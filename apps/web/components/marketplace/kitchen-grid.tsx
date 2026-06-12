@@ -22,8 +22,10 @@ export default function KitchenGrid({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {kitchens.map((k) => (
-        <KitchenCard key={k.id} k={k} />
+      {kitchens.map((k, i) => (
+        <div key={k.id} className="stagger-item h-full" style={{ '--stagger-i': i } as React.CSSProperties}>
+          <KitchenCard k={k} />
+        </div>
       ))}
     </div>
   );

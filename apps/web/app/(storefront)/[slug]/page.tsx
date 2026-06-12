@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
+import { MapPin, Bike, Store } from 'lucide-react';
 import { formatGHS } from '@/lib/utils/currency';
 import { StorefrontMenu } from '@/components/storefront/storefront-menu';
 
@@ -110,7 +111,8 @@ export default async function StorefrontPage({
             <div className="flex flex-wrap items-center gap-2 mt-3">
               {tenant.city && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
-                  📍 {tenant.city}
+                  <MapPin className="w-3.5 h-3.5" />
+                  {tenant.city}
                 </span>
               )}
               {tenant.accepts_delivery && (
@@ -118,12 +120,14 @@ export default async function StorefrontPage({
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
                   style={{ background: `${primaryColor}14`, color: primaryColor }}
                 >
-                  🚗 Delivery {tenant.delivery_fee > 0 ? `from ${formatGHS(Number(tenant.delivery_fee))}` : 'available'}
+                  <Bike className="w-3.5 h-3.5" />
+                  Delivery {tenant.delivery_fee > 0 ? `from ${formatGHS(Number(tenant.delivery_fee))}` : 'available'}
                 </span>
               )}
               {tenant.accepts_pickup && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600">
-                  🏪 Pickup
+                  <Store className="w-3.5 h-3.5" />
+                  Pickup
                 </span>
               )}
               {Number(tenant.min_order_amount) > 0 && (

@@ -8,6 +8,7 @@ import {
   Clock,
   TrendingUp,
   Star,
+  ArrowRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import SetupChecklist from '@/components/dashboard/setup-checklist';
@@ -271,9 +272,10 @@ export default async function DashboardPage() {
           </h2>
           <Link
             href="/orders"
-            className="text-sm text-brand-500 hover:text-brand-600 font-medium transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-brand-500 hover:text-brand-600 font-medium transition-colors"
           >
-            View all →
+            View all
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 

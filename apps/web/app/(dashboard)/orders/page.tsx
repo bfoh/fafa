@@ -27,6 +27,8 @@ import {
   Send,
   MessageSquare,
   Star,
+  Bike,
+  Store,
 } from 'lucide-react';
 import { getResolvedTenantIdClient } from '@/lib/admin/impersonate';
 import { isVisibleToRestaurant, VISIBLE_ORDER_FILTER } from '@/lib/orders/visibility';
@@ -713,7 +715,14 @@ export default function OrdersPage() {
                         {order.customer_name}
                       </p>
                       <div className="flex gap-2 items-center text-[10px] text-surface-500 mt-1">
-                        <span>{order.delivery_type === 'delivery' ? '🚗 Delivery' : '🏪 Pickup'}</span>
+                        <span className="inline-flex items-center gap-1">
+                          {order.delivery_type === 'delivery' ? (
+                            <Bike className="w-3 h-3" />
+                          ) : (
+                            <Store className="w-3 h-3" />
+                          )}
+                          {order.delivery_type === 'delivery' ? 'Delivery' : 'Pickup'}
+                        </span>
                         <span>·</span>
                         <span>{order.payment_method === 'cash_on_delivery' ? 'COD' : order.payment_method === 'momo' ? 'MoMo' : 'Card'}</span>
                       </div>
@@ -877,8 +886,13 @@ export default function OrdersPage() {
                     <h4 className="text-xs font-bold text-surface-400 uppercase tracking-wider">
                       Delivery Details
                     </h4>
-                    <p className="text-sm font-medium text-surface-800">
-                      {selectedOrder.delivery_type === 'delivery' ? '🚗 Home Delivery' : '🏪 Self Pickup'}
+                    <p className="text-sm font-medium text-surface-800 inline-flex items-center gap-1.5">
+                      {selectedOrder.delivery_type === 'delivery' ? (
+                        <Bike className="w-4 h-4 text-surface-400" />
+                      ) : (
+                        <Store className="w-4 h-4 text-surface-400" />
+                      )}
+                      {selectedOrder.delivery_type === 'delivery' ? 'Home Delivery' : 'Self Pickup'}
                     </p>
                     {selectedOrder.delivery_type === 'delivery' && (
                       <>

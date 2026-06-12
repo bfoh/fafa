@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Loader2, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -158,14 +159,14 @@ export default function RegisterPage() {
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
+              <Loader2 className="w-5 h-5 animate-spin" />
               Creating your account...
             </span>
           ) : (
-            'Create my restaurant →'
+            <span className="flex items-center justify-center gap-1.5">
+              Create my restaurant
+              <ArrowRight className="w-4 h-4" />
+            </span>
           )}
         </button>
       </form>

@@ -187,7 +187,7 @@ export default function ForRestaurantsPage() {
       setCart([]);
       setIsProcessingPay(false);
       playNativeChime();
-      setSuccessMsg('🔔 Order Sent! Check Live Orders board below.');
+      setSuccessMsg('Order sent! Check the Live Orders board below.');
       setTimeout(() => setSuccessMsg(''), 5000);
     }, 1200);
   };
@@ -208,7 +208,7 @@ export default function ForRestaurantsPage() {
       setOrders((prev) => [newOrder, ...prev]);
       setIsProcessingPay(false);
       playNativeChime();
-      setSuccessMsg('🔔 Order Sent! Check Live Orders board below.');
+      setSuccessMsg('Order sent! Check the Live Orders board below.');
       setTimeout(() => setSuccessMsg(''), 5000);
     }, 1200);
   };
@@ -292,9 +292,9 @@ export default function ForRestaurantsPage() {
             </a>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-6 text-[10px] sm:text-xs text-surface-500 font-semibold tracking-wider uppercase">
-            <span>✓ No Setup Fees</span>
-            <span>✓ 2-Min Onboarding</span>
-            <span>✓ Auto-SMS Alerts</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle className="w-3 h-3 text-success-500" /> No Setup Fees</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle className="w-3 h-3 text-success-500" /> 2-Min Onboarding</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle className="w-3 h-3 text-success-500" /> Auto-SMS Alerts</span>
           </div>
         </div>
       </header>
@@ -846,7 +846,8 @@ export default function ForRestaurantsPage() {
                         )}
                         {order.status === 'delivered' && (
                           <span className="text-[10px] text-success-500 font-extrabold flex items-center gap-1">
-                            ✓ Out for Delivery / Settled
+                            <CheckCircle className="w-3 h-3" />
+                            Out for Delivery / Settled
                           </span>
                         )}
                       </div>

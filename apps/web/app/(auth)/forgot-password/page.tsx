@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { MailCheck, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="text-center animate-fade-in">
         <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-400/25 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-3xl">📧</span>
+          <MailCheck className="w-8 h-8 text-emerald-400" />
         </div>
         <h2 className="text-2xl font-extrabold text-white">Check your email</h2>
         <p className="text-white/55 mt-2">
@@ -67,10 +68,11 @@ export default function ForgotPasswordPage() {
         </p>
         <Link
           href="/login"
-          className="inline-block mt-6 text-sm font-semibold transition-colors hover:opacity-80"
+          className="inline-flex items-center gap-1.5 mt-6 text-sm font-semibold transition-colors hover:opacity-80"
           style={{ color: primaryColor }}
         >
-          ← Back to sign in
+          <ArrowLeft className="w-4 h-4" />
+          Back to sign in
         </Link>
       </div>
     );

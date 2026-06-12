@@ -6,7 +6,7 @@ import { saveCustomer, loadCustomer, saveLastOrder } from '@fafa/storefront';
 import { formatGHS } from '@fafa/storefront';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CartProvider } from '@fafa/storefront';
-import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Banknote, Loader2, Bike, Store, MapPin, Check, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@fafa/storefront';
 import { GHANA_CITIES } from '../../../web/lib/delivery/ghana-areas';
@@ -253,10 +253,11 @@ function CheckoutContent({ slug }: { slug: string }) {
         <p className="text-surface-400">Your cart is empty</p>
         <Link
           href={`/store/?slug=${slug}`}
-          className="inline-block mt-4 text-sm font-semibold hover:underline"
+          className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold hover:underline"
           style={{ color: primaryColor }}
         >
-          ← Back to menu
+          <ArrowLeft className="w-4 h-4" />
+          Back to menu
         </Link>
       </div>
     );
@@ -476,7 +477,8 @@ function CheckoutContent({ slug }: { slug: string }) {
                     color: deliveryType === 'delivery' ? primaryColor : 'var(--surface-600)',
                   }}
                 >
-                  🚗 Delivery
+                  <Bike className="w-4 h-4" />
+                  Delivery
                 </button>
               )}
               {(!tenant || tenant.accepts_pickup) && (
@@ -490,7 +492,8 @@ function CheckoutContent({ slug }: { slug: string }) {
                     color: deliveryType === 'pickup' ? primaryColor : 'var(--surface-600)',
                   }}
                 >
-                  🏪 Pickup
+                  <Store className="w-4 h-4" />
+                  Pickup
                 </button>
               )}
             </div>
@@ -548,10 +551,11 @@ function CheckoutContent({ slug }: { slug: string }) {
                       <button
                         type="button"
                         onClick={useMyLocation}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border border-surface-200 hover:bg-surface-50 transition-colors"
                         style={{ color: primaryColor }}
                       >
-                        📍 Use my location
+                        <MapPin className="w-3.5 h-3.5" />
+                        Use my location
                       </button>
                     </div>
                     {geoError && <p className="text-xs text-warning-700">{geoError}</p>}
@@ -572,7 +576,10 @@ function CheckoutContent({ slug }: { slug: string }) {
                       </button>
                     )}
                     {customerPin && (
-                      <p className="text-xs text-success-600">✓ Using your exact location for a precise fee.</p>
+                      <p className="inline-flex items-center gap-1 text-xs text-success-600">
+                        <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
+                        Using your exact location for a precise fee.
+                      </p>
                     )}
                   </div>
                 )}
@@ -697,8 +704,9 @@ function CheckoutContent({ slug }: { slug: string }) {
 
           {/* Limit warning */}
           {belowMinLimit && tenant && (
-            <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in">
-              ⚠️ Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
+            <div className="p-3 rounded-xl bg-warning-500/10 text-warning-700 text-xs text-center font-medium animate-fade-in inline-flex w-full items-center justify-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              Minimum order amount of {formatGHS(tenant.min_order_amount)} is required by this restaurant. Please add more items to checkout.
             </div>
           )}
 

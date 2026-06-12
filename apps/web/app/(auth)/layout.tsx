@@ -1,28 +1,22 @@
 import { cookies, headers } from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bricolage_Grotesque } from 'next/font/google';
+import { ClipboardList, CreditCard, Package, ArrowLeft } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
-
-const display = Bricolage_Grotesque({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
-  variable: '--font-display',
-});
 
 const FEATURES = [
   {
-    icon: '📋',
+    icon: ClipboardList,
     title: 'Share your menu',
     body: 'Customers scan your QR or tap your link',
   },
   {
-    icon: '💳',
+    icon: CreditCard,
     title: 'Accept payments',
     body: 'Mobile Money, Card, or Cash on Delivery',
   },
   {
-    icon: '📦',
+    icon: Package,
     title: 'Manage orders',
     body: 'Real-time dashboard with instant alerts',
   },
@@ -64,7 +58,7 @@ export default async function AuthLayout({
 
   return (
     <div
-      className={`${display.variable} relative min-h-[100dvh] flex text-white`}
+      className="relative min-h-[100dvh] flex text-white"
       style={{
         backgroundColor: '#0b0910',
         backgroundImage: [
@@ -148,8 +142,8 @@ export default async function AuthLayout({
                 key={f.title}
                 className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.05] backdrop-blur-xl px-4 py-3.5"
               >
-                <div className="w-11 h-11 rounded-xl grid place-items-center text-xl bg-white/8 border border-white/10">
-                  {f.icon}
+                <div className="w-11 h-11 rounded-xl grid place-items-center bg-white/8 border border-white/10">
+                  <f.icon className="w-5 h-5 text-brand-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">{f.title}</h3>
@@ -179,7 +173,8 @@ export default async function AuthLayout({
             href="/"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-white/55 hover:text-white transition-colors"
           >
-            <span aria-hidden>←</span> Back to marketplace
+            <ArrowLeft className="w-4 h-4" aria-hidden />
+            Back to marketplace
           </Link>
         </div>
         <div className="flex-1 flex items-center justify-center py-5">

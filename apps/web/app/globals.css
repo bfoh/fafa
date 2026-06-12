@@ -44,6 +44,9 @@
   /* ─── Typography ────────────────────────────────────────── */
   --font-sans: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
+  /* --font-display is injected by next/font (Bricolage Grotesque) in the
+     root layout; the fallback keeps headings sane if it ever fails. */
+  --font-display-stack: var(--font-display, var(--font-sans));
 
   /* ─── Shadows ───────────────────────────────────────────── */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -225,6 +228,18 @@ label {
 
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Display typography — headings, prices, brand moments. */
+.font-display {
+  font-family: var(--font-display-stack);
+  letter-spacing: -0.01em;
+}
+
+/* Staggered list entrance — set --stagger-i per item (capped ~12 for long lists). */
+.stagger-item {
+  animation: fadeIn 0.35s ease-out both;
+  animation-delay: calc(min(var(--stagger-i, 0), 12) * 35ms);
 }
 
 /* ─── Redesign helpers ────────────────────────────────────── */

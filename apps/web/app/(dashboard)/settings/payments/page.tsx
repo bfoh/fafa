@@ -200,8 +200,9 @@ export default function PayoutSettingsPage() {
             </div>
 
             {linkedAccount.note && (
-              <p className="text-[11px] text-surface-500 border-t border-surface-100 pt-3">
-                ⚠️ {linkedAccount.note}
+              <p className="inline-flex items-start gap-1 text-[11px] text-surface-500 border-t border-surface-100 pt-3">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px text-warning-600" />
+                {linkedAccount.note}
               </p>
             )}
           </div>

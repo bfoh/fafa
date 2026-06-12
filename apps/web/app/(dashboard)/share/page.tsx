@@ -312,8 +312,8 @@ export default function SharePage() {
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-md font-bold uppercase" style={{ color: '#FF6B35' }}>
-            📱 Order · 💳 Pay · 🚗 Get Delivered
+          <p className="text-md font-bold uppercase tracking-wider" style={{ color: '#FF6B35' }}>
+            Order · Pay · Get Delivered
           </p>
           <p className="text-xs text-surface-400 italic">
             Supports Card & Mobile Money payments (MTN MoMo, Vodafone, AirtelTigo)

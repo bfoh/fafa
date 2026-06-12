@@ -12,7 +12,7 @@ import { loadSetupStatus, type SetupStatus } from '@/lib/onboarding/setup-status
 import { CUISINES } from '@/lib/marketplace/cuisines';
 import { CITY_COORDS } from '@/lib/marketplace/geo';
 import { Button } from '@/components/ui/button';
-import { Loader2, Check, ArrowRight, UtensilsCrossed, CreditCard, Palette, MapPin, Copy } from 'lucide-react';
+import { Loader2, Check, ArrowRight, UtensilsCrossed, CreditCard, Palette, MapPin, Copy, PartyPopper } from 'lucide-react';
 
 const LocationPicker = dynamic(() => import('@/components/onboarding/location-picker'), { ssr: false });
 
@@ -140,7 +140,10 @@ export default function WelcomeWizardPage() {
             <div className="flex items-center gap-2"><UtensilsCrossed className="w-5 h-5 text-brand-500" /><h2 className="font-bold text-surface-900">Add your first dish</h2></div>
             <p className="text-sm text-surface-500">Start with a ready-made Ghanaian menu, or build your own.</p>
             <Button onClick={handleSampleSeed} loading={busy} className="w-full">Add a sample menu for me</Button>
-            <Link href="/menu" className="block text-center text-sm font-semibold text-brand-600">Or build my own menu →</Link>
+            <Link href="/menu" className="flex items-center justify-center gap-1 text-center text-sm font-semibold text-brand-600">
+              Or build my own menu
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
             {status.menuDone && <p className="text-sm text-success-600 flex items-center gap-1"><Check className="w-4 h-4" /> Menu added</p>}
           </div>
         )}
@@ -195,7 +198,9 @@ export default function WelcomeWizardPage() {
 
         {current.key === 'live' && (
           <div className="space-y-4 text-center">
-            <div className="text-4xl">🎉</div>
+            <div className="w-14 h-14 mx-auto rounded-full bg-brand-500/10 flex items-center justify-center">
+              <PartyPopper className="w-7 h-7 text-brand-500" />
+            </div>
             <h2 className="font-bold text-surface-900">You&apos;re ready!</h2>
             <p className="text-sm text-surface-500">Share your store link and start taking orders.</p>
             <Button onClick={handleCopy} className="w-full">{copied ? 'Copied!' : 'Copy store link'} {!copied && <Copy className="w-4 h-4" />}</Button>

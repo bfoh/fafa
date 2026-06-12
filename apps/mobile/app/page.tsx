@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Star, MapPin, Compass, Clock, Sparkles } from 'lucide-react';
+import { Search, Star, MapPin, Compass, Clock, Sparkles, ArrowRight, Bike } from 'lucide-react';
 import { AdepaWidget } from '@fafa/storefront';
 import { Geolocation } from '@capacitor/geolocation';
 
@@ -155,13 +155,17 @@ export default function MobileMarketplaceHome() {
               href="/for-restaurants"
               className="px-3 py-1.5 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-[10px] shadow-[0_4px_12px_-4px_rgba(255,107,53,0.6)] hover:brightness-110 transition-all whitespace-nowrap"
             >
-              List kitchen ▸
+              <span className="inline-flex items-center gap-0.5">
+                List kitchen
+                <ArrowRight className="w-3 h-3" />
+              </span>
             </Link>
             <Link
               href="/rider"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-[10px] font-semibold text-white/85 whitespace-nowrap"
             >
-              🏍️ Rider Portal
+              <Bike className="w-3 h-3" />
+              Rider Portal
             </Link>
           </div>
         </header>
@@ -300,7 +304,7 @@ export default function MobileMarketplaceHome() {
           ) : (
             // Real kitchens list
             <div className="space-y-5">
-              {kitchens.map((k) => {
+              {kitchens.map((k, kitchenIdx) => {
                 const dishes = k.items ?? [];
                 const heroImg = k.cover_image_url || dishes.find((d) => d.image_url)?.image_url || null;
                 const tags = k.cuisines.slice(0, 2);
@@ -309,7 +313,8 @@ export default function MobileMarketplaceHome() {
                   <Link
                     href={`/store/?slug=${k.slug}`}
                     key={k.id}
-                    className="group flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl transition-all duration-300 hover:border-brand-400/30 hover:bg-white/[0.07] active:scale-[0.99]"
+                    style={{ '--stagger-i': kitchenIdx } as React.CSSProperties}
+                    className="group flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl transition-all duration-300 hover:border-brand-400/30 hover:bg-white/[0.07] active:scale-[0.99] stagger-item"
                   >
                     {/* Cover Photo */}
                     <div className="relative h-40 w-full">

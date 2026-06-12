@@ -857,8 +857,8 @@ export default function MenuPage() {
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-20 bg-white border border-surface-100 rounded-2xl shadow-sm">
-              <div className="w-16 h-16 bg-surface-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
-                🍽️
+              <div className="w-16 h-16 bg-surface-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <UtensilsCrossed className="w-7 h-7 text-surface-400" />
               </div>
               <p className="text-surface-500 font-medium">No dishes found</p>
               <p className="text-sm text-surface-400 mt-1">
@@ -893,8 +893,8 @@ export default function MenuPage() {
                         className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-xl bg-brand-500/5 flex items-center justify-center text-3xl flex-shrink-0">
-                        🍽️
+                      <div className="w-20 h-20 rounded-xl bg-brand-500/5 flex items-center justify-center flex-shrink-0">
+                        <UtensilsCrossed className="w-7 h-7 text-brand-300" />
                       </div>
                     )}
 

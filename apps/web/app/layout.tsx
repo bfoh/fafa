@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { SwRegister } from '@/components/ui/sw-register';
 import { InstallPrompt } from '@/components/ui/install-prompt';
@@ -8,6 +8,16 @@ import { NativeBridge } from '@/components/native-bridge';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
+});
+
+// Display face for headings, prices and brand moments. Loaded once here so
+// every route (storefront, checkout, tracker) resolves var(--font-display)
+// instead of silently falling back to the body font.
+const display = Bricolage_Grotesque({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
   display: 'swap',
 });
 
@@ -64,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${display.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         {children}
         <NativeBridge />

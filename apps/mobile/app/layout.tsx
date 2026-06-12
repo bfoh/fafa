@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { NativeBridge } from './native-bridge';
@@ -7,6 +7,15 @@ import { NativeBridge } from './native-bridge';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
+});
+
+// Same display face as the web app so cross-aliased components (which use
+// var(--font-display)) render identically inside the native shell.
+const display = Bricolage_Grotesque({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
   display: 'swap',
 });
 
@@ -31,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} pt-safe pb-safe bg-canvas`}>
+      <body className={`${inter.variable} ${display.variable} pt-safe pb-safe bg-canvas`}>
         <Providers>
           <NativeBridge />
           {children}

@@ -19,6 +19,7 @@ import {
   Copy,
   X,
   CheckCircle2,
+  ArrowRight,
 } from 'lucide-react';
 
 interface SetupChecklistProps {
@@ -105,7 +106,7 @@ export default function SetupChecklist({
           </div>
           <div className="min-w-0">
             <h2 className="text-base font-bold text-surface-900">
-              🎉 Your store is live!
+              Your store is live!
             </h2>
             <p className="text-sm text-surface-500 mt-0.5">
               Share your link and start taking orders.
@@ -186,7 +187,8 @@ export default function SetupChecklist({
           href="/welcome"
           className="inline-flex items-center gap-1 mt-3 text-xs font-semibold text-brand-600 hover:text-brand-700"
         >
-          Resume guided setup →
+          Resume guided setup
+          <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
