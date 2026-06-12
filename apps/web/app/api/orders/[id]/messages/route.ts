@@ -119,10 +119,18 @@ export async function POST(
 
     if (error || !message) throw error || new Error('Failed to send message');
 
+    // Realtime: broadcast on the per-order channel so the other party's open
+    // thread updates instantly. Topic is the unguessable order UUID — the same
+    // trust model as the tracker URL. Polling remains the fallback.
+    admin
+      .channel(`order-${id}`)
+      .send({ type: 'broadcast', event: 'message', payload: { message } })
+      .catch((e) => console.error('Message broadcast failed:', e));
+
     // Notify the other party (throttled, in background).
     const { data: tenant } = await admin
       .from('tenants')
-      .select('id, name, phone, whatsapp, primary_color, notify_sms, notify_email, notify_whatsapp')
+      .select('id, slug, name, phone, whatsapp, primary_color, notify_sms, notify_email, notify_whatsapp')
       .eq('id', order.tenant_id)
       .single();
 

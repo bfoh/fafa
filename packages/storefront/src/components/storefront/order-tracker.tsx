@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { createBrowserClient } from '../../lib/supabase/client';
 import { formatGHS } from '../../lib/utils/currency';
 import { waLink } from '../../lib/utils/whatsapp';
 import { CheckCircle, Clock, Phone, Send, MessageCircle, Loader2, Star } from 'lucide-react';
@@ -105,6 +106,8 @@ export function OrderTracker({
   const [order, setOrder] = useState<TrackedOrder>(initialOrder);
   const [history, setHistory] = useState<HistoryEntry[]>(initialHistory);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Bumped by a realtime status broadcast → immediate order refetch.
+  const [statusTick, setStatusTick] = useState(0);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -140,6 +143,8 @@ export function OrderTracker({
       }
     }
 
+    // A status broadcast re-runs this effect (statusTick) — fetch right away.
+    if (statusTick > 0) poll();
     const interval = setInterval(poll, 8000);
     const onVisible = () => {
       if (document.visibilityState === 'visible') poll();
@@ -150,7 +155,26 @@ export function OrderTracker({
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [order.id, order.status]);
+  }, [order.id, order.status, statusTick]);
+
+  // Realtime: per-order broadcast channel pushes new chat messages and status
+  // pokes instantly; the polling above stays as the fallback transport.
+  useEffect(() => {
+    const supabase = createBrowserClient();
+    const channel = supabase
+      .channel(`order-${order.id}`)
+      .on('broadcast', { event: 'message' }, ({ payload }) => {
+        const msg = payload?.message as ChatMessage | undefined;
+        if (msg?.id) {
+          setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+        }
+      })
+      .on('broadcast', { event: 'status' }, () => setStatusTick((t) => t + 1))
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order.id]);
 
   // Live chat polling.
   useEffect(() => {
@@ -203,7 +227,13 @@ export function OrderTracker({
       });
       if (res.ok) {
         const data = await res.json();
-        setMessages((m) => m.map((x) => (x.id === optimistic.id ? (data.message as ChatMessage) : x)));
+        const real = data.message as ChatMessage;
+        // The realtime broadcast of our own message can land before this
+        // response — swap the optimistic bubble without duplicating.
+        setMessages((m) => {
+          const rest = m.filter((x) => x.id !== optimistic.id);
+          return rest.some((x) => x.id === real.id) ? rest : [...rest, real];
+        });
       } else {
         setMessages((m) => m.filter((x) => x.id !== optimistic.id));
         setDraft(text);
@@ -603,9 +633,12 @@ export function OrderTracker({
         </div>
       )}
 
-      <div className="mt-4 text-center">
-        <Link href={`/${slug}`} className="text-sm text-surface-400 hover:text-surface-600 transition-colors">
+      <div className="mt-4 text-center space-y-2">
+        <Link href={`/${slug}`} className="block text-sm text-surface-400 hover:text-surface-600 transition-colors">
           ← Order more from {tenant.name}
+        </Link>
+        <Link href="/" className="block text-sm font-semibold transition-colors" style={{ color: accent }}>
+          Browse more restaurants on Didi
         </Link>
       </div>
     </div>

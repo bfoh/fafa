@@ -403,7 +403,12 @@ export default function OrdersPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setMessages((m) => m.map((x) => (x.id === optimistic.id ? (data.message as ChatMessage) : x)));
+        const real = data.message as ChatMessage;
+        // Our own broadcast can arrive before this response — dedupe.
+        setMessages((m) => {
+          const rest = m.filter((x) => x.id !== optimistic.id);
+          return rest.some((x) => x.id === real.id) ? rest : [...rest, real];
+        });
       } else {
         setMessages((m) => m.filter((x) => x.id !== optimistic.id));
         setMsgDraft(text);
@@ -437,6 +442,25 @@ export default function OrdersPage() {
       setReplySending(false);
     }
   }
+
+  // Realtime: the messages API broadcasts each new message on a per-order
+  // channel — the open thread updates instantly; polling below is the fallback.
+  useEffect(() => {
+    if (!selectedOrder) return;
+    const channel = supabase
+      .channel(`order-${selectedOrder.id}`)
+      .on('broadcast', { event: 'message' }, ({ payload }) => {
+        const msg = payload?.message as ChatMessage | undefined;
+        if (msg?.id) {
+          setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+        }
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOrder?.id]);
 
   // Poll the selected order's chat thread.
   useEffect(() => {

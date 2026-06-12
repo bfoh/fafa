@@ -156,6 +156,13 @@ export async function PATCH(
       throw updateErr || new Error('Failed to update order');
     }
 
+    // Realtime: poke the customer's open tracker so it refreshes immediately
+    // instead of waiting for the next poll tick.
+    supabase
+      .channel(`order-${id}`)
+      .send({ type: 'broadcast', event: 'status', payload: { status } })
+      .catch((e) => console.error('Status broadcast failed:', e));
+
     // 5. If transitioning to delivered and cash on delivery, create manual payment record
     if (status === 'delivered' && order.payment_method === 'cash_on_delivery') {
       // Check if payment already exists

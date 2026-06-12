@@ -8,6 +8,7 @@ import { sendSMS } from '@/lib/arkesel/client';
 import { sendEmail } from '@/lib/brevio/client';
 import { sendWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/client';
 import { sendOrderPush } from '@/lib/notifications/push';
+import { sendPush, isPushConfigured } from '@/lib/push/fcm';
 import { updateLiveActivity } from '@/lib/live-activity/update';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatGHS } from '@/lib/utils/currency';
@@ -268,7 +269,7 @@ export async function sendOrderMessageNotification(params: {
     customer_email?: string | null;
     tenant_id: string;
   };
-  tenant: { id: string; name: string; phone: string; whatsapp?: string | null; primary_color?: string; notify_sms?: boolean; notify_email?: boolean; notify_whatsapp?: boolean };
+  tenant: { id: string; slug?: string; name: string; phone: string; whatsapp?: string | null; primary_color?: string; notify_sms?: boolean; notify_email?: boolean; notify_whatsapp?: boolean };
   direction: 'to_customer' | 'to_restaurant';
   preview: string;
 }) {
@@ -276,7 +277,39 @@ export async function sendOrderMessageNotification(params: {
   const supabase = createAdminClient();
   const template = direction === 'to_customer' ? 'order_message_to_customer' : 'order_message_to_restaurant';
 
-  // Throttle: one notification per direction per order every 2 minutes.
+  const short = preview.length > 90 ? `${preview.slice(0, 87)}…` : preview;
+
+  // Device push for every message (free, chat-app feel, wakes the lock
+  // screen). Tapping deep-links to the tracker thread. Recipient is whoever
+  // registered the device with the matching phone — including a restaurant
+  // owner using the app.
+  if (isPushConfigured()) {
+    const recipientPhone = direction === 'to_customer' ? order.customer_phone : tenant.phone;
+    if (recipientPhone) {
+      try {
+        const { data: rows } = await supabase
+          .from('device_tokens')
+          .select('token')
+          .eq('customer_phone', recipientPhone);
+        const tokens = (rows || []).map((r) => r.token as string);
+        if (tokens.length > 0) {
+          await sendPush(tokens, {
+            title:
+              direction === 'to_customer'
+                ? tenant.name
+                : `${order.customer_name} — order #${order.order_number}`,
+            body: short,
+            data: tenant.slug ? { orderId: order.id, slug: tenant.slug } : { orderId: order.id },
+          });
+        }
+      } catch (err) {
+        console.error('[push] message push failed:', err);
+      }
+    }
+  }
+
+  // Throttle SMS/WhatsApp/email (paid channels): one per direction per order
+  // every 2 minutes. The in-app thread and push above are not throttled.
   const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
   const { count } = await supabase
     .from('notification_log')
@@ -287,7 +320,6 @@ export async function sendOrderMessageNotification(params: {
 
   if ((count ?? 0) > 0) return;
 
-  const short = preview.length > 90 ? `${preview.slice(0, 87)}…` : preview;
   const waOn = Boolean(tenant.notify_whatsapp) && isWhatsAppConfigured();
 
   if (direction === 'to_restaurant') {
