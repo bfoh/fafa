@@ -42,7 +42,9 @@
   --color-info-600: #2563EB;
 
   /* ─── Typography ────────────────────────────────────────── */
-  --font-sans: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+  /* --font-jakarta is injected by next/font (Plus Jakarta Sans) in the
+     root layouts; hashed family names mean we must go through the var. */
+  --font-sans: var(--font-jakarta, 'Plus Jakarta Sans'), system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
   /* --font-display is injected by next/font (Bricolage Grotesque) in the
      root layout; the fallback keeps headings sane if it ever fails. */
@@ -99,6 +101,19 @@ a,
 [role='button'],
 label {
   touch-action: manipulation;
+}
+
+/* Keyboard navigation: visible ring on focus-visible only (no mouse rings). */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Text selection in brand tint. */
+::selection {
+  background: var(--color-brand-100);
+  color: var(--color-brand-900);
 }
 
 /* ─── Mobile input zoom fix ───────────────────────────────────

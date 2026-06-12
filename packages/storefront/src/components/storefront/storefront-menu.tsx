@@ -480,6 +480,13 @@ function CartDrawer({
 
         {/* Items */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin overscroll-contain-y">
+          {items.length === 0 && (
+            <div className="py-12 text-center">
+              <ShoppingBag className="w-8 h-8 text-surface-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-surface-600">Your order is empty</p>
+              <p className="text-xs text-surface-400 mt-0.5">Add something tasty from the menu.</p>
+            </div>
+          )}
           {items.map((item) => {
             const optionsTotal = item.options.reduce(
               (s, o) => s + o.priceModifier,
@@ -562,10 +569,11 @@ function CartDrawer({
         </div>
 
         {/* Footer */}
+        {items.length > 0 && (
         <div className="border-t border-surface-100 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-surface-500 text-sm">Subtotal</span>
-            <span className="font-bold text-surface-900">
+            <span className="font-bold text-surface-900 tabular-nums">
               {formatGHS(subtotal)}
             </span>
           </div>
@@ -605,6 +613,7 @@ function CartDrawer({
             Clear cart
           </button>
         </div>
+        )}
       </div>
     </>
   );

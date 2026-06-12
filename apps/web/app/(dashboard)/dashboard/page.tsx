@@ -250,15 +250,18 @@ export default async function DashboardPage() {
               key={stat.label}
               className="bg-white rounded-2xl p-5 border border-hairline shadow-card lift"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl ${stat.bg}`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-bold text-surface-400 uppercase tracking-wider truncate">
+                  {stat.label}
+                </p>
+                <Icon className={`w-4 h-4 shrink-0 ${stat.color}`} />
               </div>
-              <p className="text-2xl font-bold text-surface-900">
+              <p
+                className="text-[28px] leading-tight font-bold text-surface-900 mt-2 tabular-nums"
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
                 {stat.value}
               </p>
-              <p className="text-sm text-surface-500 mt-1">{stat.label}</p>
             </div>
           );
         })}

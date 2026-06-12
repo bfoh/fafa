@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Bricolage_Grotesque } from 'next/font/google';
+import { Plus_Jakarta_Sans, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { SwRegister } from '@/components/ui/sw-register';
 import { InstallPrompt } from '@/components/ui/install-prompt';
 import { NativeBridge } from '@/components/native-bridge';
 
-const inter = Inter({
-  variable: '--font-inter',
+// Warm humanist body face. Exposed as --font-jakarta and consumed by the
+// --font-sans token in globals.css (next/font family names are hashed, so
+// the token must reference the variable, not a literal family name).
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
   subsets: ['latin'],
   display: 'swap',
 });
@@ -74,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable} h-full`}>
+    <html lang="en" className={`${jakarta.variable} ${display.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         {children}
         <NativeBridge />

@@ -169,10 +169,7 @@ export default async function HomePage({
           >
             What do you want
             <br />
-            to{' '}
-            <span className="bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
-              eat?
-            </span>
+            to <span className="text-brand-500">eat?</span>
           </h1>
           <p className="text-sm sm:text-base text-surface-500 mt-3 sm:mt-4 mb-7 sm:mb-8 max-w-md mx-auto">
             Order from the best local kitchens near you — pay with Mobile Money

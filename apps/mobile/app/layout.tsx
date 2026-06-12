@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Bricolage_Grotesque } from 'next/font/google';
+import { Plus_Jakarta_Sans, Bricolage_Grotesque } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { NativeBridge } from './native-bridge';
 
-const inter = Inter({
-  variable: '--font-inter',
+// Same body face as the web app (see apps/web/app/layout.tsx).
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
   subsets: ['latin'],
   display: 'swap',
 });
@@ -40,7 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${display.variable} pt-safe pb-safe bg-canvas`}>
+      <body className={`${jakarta.variable} ${display.variable} pt-safe pb-safe bg-canvas`}>
         <Providers>
           <NativeBridge />
           {children}

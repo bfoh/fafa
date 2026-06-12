@@ -168,7 +168,7 @@ export default function MobileMarketplaceHome() {
           >
             What do you want
             <br />
-            to <span className="bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">eat?</span>
+            to <span className="text-brand-500">eat?</span>
           </h1>
           <p className="text-xs text-surface-500 mt-1.5">
             Order from local kitchens near you — pay with MoMo or card.
