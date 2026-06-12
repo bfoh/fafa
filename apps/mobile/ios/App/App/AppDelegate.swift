@@ -106,4 +106,9 @@ class NotificationLaunchViewController: CAPBridgeViewController {
         }
         return descriptor
     }
+
+    override func capacitorDidLoad() {
+        // App-local plugins aren't auto-discovered in Capacitor 6 — register here.
+        bridge?.registerPluginInstance(LiveActivityPlugin())
+    }
 }

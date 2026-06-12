@@ -6,8 +6,17 @@ import ActivityKit
 
 /// Starts/ends the order-tracking Live Activity. Updates after start come
 /// exclusively from backend APNs pushes (apns-push-type: liveactivity).
+/// Registered manually in NotificationLaunchViewController.capacitorDidLoad()
+/// — Capacitor 6 does not auto-discover app-local plugins.
 @objc(LiveActivityPlugin)
-public class LiveActivityPlugin: CAPPlugin {
+public class LiveActivityPlugin: CAPInstancePlugin, CAPBridgedPlugin {
+    public let identifier = "LiveActivityPlugin"
+    public let jsName = "LiveActivity"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "end", returnType: CAPPluginReturnPromise),
+    ]
 
     @objc func isAvailable(_ call: CAPPluginCall) {
         if #available(iOS 16.2, *) {

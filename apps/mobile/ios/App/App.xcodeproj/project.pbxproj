@@ -18,7 +18,6 @@
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* GoogleService-Info.plist */; };
 		DD1A000000000000000000B1 /* OrderActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F1 /* OrderActivityAttributes.swift */; };
 		DD1A000000000000000000B2 /* LiveActivityPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F2 /* LiveActivityPlugin.swift */; };
-		DD1A000000000000000000B3 /* LiveActivityPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F3 /* LiveActivityPlugin.m */; };
 		DD1A000000000000000000B4 /* OrderActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F1 /* OrderActivityAttributes.swift */; };
 		DD1A000000000000000000B5 /* DidiWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F5 /* DidiWidgetsBundle.swift */; };
 		DD1A000000000000000000B6 /* OrderLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1A000000000000000000F6 /* OrderLiveActivity.swift */; };
@@ -41,7 +40,6 @@
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 		DD1A000000000000000000F1 /* OrderActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderActivityAttributes.swift; sourceTree = "<group>"; };
 		DD1A000000000000000000F2 /* LiveActivityPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityPlugin.swift; sourceTree = "<group>"; };
-		DD1A000000000000000000F3 /* LiveActivityPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LiveActivityPlugin.m; sourceTree = "<group>"; };
 		DD1A000000000000000000F5 /* DidiWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DidiWidgetsBundle.swift; sourceTree = "<group>"; };
 		DD1A000000000000000000F6 /* OrderLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderLiveActivity.swift; sourceTree = "<group>"; };
 		DD1A000000000000000000F7 /* DidiWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DidiWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -112,7 +110,6 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				DD1A000000000000000000F1 /* OrderActivityAttributes.swift */,
 				DD1A000000000000000000F2 /* LiveActivityPlugin.swift */,
-				DD1A000000000000000000F3 /* LiveActivityPlugin.m */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -327,7 +324,6 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				DD1A000000000000000000B1 /* OrderActivityAttributes.swift in Sources */,
 				DD1A000000000000000000B2 /* LiveActivityPlugin.swift in Sources */,
-				DD1A000000000000000000B3 /* LiveActivityPlugin.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
