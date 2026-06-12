@@ -42,9 +42,6 @@ export function LiveActivityBridge({
   status: string;
 }) {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
-    if (TERMINAL.includes(status)) return;
-
     // Failures surface server-side ([live-activity] in Vercel logs): release
     // WebViews aren't inspectable, so this is the only window into the device.
     const report = (debug: string) =>
@@ -53,6 +50,16 @@ export function LiveActivityBridge({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, debug }),
       }).catch(() => {});
+
+    // Debug: report every native mount so the platform gate itself is visible.
+    if ((window as unknown as { Capacitor?: unknown }).Capacitor) {
+      void report(
+        `mount native=${Capacitor.isNativePlatform()} platform=${Capacitor.getPlatform()} status=${status}`
+      );
+    }
+
+    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
+    if (TERMINAL.includes(status)) return;
 
     (async () => {
       try {
