@@ -145,6 +145,7 @@ export type NotificationStatus = 'sent' | 'failed' | 'delivered';
 export type NotificationEvent =
   | 'order_placed'
   | 'order_confirmed'
+  | 'order_preparing'
   | 'order_ready'
   | 'order_out_for_delivery'
   | 'order_delivered'

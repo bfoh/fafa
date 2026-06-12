@@ -206,6 +206,7 @@ export async function PATCH(
     if (tenant) {
       let eventType = null;
       if (status === 'confirmed') eventType = 'order_confirmed';
+      else if (status === 'preparing') eventType = 'order_preparing';
       else if (status === 'ready') eventType = 'order_ready';
       else if (status === 'out_for_delivery') eventType = 'order_out_for_delivery';
       else if (status === 'delivered') eventType = 'order_delivered';

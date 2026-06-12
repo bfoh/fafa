@@ -11,6 +11,8 @@ function pushBody(event: NotificationEvent, tenantName: string): string | null {
       return 'Payment confirmed. Your order is being prepared.';
     case 'order_confirmed':
       return `${tenantName} confirmed your order.`;
+    case 'order_preparing':
+      return 'Your food is being prepared. 🍳';
     case 'order_ready':
       return 'Your order is ready!';
     case 'order_out_for_delivery':
