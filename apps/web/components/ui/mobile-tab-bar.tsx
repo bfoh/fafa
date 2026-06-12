@@ -26,14 +26,14 @@ export function MobileTabBar({
   accent?: string;
 }) {
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-black/70 backdrop-blur-2xl border-t border-white/10 pb-safe">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/90 backdrop-blur-2xl border-t border-hairline pb-safe">
       <div
         className="grid h-16"
         style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const color = tab.active ? accent : 'rgba(255,255,255,0.55)';
+          const color = tab.active ? accent : 'var(--color-surface-400)';
           const inner = (
             <span className="relative flex flex-col items-center justify-center gap-1 h-full transition-transform active:scale-90">
               <span className="relative">

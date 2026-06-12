@@ -375,9 +375,10 @@ function MenuContent({
                     <button
                       onClick={() => handleAddItem(item)}
                       aria-label={item.is_chop_bar ? `Customize ${item.name}` : `Add ${item.name}`}
-                      className="absolute -bottom-2 -right-2 h-9 w-9 rounded-full bg-white shadow-lg ring-1 ring-black/5 grid place-items-center active:scale-90 transition-transform cursor-pointer"
+                      className="tap-target absolute bottom-1.5 right-1.5 h-10 w-10 rounded-full text-white shadow-[0_4px_14px_-2px_rgba(0,0,0,0.4)] ring-2 ring-white grid place-items-center active:scale-90 transition-transform cursor-pointer"
+                      style={{ background: tenant.primary_color }}
                     >
-                      <Plus className="h-5 w-5" strokeWidth={2.75} style={{ color: tenant.primary_color }} />
+                      <Plus className="h-5 w-5" strokeWidth={3} />
                     </button>
                   </div>
                 </div>

@@ -112,28 +112,18 @@ export default async function HomePage({
 
   return (
     <div
-      className="relative min-h-[100dvh] text-white antialiased overflow-x-hidden"
+      className="relative min-h-[100dvh] text-surface-900 antialiased overflow-x-hidden"
       style={{
-        backgroundColor: '#0b0910',
+        backgroundColor: '#FCFBFA',
         backgroundImage: [
-          'radial-gradient(70% 55% at 50% -5%, rgba(255,107,53,0.28), transparent 70%)',
-          'radial-gradient(45% 35% at 88% 8%, rgba(255,150,90,0.16), transparent 70%)',
-          'radial-gradient(55% 45% at 8% 22%, rgba(120,72,255,0.10), transparent 70%)',
+          'radial-gradient(70% 55% at 50% -5%, rgba(255,107,53,0.10), transparent 70%)',
+          'radial-gradient(45% 35% at 88% 8%, rgba(255,150,90,0.07), transparent 70%)',
         ].join(','),
       }}
     >
-      {/* Grain / texture overlay */}
-      <div
-        className="pointer-events-none fixed inset-0 opacity-[0.04] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        }}
-      />
-
       <div className="relative z-10 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-0">
         {/* Header */}
-        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/20 backdrop-blur-2xl pt-safe">
+        <header className="sticky top-0 z-30 border-b border-hairline bg-white/80 backdrop-blur-2xl pt-safe">
           <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
@@ -141,10 +131,10 @@ export default async function HomePage({
                 alt="Didi"
                 width={34}
                 height={34}
-                className="rounded-xl ring-1 ring-white/15"
+                className="rounded-xl ring-1 ring-black/5"
               />
               <span
-                className="text-2xl font-extrabold bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
+                className="text-2xl font-extrabold bg-gradient-to-br from-brand-400 to-brand-600 bg-clip-text text-transparent"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Didi
@@ -153,14 +143,14 @@ export default async function HomePage({
             <nav className="flex items-center gap-3 text-sm">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-xs shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)] hover:brightness-110 transition-all"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-xs shadow-[0_6px_20px_-6px_rgba(255,107,53,0.5)] hover:brightness-110 transition-all"
               >
                 List your kitchen
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
                 href="/login"
-                className="px-4 py-2 rounded-full border border-white/15 bg-white/[0.04] text-white/85 font-semibold text-xs hover:bg-white/10 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-full border border-hairline bg-white text-surface-700 font-semibold text-xs hover:bg-surface-50 hover:text-surface-900 transition-colors shadow-sm"
               >
                 Sign in
               </Link>
@@ -170,21 +160,21 @@ export default async function HomePage({
 
         {/* Hero */}
         <section className="px-4 pt-8 sm:pt-14 pb-8 text-center">
-          <p className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] sm:tracking-[0.25em] uppercase text-brand-300/80 mb-3 sm:mb-4">
+          <p className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] sm:tracking-[0.25em] uppercase text-brand-600/80 mb-3 sm:mb-4">
             Ghana&apos;s kitchens, delivered
           </p>
           <h1
-            className="text-[clamp(2.1rem,9vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight"
+            className="text-[clamp(2.1rem,9vw,3.75rem)] font-extrabold leading-[1.05] tracking-tight text-surface-900"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             What do you want
             <br />
             to{' '}
-            <span className="bg-gradient-to-br from-brand-300 via-brand-400 to-brand-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 bg-clip-text text-transparent">
               eat?
             </span>
           </h1>
-          <p className="text-sm sm:text-base text-white/50 mt-3 sm:mt-4 mb-7 sm:mb-8 max-w-md mx-auto">
+          <p className="text-sm sm:text-base text-surface-500 mt-3 sm:mt-4 mb-7 sm:mb-8 max-w-md mx-auto">
             Order from the best local kitchens near you — pay with Mobile Money
             or card.
           </p>
@@ -200,37 +190,37 @@ export default async function HomePage({
         <section className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex items-baseline justify-between mb-6">
             <h2
-              className="text-xl font-bold"
+              className="text-xl font-bold text-surface-900"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {nearActive ? 'Kitchens near you' : 'All kitchens'}
             </h2>
-            <span className="text-xs text-white/40">{kitchens.length} found</span>
+            <span className="text-xs text-surface-400">{kitchens.length} found</span>
           </div>
           <KitchenGrid kitchens={kitchens} />
         </section>
 
         {/* Vendor strip */}
         <section className="max-w-6xl mx-auto px-4 pb-16 pt-4">
-          <div className="relative overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.05] backdrop-blur-2xl px-7 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div className="relative overflow-hidden rounded-[26px] border border-hairline bg-white shadow-card px-7 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
             <div
               className="pointer-events-none absolute -right-10 -top-16 w-64 h-64 rounded-full blur-3xl"
-              style={{ background: 'rgba(255,107,53,0.25)' }}
+              style={{ background: 'rgba(255,107,53,0.10)' }}
             />
             <div className="relative">
               <h3
-                className="text-xl font-bold"
+                className="text-xl font-bold text-surface-900"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Run a kitchen?
               </h3>
-              <p className="text-sm text-white/55 mt-1">
+              <p className="text-sm text-surface-500 mt-1">
                 Get your own storefront and start taking orders in 5 minutes.
               </p>
             </div>
             <Link
               href="/register"
-              className="relative inline-flex items-center gap-1.5 px-6 py-3 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 font-bold text-sm shadow-[0_8px_28px_-8px_rgba(255,107,53,0.8)] hover:brightness-110 transition-all"
+              className="relative inline-flex items-center gap-1.5 px-6 py-3 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white font-bold text-sm shadow-[0_8px_28px_-8px_rgba(255,107,53,0.6)] hover:brightness-110 transition-all"
             >
               List your kitchen
               <ArrowRight className="w-4 h-4" />
@@ -239,7 +229,7 @@ export default async function HomePage({
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-white/10 bg-black/20 backdrop-blur-xl">
+        <footer className="border-t border-hairline bg-white/70 backdrop-blur-xl">
           <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <Image
@@ -247,26 +237,26 @@ export default async function HomePage({
                 alt="Didi"
                 width={30}
                 height={30}
-                className="rounded-lg ring-1 ring-white/15"
+                className="rounded-lg ring-1 ring-black/5"
               />
               <span
-                className="text-lg font-extrabold bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-transparent"
+                className="text-lg font-extrabold bg-gradient-to-br from-brand-400 to-brand-600 bg-clip-text text-transparent"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Didi
               </span>
-              <span className="text-xs text-white/35 ml-1">
+              <span className="text-xs text-surface-400 ml-1">
                 Ghana&apos;s kitchens, delivered
               </span>
             </div>
-            <div className="flex items-center gap-5 text-xs text-white/50">
-              <Link href="/for-restaurants" className="hover:text-white transition-colors">
+            <div className="flex items-center gap-5 text-xs text-surface-500">
+              <Link href="/for-restaurants" className="hover:text-surface-900 transition-colors">
                 For restaurants
               </Link>
-              <Link href="/login" className="hover:text-white transition-colors">
+              <Link href="/login" className="hover:text-surface-900 transition-colors">
                 Sign in
               </Link>
-              <span className="text-white/30">
+              <span className="text-surface-400">
                 © {new Date().getFullYear()} Didi
               </span>
             </div>

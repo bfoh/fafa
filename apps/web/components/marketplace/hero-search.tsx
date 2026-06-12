@@ -42,16 +42,16 @@ export default function HeroSearch() {
   return (
     <form
       onSubmit={submit}
-      className="max-w-xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 sm:p-1.5 sm:bg-white/[0.07] sm:border sm:border-white/15 sm:rounded-full sm:backdrop-blur-2xl sm:shadow-[0_12px_40px_-10px_rgba(0,0,0,0.6)]"
+      className="max-w-xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-1.5 sm:p-1.5 sm:bg-white sm:border sm:border-hairline sm:rounded-full sm:shadow-card"
     >
       {/* Search field — full-width pill on mobile, inline on sm+ */}
-      <div className="flex items-center flex-1 min-w-0 px-4 h-12 bg-white/[0.07] border border-white/15 rounded-full backdrop-blur-2xl sm:h-auto sm:px-0 sm:pl-4 sm:bg-transparent sm:border-0 sm:backdrop-blur-none">
-        <Search className="w-4 h-4 text-white/40 shrink-0" />
+      <div className="flex items-center flex-1 min-w-0 px-4 h-12 bg-white border border-hairline rounded-full shadow-card sm:h-auto sm:px-0 sm:pl-4 sm:bg-transparent sm:border-0 sm:shadow-none">
+        <Search className="w-4 h-4 text-surface-400 shrink-0" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search jollof, waakye, pizza…"
-          className="flex-1 min-w-0 px-3 py-2.5 text-sm outline-none bg-transparent text-white placeholder:text-white/40"
+          className="flex-1 min-w-0 px-3 py-2.5 text-sm outline-none bg-transparent text-surface-900 placeholder:text-surface-400"
         />
       </div>
       {/* Actions — second row on mobile so the submit button is never clipped */}
@@ -61,8 +61,8 @@ export default function HeroSearch() {
           onClick={useMyLocation}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 h-11 rounded-full text-xs font-bold transition-colors ${
             nearActive
-              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/30'
-              : 'bg-white/[0.07] border border-white/15 text-white/80 hover:bg-white/10 sm:bg-transparent sm:border-0'
+              ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/30'
+              : 'bg-white border border-hairline text-surface-600 hover:bg-surface-50 shadow-sm sm:bg-transparent sm:border-0 sm:shadow-none'
           }`}
         >
           {locating ? (
