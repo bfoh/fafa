@@ -51,12 +51,12 @@ export function LiveActivityBridge({
         body: JSON.stringify({ orderId, debug }),
       }).catch(() => {});
 
-    // Debug: report every native mount so the platform gate itself is visible.
-    if ((window as unknown as { Capacitor?: unknown }).Capacitor) {
-      void report(
-        `mount native=${Capacitor.isNativePlatform()} platform=${Capacitor.getPlatform()} status=${status}`
-      );
-    }
+    // Debug: report every mount so the environment itself is visible.
+    void report(
+      `mount native=${Capacitor.isNativePlatform()} platform=${Capacitor.getPlatform()} ` +
+        `winCap=${!!(window as unknown as { Capacitor?: unknown }).Capacitor} status=${status} ` +
+        `ua=${navigator.userAgent.slice(0, 80)}`
+    );
 
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return;
     if (TERMINAL.includes(status)) return;
