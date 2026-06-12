@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { orderTrackingUrl, trackerPathFromUrl } from './notification-url';
+import { orderTrackingUrl, pushTargetUrl, trackerPathFromUrl } from './notification-url';
 
 describe('orderTrackingUrl', () => {
   it('maps orderId + slug to the storefront tracker route', () => {
@@ -24,6 +24,25 @@ describe('orderTrackingUrl', () => {
     expect(orderTrackingUrl({ orderId: 'a/b', slug: 's p' })).toBe(
       '/s%20p/order/a%2Fb'
     );
+  });
+});
+
+describe('pushTargetUrl', () => {
+  it('prefers an explicit in-app path (owner pushes)', () => {
+    expect(pushTargetUrl({ path: '/orders' })).toBe('/orders');
+  });
+
+  it('falls back to the order tracker mapping', () => {
+    expect(pushTargetUrl({ orderId: 'abc', slug: 'mama-chops' })).toBe('/mama-chops/order/abc');
+  });
+
+  it('rejects non-relative and protocol-relative paths', () => {
+    expect(pushTargetUrl({ path: 'https://evil.example' })).toBeNull();
+    expect(pushTargetUrl({ path: '//evil.example' })).toBeNull();
+  });
+
+  it('returns null for undefined data', () => {
+    expect(pushTargetUrl(undefined)).toBeNull();
   });
 });
 

@@ -7,7 +7,7 @@
 import { sendSMS } from '@/lib/arkesel/client';
 import { sendEmail } from '@/lib/brevio/client';
 import { sendWhatsApp, isWhatsAppConfigured } from '@/lib/whatsapp/client';
-import { sendOrderPush } from '@/lib/notifications/push';
+import { sendOrderPush, sendOwnerOrderPush, getOwnerDeviceTokens } from '@/lib/notifications/push';
 import { sendPush, isPushConfigured } from '@/lib/push/fcm';
 import { updateLiveActivity } from '@/lib/live-activity/update';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -247,6 +247,10 @@ export async function sendOrderNotifications(
   //    creds → no-op), so this is inert until the mobile app ships.
   notifications.push(sendOrderPush(ctx, event));
 
+  // 4b. Push to the restaurant's devices (new orders / payments — the events
+  //     the kitchen must act on). Tapping opens the orders dashboard.
+  notifications.push(sendOwnerOrderPush(ctx, event));
+
   // 5. Lock-screen live activity (iOS Live Activity / Android ongoing
   //    notification). Env-gated and best-effort like push.
   notifications.push(updateLiveActivity(ctx, 'status'));
@@ -280,31 +284,37 @@ export async function sendOrderMessageNotification(params: {
   const short = preview.length > 90 ? `${preview.slice(0, 87)}…` : preview;
 
   // Device push for every message (free, chat-app feel, wakes the lock
-  // screen). Tapping deep-links to the tracker thread. Recipient is whoever
-  // registered the device with the matching phone — including a restaurant
-  // owner using the app.
+  // screen). Customers deep-link to the tracker thread; owners to the
+  // orders dashboard.
   if (isPushConfigured()) {
-    const recipientPhone = direction === 'to_customer' ? order.customer_phone : tenant.phone;
-    if (recipientPhone) {
-      try {
-        const { data: rows } = await supabase
-          .from('device_tokens')
-          .select('token')
-          .eq('customer_phone', recipientPhone);
-        const tokens = (rows || []).map((r) => r.token as string);
+    try {
+      if (direction === 'to_customer') {
+        if (order.customer_phone) {
+          const { data: rows } = await supabase
+            .from('device_tokens')
+            .select('token')
+            .eq('customer_phone', order.customer_phone);
+          const tokens = (rows || []).map((r) => r.token as string);
+          if (tokens.length > 0) {
+            await sendPush(tokens, {
+              title: tenant.name,
+              body: short,
+              data: tenant.slug ? { orderId: order.id, slug: tenant.slug } : { orderId: order.id },
+            });
+          }
+        }
+      } else {
+        const tokens = await getOwnerDeviceTokens(tenant);
         if (tokens.length > 0) {
           await sendPush(tokens, {
-            title:
-              direction === 'to_customer'
-                ? tenant.name
-                : `${order.customer_name} — order #${order.order_number}`,
+            title: `${order.customer_name} — order #${order.order_number} 💬`,
             body: short,
-            data: tenant.slug ? { orderId: order.id, slug: tenant.slug } : { orderId: order.id },
+            data: { path: '/orders' },
           });
         }
-      } catch (err) {
-        console.error('[push] message push failed:', err);
       }
+    } catch (err) {
+      console.error('[push] message push failed:', err);
     }
   }
 

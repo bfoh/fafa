@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MessageCircle, Star } from 'lucide-react';
+import { ChevronLeft, MessageCircle, Star } from 'lucide-react';
 import { BrandingCache } from '@/components/storefront/branding-cache';
 import { AdepaWidget } from '@/components/adepa/adepa-widget';
 import { waLink } from '@/lib/utils/whatsapp';
@@ -90,6 +90,13 @@ export default async function StorefrontLayout({
       {/* Sticky glass header */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-hairline pt-safe">
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Back to marketplace"
+            className="shrink-0 -ml-2 w-9 h-9 flex items-center justify-center rounded-xl text-surface-500 hover:bg-surface-100 active:bg-surface-100 transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Link>
           {tenant.logo_url ? (
             <img
               src={tenant.logo_url}

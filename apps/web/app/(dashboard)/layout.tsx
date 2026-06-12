@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getResolvedTenantId } from '@/lib/admin/guard';
 import ImpersonationBanner from '@/components/admin/impersonation-banner';
+import { OwnerPushBridge } from '@/components/dashboard/owner-push-bridge';
 
 export default async function DashboardLayout({
   children,
@@ -44,6 +45,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-[100dvh] bg-canvas">
+      {/* Link this device's push token to the tenant (native app only) */}
+      {!isImpersonating && <OwnerPushBridge />}
+
       {/* Desktop sidebar */}
       <Sidebar
         tenantName={tenantName}

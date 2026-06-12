@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getResolvedTenantId } from '@/lib/admin/guard';
 import { corsHeaders, preflight } from '@/lib/http/cors';
 
 /* ── Device token registration (CORS-enabled) ───────────────
@@ -34,6 +35,17 @@ export async function POST(req: Request) {
       last_seen_at: new Date().toISOString(),
     };
     if (customerPhone) payload.customer_phone = customerPhone;
+
+    // Restaurant owners: if the caller has an authenticated dashboard session,
+    // link the device to their tenant (resolved server-side — the client can't
+    // claim a tenant). Impersonating platform admins are deliberately not
+    // linked. Omitted otherwise, so upsert preserves an existing link.
+    try {
+      const { tenantId, isImpersonating } = await getResolvedTenantId();
+      if (tenantId && !isImpersonating) payload.tenant_id = tenantId;
+    } catch {
+      /* anonymous customer — no tenant link */
+    }
 
     const { error } = await supabase.from('device_tokens').upsert(
       payload,

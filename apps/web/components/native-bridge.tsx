@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { App as CapApp } from '@capacitor/app';
-import { orderTrackingUrl, trackerPathFromUrl } from '@/lib/push/notification-url';
+import { pushTargetUrl, trackerPathFromUrl } from '@/lib/push/notification-url';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
 
@@ -34,8 +34,10 @@ export function NativeBridge() {
       // router navigation (vs location.assign) avoids a second full page load.
       handles.push(
         await FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
-          const data = action.notification.data as { orderId?: string; slug?: string } | undefined;
-          const url = orderTrackingUrl(data);
+          const data = action.notification.data as
+            | { path?: string; orderId?: string; slug?: string }
+            | undefined;
+          const url = pushTargetUrl(data);
           if (url) router.push(url);
         })
       );

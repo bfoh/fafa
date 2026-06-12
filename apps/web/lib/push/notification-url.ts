@@ -12,6 +12,21 @@ export function orderTrackingUrl(
 }
 
 /**
+ * Resolves a push notification's tap target. Owner pushes carry an explicit
+ * in-app `path` (e.g. '/orders'); customer order pushes carry { orderId, slug }
+ * mapped to the tracker. Only root-relative paths are honoured so a payload
+ * can never navigate off-site.
+ */
+export function pushTargetUrl(
+  data: { path?: string; orderId?: string; slug?: string } | undefined
+): string | null {
+  if (data?.path && data.path.startsWith('/') && !data.path.startsWith('//')) {
+    return data.path;
+  }
+  return orderTrackingUrl(data);
+}
+
+/**
  * Maps a tracker universal link (Live Activity widget tap) to an in-app path:
  * https://ghdidi.com/<slug>/order/<orderId> → /<slug>/order/<orderId>.
  * Returns null for anything else.
