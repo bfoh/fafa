@@ -24,9 +24,13 @@ export async function POST(req: Request) {
       debug?: string;
     };
 
-    // Client-side diagnostics from the (uninspectable) native WebView.
+    // Client-side diagnostics from the (uninspectable) native WebView. Stored
+    // in the DB — Vercel log tails drop lines, so logs alone are unreliable.
     if (debug) {
       console.error('[live-activity] client debug:', orderId, debug.slice(0, 500));
+      await createAdminClient()
+        .from('live_activity_debug')
+        .insert({ order_id: orderId ?? null, message: debug.slice(0, 500) });
       return NextResponse.json({ ok: true }, { headers });
     }
 
