@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
@@ -225,11 +226,22 @@ export function Sidebar({
 
       </nav>
 
-      {/* Sign Out */}
-      <div className="p-3 border-t border-hairline">
+      {/* View store + Sign Out */}
+      <div className="p-3 border-t border-hairline space-y-1">
+        {tenantSlug && (
+          <a
+            href={`/${tenantSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-600 hover:bg-surface-100 hover:text-surface-900 transition-all group"
+          >
+            <ExternalLink className="w-5 h-5 flex-shrink-0 text-surface-400 group-hover:text-surface-600 transition-colors" />
+            <span>View my store</span>
+          </a>
+        )}
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-error-500/10 hover:text-error-600 transition-all w-full group"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-500 hover:bg-error-500/10 hover:text-error-600 transition-all w-full group cursor-pointer"
         >
           <LogOut className="w-5 h-5 flex-shrink-0 group-hover:text-error-500 transition-colors" />
           <span>Sign Out</span>
