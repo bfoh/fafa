@@ -26,10 +26,10 @@ export default function CuisineChips() {
         key={slug}
         onClick={() => select(slug)}
         disabled={isPending}
-        className={`snap-start-item shrink-0 px-4 py-2 rounded-full text-xs font-semibold border whitespace-nowrap transition-all duration-200 active:scale-95 disabled:opacity-60 ${
+        className={`snap-start-item shrink-0 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ease-out active:scale-[0.96] disabled:opacity-60 ${
           on
-            ? 'bg-gradient-to-br from-brand-400 to-brand-600 text-white border-transparent shadow-[0_6px_20px_-6px_rgba(255,107,53,0.7)]'
-            : 'bg-white/5 text-white/70 border-white/10 backdrop-blur-md hover:bg-white/10 hover:text-white'
+            ? 'bg-brand-500 text-white shadow-cta'
+            : 'bg-white text-surface-600 border border-hairline shadow-sm hover:text-surface-900 hover:shadow-card'
         }`}
       >
         {label}

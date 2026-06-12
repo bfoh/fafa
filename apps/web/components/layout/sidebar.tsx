@@ -239,9 +239,12 @@ export function Sidebar({
   );
 
   return (
-    /* Desktop sidebar only — mobile navigation is handled by <MobileNav />. */
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-hairline">
-      {sidebarContent}
+    /* Desktop sidebar only — mobile navigation is handled by <MobileNav />.
+       Floating panel: inset from the canvas with a soft outer shadow. */
+    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 p-3 pr-0">
+      <div className="flex flex-col h-full w-full rounded-3xl bg-white border border-hairline shadow-float overflow-hidden">
+        {sidebarContent}
+      </div>
     </aside>
   );
 }

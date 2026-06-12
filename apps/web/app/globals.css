@@ -42,7 +42,10 @@
   --color-info-600: #2563EB;
 
   /* ─── Typography ────────────────────────────────────────── */
-  --font-sans: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  /* Display = the same geometric family at heavy weights; components that
+     set fontFamily: var(--font-display) keep working. */
+  --font-display: var(--font-jakarta), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   /* ─── Shadows ───────────────────────────────────────────── */
@@ -61,11 +64,17 @@
   --radius-full: 9999px;
 
   /* ─── Redesign additions ────────────────────────────────── */
-  --color-canvas: #FCFBFA;
-  --color-hairline: rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12);
-  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 0.05), 0 16px 32px -14px rgb(0 0 0 / 0.16);
+  --color-canvas: #FBF9F6;            /* ultra-clean warm white */
+  --color-canvas-deep: #F5F1EC;       /* subtle cream tint for sections */
+  --color-hairline: rgba(28, 25, 23, 0.07);
+  --color-obsidian: #0C0C0E;          /* premium dark surface (dark mode) */
+  --color-obsidian-raised: #16161A;
+  --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px -12px rgb(28 25 23 / 0.12);
+  --shadow-card-hover: 0 2px 4px rgb(28 25 23 / 0.05), 0 16px 32px -14px rgb(28 25 23 / 0.16);
+  --shadow-float: 0 1px 2px rgb(28 25 23 / 0.03), 0 12px 40px -12px rgb(28 25 23 / 0.18);
+  --shadow-cta: 0 8px 24px -8px rgb(255 107 53 / 0.55);
   --ease-quick: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ─── Base Styles ─────────────────────────────────────────── */
@@ -229,13 +238,24 @@ label {
 
 /* ─── Redesign helpers ────────────────────────────────────── */
 .bg-canvas { background-color: var(--color-canvas); }
+.bg-canvas-deep { background-color: var(--color-canvas-deep); }
 .border-hairline { border-color: var(--color-hairline); }
 .shadow-card { box-shadow: var(--shadow-card); }
 .shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.shadow-float { box-shadow: var(--shadow-float); }
+.shadow-cta { box-shadow: var(--shadow-cta); }
 .press { transition: transform 180ms var(--ease-quick); }
 .press:active { transform: scale(0.97); }
 .lift { transition: box-shadow 180ms var(--ease-quick), transform 180ms var(--ease-quick); }
 .lift:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+
+/* Tracked-out micro-labels (section eyebrows, badges). */
+.micro-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

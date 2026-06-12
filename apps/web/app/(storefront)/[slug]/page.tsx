@@ -83,24 +83,24 @@ export default async function StorefrontPage({
       {/* Hero */}
       <div className="relative">
         {tenant.cover_image_url ? (
-          <div className="h-48 relative overflow-hidden">
+          <div className="h-56 relative overflow-hidden">
             <img
               src={tenant.cover_image_url}
               alt={tenant.name}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
           </div>
         ) : (
           <div
-            className="h-32"
+            className="h-36"
             style={{ background: `linear-gradient(135deg, ${primaryColor}22, ${primaryColor}08)` }}
           />
         )}
 
-        {/* Info card pulled over the cover */}
+        {/* Glass info card overlapping the cover */}
         <div className="px-4">
-          <div className="-mt-8 relative bg-white rounded-2xl border border-hairline shadow-card p-4 animate-fade-in">
+          <div className="-mt-12 relative rounded-3xl border border-white/40 bg-white/80 backdrop-blur-xl shadow-float p-5 animate-fade-in">
             <h1 className="text-xl font-bold text-surface-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
               {tenant.name}
             </h1>

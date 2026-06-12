@@ -354,7 +354,7 @@ function MenuContent({
                         <img
                           src={item.image_url}
                           alt={item.name}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.07]"
                           loading="lazy"
                         />
                       </div>

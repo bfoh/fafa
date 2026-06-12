@@ -247,17 +247,17 @@ export default async function DashboardPage() {
           return (
             <div
               key={stat.label}
-              className="bg-white rounded-2xl p-5 border border-hairline shadow-card lift"
+              className="bg-white rounded-3xl p-5 border border-hairline shadow-float lift"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl ${stat.bg}`}>
-                  <Icon className={`w-5 h-5 ${stat.color}`} />
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`p-2.5 rounded-2xl ${stat.bg}`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} strokeWidth={1.75} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-surface-900">
+              <p className="text-[26px] leading-none font-extrabold tracking-tight text-surface-900 tabular-nums">
                 {stat.value}
               </p>
-              <p className="text-sm text-surface-500 mt-1">{stat.label}</p>
+              <p className="micro-label text-surface-400 mt-2.5">{stat.label}</p>
             </div>
           );
         })}

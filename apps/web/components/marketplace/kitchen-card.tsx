@@ -34,46 +34,46 @@ export interface KitchenResult {
 export default function KitchenCard({ k }: { k: KitchenResult }) {
   const distance = formatDistance(k.distance_km);
   const dishes = k.items ?? [];
+  // Dish photos still back up a missing cover image — they just no longer
+  // render as a list inside the card.
   const heroImg = k.cover_image_url || dishes.find((d) => d.image_url)?.image_url || null;
-  const tags = k.cuisines.slice(0, 2);
+  const tags = k.cuisines.slice(0, 3);
   const extraTags = k.cuisines.length - tags.length;
+  const place = [k.city, k.region].filter(Boolean).join(', ');
 
   return (
     <Link
       href={`/${k.slug}`}
-      className="group relative flex flex-col rounded-[26px] overflow-hidden border border-white/10 bg-white/[0.055] backdrop-blur-2xl shadow-[0_10px_40px_-12px_rgba(0,0,0,0.6)] transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-400/40 hover:bg-white/[0.08] hover:shadow-[0_24px_60px_-14px_rgba(255,107,53,0.34)] active:scale-[0.985] active:border-brand-400/40"
+      className="group relative flex flex-col rounded-3xl overflow-hidden bg-white border border-hairline shadow-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-card-hover active:scale-[0.98]"
     >
-      {/* Hero (image clipped) + logo straddling the seam (not clipped) */}
+      {/* Cover — full-bleed image across the card top */}
       <div className="relative">
-        <div className="relative h-44 overflow-hidden rounded-t-[26px]">
+        <div className="relative aspect-[16/9] overflow-hidden">
           {heroImg ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={heroImg}
               alt=""
-              className="w-full h-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-110"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-brand-500 via-[#d6552a] to-[#5e2412]" />
+            <div className="w-full h-full bg-gradient-to-br from-brand-100 via-brand-200 to-brand-300" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-black/30" />
 
-          {/* Open / closed */}
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-black/45 backdrop-blur-md border border-white/15 text-white">
-            <span className={k.open_now ? 'text-emerald-400' : 'text-rose-400'}>●</span>
+          {/* Status badges — translucent glass over the photo */}
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide bg-white/70 backdrop-blur-md text-surface-900 shadow-sm">
+            <span className={k.open_now ? 'text-success-600' : 'text-error-500'}>●</span>
             {k.open_now ? 'Open now' : 'Closed'}
           </span>
-
-          {/* Distance */}
           {distance && (
-            <span className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-black/45 backdrop-blur-md border border-white/15 text-white">
+            <span className="absolute top-3 right-3 inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/70 backdrop-blur-md text-surface-900 shadow-sm">
               {distance}
             </span>
           )}
         </div>
 
-        {/* Logo — half over the photo, half over the body */}
-        <div className="absolute -bottom-7 left-5 z-10 w-14 h-14 rounded-2xl border-2 border-white/30 bg-brand-500 overflow-hidden flex items-center justify-center text-white font-extrabold text-lg shadow-[0_8px_24px_-6px_rgba(0,0,0,0.7)]">
+        {/* Logo — straddling the photo/body seam */}
+        <div className="absolute -bottom-6 left-5 z-10 w-12 h-12 rounded-2xl ring-2 ring-white bg-brand-500 overflow-hidden flex items-center justify-center text-white font-extrabold text-base shadow-card">
           {k.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={k.logo_url} alt="" className="w-full h-full object-cover" />
@@ -83,76 +83,46 @@ export default function KitchenCard({ k }: { k: KitchenResult }) {
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex flex-col flex-1 pt-10 px-5 pb-5">
-        <h3 className="font-bold text-[16px] text-white truncate group-hover:text-brand-300 transition-colors">
+      {/* Body — name, rating, place, tags. Whitespace does the talking. */}
+      <div className="flex flex-col flex-1 pt-9 px-5 pb-5">
+        <h3 className="font-bold text-[16px] text-surface-900 truncate group-hover:text-brand-600 transition-colors duration-300">
           {k.name}
         </h3>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-1">
           {(k.rating_count ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-300">
-              <Star className="w-3.5 h-3.5 fill-amber-300" />
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               {Number(k.rating_avg).toFixed(1)}
-              <span className="text-white/40 font-normal">({k.rating_count})</span>
+              <span className="text-surface-400 font-normal">({k.rating_count})</span>
             </span>
           )}
-          <p className="text-xs text-white/45 truncate">{k.city || 'Kitchen'}</p>
+          <p className="text-xs text-surface-400 truncate">{place || 'Kitchen'}</p>
         </div>
 
         {/* Cuisine tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2.5">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {tags.map((t) => (
               <span
                 key={t}
-                className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/8 border border-white/12 text-white/75"
+                className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide bg-surface-100 text-surface-600"
               >
                 {CUISINE_LABEL[t] || t}
               </span>
             ))}
             {extraTags > 0 && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/8 border border-white/12 text-white/75">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-surface-100 text-surface-600">
                 +{extraTags}
               </span>
             )}
           </div>
         )}
 
-        {/* Dish preview */}
-        {dishes.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {dishes.map((d, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 border border-white/10">
-                  {d.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={d.image_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-brand-500/60 to-[#5e2412]/60" />
-                  )}
-                </div>
-                <span className="flex-1 text-[13px] text-white/85 truncate">
-                  {d.name}
-                </span>
-                {d.is_chop_bar ? (
-                  <span className="text-[11px] font-bold text-brand-300 shrink-0">
-                    {d.price > 0 ? `from ${formatGHS(d.price)}` : 'Order your way'}
-                  </span>
-                ) : (
-                  <span className="text-[13px] font-bold text-brand-300 shrink-0">
-                    {formatGHS(d.price)}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Footer */}
         <div className="mt-auto pt-4">
-          <div className="flex items-center justify-between text-[11px] text-white/55 pt-3.5 border-t border-white/10">
+          <div className="flex items-center justify-between text-[11px] text-surface-400 pt-3.5 border-t border-hairline">
             <span>{k.item_count} dishes</span>
-            <span className="font-semibold text-white/70">
+            <span className="font-semibold text-surface-600">
               {Number(k.delivery_fee || 0) === 0
                 ? 'Free delivery'
                 : `${formatGHS(Number(k.delivery_fee))} delivery`}
