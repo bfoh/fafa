@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { initializeTransaction } from '@/lib/paystack/client';
+import { initializeTransaction } from '@/lib/expresspay/client';
 import { normalizeGhanaPhone, isValidGhanaPhone } from '@/lib/utils/phone';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import { getBaseUrl } from '@/lib/utils';
@@ -245,42 +245,55 @@ export async function POST(req: Request) {
       to_status: 'pending',
     });
 
-    // 10. If online payment, initialize Paystack
+    // 10. If online payment, initialize ExpressPay.
     if (paymentMethod !== 'cash_on_delivery') {
       try {
-        // Create a pending payment record
-        await supabase.from('payments').insert({
-          tenant_id: tenant.id,
-          order_id: order.id,
-          amount: total,
-          method: paymentMethod === 'momo' ? 'momo' : 'card',
-          provider: 'paystack',
-          status: 'pending',
+        // Create a pending payment record. provider_ref is backfilled with the
+        // ExpressPay token below so the webhook/poll reconcile can query it.
+        const { data: paymentRow } = await supabase
+          .from('payments')
+          .insert({
+            tenant_id: tenant.id,
+            order_id: order.id,
+            amount: total,
+            method: paymentMethod === 'momo' ? 'momo' : 'card',
+            provider: 'expresspay',
+            status: 'pending',
+          })
+          .select('id')
+          .single();
+
+        // ExpressPay splits the customer name into first/last.
+        const [firstName, ...rest] = String(customer.name || '').trim().split(/\s+/);
+        const lastName = rest.join(' ');
+
+        const expresspay = await initializeTransaction({
+          amount: total, // Major units (GH₵); the client formats to a decimal string.
+          currency: 'GHS',
+          orderId: order.id,
+          orderDesc: `${tenant.name} order ${orderNumber}`,
+          firstName: firstName || customer.name || 'Customer',
+          lastName: lastName || '-',
+          email: customer.email || `${normalizedPhone.replace('+', '')}@ghdidi.com`,
+          phone: normalizedPhone.replace('+', ''),
+          redirectUrl: `${getBaseUrl()}/${tenantSlug}/order/${order.id}`,
+          postUrl: `${getBaseUrl()}/api/webhooks/expresspay`,
         });
 
-        const paystackResult = await initializeTransaction({
-          email:
-            customer.email || `${normalizedPhone.replace('+', '')}@ghdidi.com`,
-          amount: Math.round(total * 100), // Pesewas
-          currency: 'GHS',
-          reference: order.id,
-          callback_url: `${getBaseUrl()}/${tenantSlug}/order/${order.id}`,
-          channels:
-            paymentMethod === 'momo' ? ['mobile_money'] : ['card'],
-          metadata: {
-            order_id: order.id,
-            tenant_id: tenant.id,
-            order_number: orderNumber,
-          },
-          subaccount: tenant.paystack_subaccount_code || undefined,
-        });
+        // Persist the token on the payment row so reconciliation can query it.
+        if (paymentRow?.id) {
+          await supabase
+            .from('payments')
+            .update({ provider_ref: expresspay.token })
+            .eq('id', paymentRow.id);
+        }
 
         return NextResponse.json({
           order,
-          payment_url: paystackResult.data.authorization_url,
+          payment_url: expresspay.checkoutUrl,
         }, { headers });
-      } catch (paystackError) {
-        console.error('Paystack error:', paystackError);
+      } catch (expresspayError) {
+        console.error('ExpressPay error:', expresspayError);
         // Order created but payment failed — tenant can see it as pending
         return NextResponse.json({
           order,

@@ -1,18 +1,18 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { verifyTransaction } from '@/lib/paystack/client';
-import { settlePaidOrder } from '@/lib/orders/settle';
+import { reconcileExpressPayOrder } from '@/lib/expresspay/client';
 
 const LOOKBACK_HOURS = 24;
 const MAX_ORDERS = 15;
 
 /**
- * Verify a single tenant's recent pending online orders against Paystack and
+ * Verify a single tenant's recent pending online orders against ExpressPay and
  * settle the ones that actually succeeded. Used on the restaurant's dashboard /
  * orders read paths so a paid momo/card order shows up even when the webhook and
  * the customer-callback verification both missed it.
  *
- * Only hits Paystack when there are unsettled online orders, so the common case
- * (everything already paid) costs nothing. Returns how many were newly settled.
+ * Only hits ExpressPay when there are unsettled online orders, so the common
+ * case (everything already paid) costs nothing. Returns how many were newly
+ * settled.
  */
 export async function reconcileTenantPendingPayments(tenantId: string): Promise<number> {
   const supabase = createAdminClient();
@@ -32,23 +32,8 @@ export async function reconcileTenantPendingPayments(tenantId: string): Promise<
 
   const results = await Promise.all(
     pending.map(async (order): Promise<number> => {
-      try {
-        const verification = await verifyTransaction(order.id);
-        const data = verification.data;
-        if (
-          data?.status === 'success' &&
-          Number(data.amount) >= Math.round(Number(order.total) * 100)
-        ) {
-          const result = await settlePaidOrder(order.id, {
-            channel: data.channel,
-            providerRef: String(data.id),
-          });
-          return result.settled ? 1 : 0;
-        }
-      } catch {
-        // Unknown reference / network error — leave pending for the next read.
-      }
-      return 0;
+      const paid = await reconcileExpressPayOrder(order.id);
+      return paid ? 1 : 0;
     })
   );
 
