@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendOrderNotifications } from '@/lib/notifications/send';
-import { verifyTransaction } from '@/lib/paystack/client';
-import { settlePaidOrder } from '@/lib/orders/settle';
+import { reconcileExpressPayOrder } from '@/lib/expresspay/client';
 import { getResolvedTenantId } from '@/lib/admin/guard';
 import type { OrderStatus, PaymentStatus } from '@fafa/types';
 
@@ -45,22 +44,8 @@ export async function GET(
       order.payment_status === 'pending' &&
       order.payment_method !== 'cash_on_delivery'
     ) {
-      try {
-        const verification = await verifyTransaction(order.id);
-        const data = verification.data;
-        if (
-          data?.status === 'success' &&
-          Number(data.amount) >= Math.round(Number(order.total) * 100)
-        ) {
-          await settlePaidOrder(order.id, {
-            channel: data.channel,
-            providerRef: String(data.id),
-          });
-          order.payment_status = 'paid';
-        }
-      } catch (err) {
-        console.error('Order poll payment verification failed:', err);
-      }
+      const paid = await reconcileExpressPayOrder(order.id);
+      if (paid) order.payment_status = 'paid';
     }
 
     const { data: history } = await supabase

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformAdmin } from '@/lib/admin/guard';
-import { verifyTransaction } from '@/lib/paystack/client';
-import { settlePaidOrder } from '@/lib/orders/settle';
+import { reconcileExpressPayOrder } from '@/lib/expresspay/client';
 
 // Sweep historical online orders that are still `pending` (e.g. paid before the
 // callback-verification fix shipped, when the webhook was the only settle path)
-// and settle any that Paystack confirms as successful. Idempotent and
+// and settle any that ExpressPay confirms as successful. Idempotent and
 // platform-admin only. Bounded so a single run can't fan out unboundedly.
 
 const MAX_ORDERS = 200;
@@ -42,20 +41,10 @@ export async function POST() {
   for (const order of orders || []) {
     checked += 1;
     try {
-      const verification = await verifyTransaction(order.id);
-      const data = verification.data;
-      if (
-        data?.status === 'success' &&
-        Number(data.amount) >= Math.round(Number(order.total) * 100)
-      ) {
-        const result = await settlePaidOrder(order.id, {
-          channel: data.channel,
-          providerRef: String(data.id),
-        });
-        if (result.settled) settled += 1;
-      }
+      const paid = await reconcileExpressPayOrder(order.id);
+      if (paid) settled += 1;
     } catch {
-      // Unknown reference / network error — leave it pending for a later run.
+      // Unknown token / network error — leave it pending for a later run.
       failed += 1;
     }
   }

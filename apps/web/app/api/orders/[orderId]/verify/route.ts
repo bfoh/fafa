@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { verifyTransaction } from '@/lib/paystack/client';
-import { settlePaidOrder } from '@/lib/orders/settle';
+import { reconcileExpressPayOrder } from '@/lib/expresspay/client';
 import { corsHeaders, preflight } from '@/lib/http/cors';
 import type {
   OrderTrackingPayload,
@@ -27,32 +26,16 @@ const ORDER_FIELDS = `
   order_items ( id, item_name, quantity, line_total, options_json )
 `;
 
-/** Verify + settle a pending online payment. Idempotent; no-op for paid / COD. */
+/** Verify + settle a pending online payment. Idempotent; no-op for paid / COD.
+ *  Delegates to the shared ExpressPay reconcile (token-keyed query). */
 async function reconcile(
-  supabase: ReturnType<typeof createAdminClient>,
+  _supabase: ReturnType<typeof createAdminClient>,
   order: { id: string; payment_status: string; payment_method: string; total: number }
 ): Promise<boolean> {
   if (order.payment_status === 'paid') return true;
   if (order.payment_method === 'cash_on_delivery') return false;
   if (order.payment_status !== 'pending') return false;
-
-  try {
-    const verification = await verifyTransaction(order.id);
-    const data = verification.data;
-    if (
-      data?.status === 'success' &&
-      Number(data.amount) >= Math.round(Number(order.total) * 100)
-    ) {
-      await settlePaidOrder(order.id, {
-        channel: data.channel,
-        providerRef: String(data.id),
-      });
-      return true;
-    }
-  } catch (err) {
-    console.error('verify route reconciliation failed:', err);
-  }
-  return false;
+  return reconcileExpressPayOrder(order.id);
 }
 
 export async function OPTIONS(req: Request) {
