@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { NativeBridge } from './native-bridge';
+import { ApiFetchBridge } from './api-fetch-bridge';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -33,6 +34,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} pt-safe pb-safe bg-canvas`}>
         <Providers>
+          <ApiFetchBridge />
           <NativeBridge />
           {children}
         </Providers>

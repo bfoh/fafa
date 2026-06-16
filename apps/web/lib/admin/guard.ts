@@ -1,4 +1,5 @@
 import { createServerClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * Verify the current session belongs to a platform admin.
@@ -26,16 +27,44 @@ export async function getPlatformAdmin() {
 }
 
 /**
- * Resolves the active tenant ID server-side, taking admin impersonation
- * cookies into account.
+ * Resolves the active tenant ID server-side.
+ *
+ * Web requests authenticate via the cookie session (and honour admin
+ * impersonation cookies). The native mobile app has no cookies — its session
+ * lives in Capacitor Preferences — so it sends `Authorization: Bearer <token>`.
+ * Pass the request to enable that path; without it, behaviour is unchanged.
  */
-export async function getResolvedTenantId() {
+export async function getResolvedTenantId(req?: Request) {
+  // ── Native (mobile) path: Bearer access token ──
+  const authHeader = req?.headers.get('authorization') ?? null;
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    const admin = createAdminClient();
+    const {
+      data: { user },
+    } = await admin.auth.getUser(token);
+    if (!user) {
+      return { tenantId: null, isImpersonating: false, isPlatformAdmin: false, userId: null };
+    }
+    const { data: member } = await admin
+      .from('tenant_members')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .single();
+    return {
+      tenantId: member?.tenant_id ?? null,
+      isImpersonating: false,
+      isPlatformAdmin: false,
+      userId: user.id,
+    };
+  }
+
   const supabase = await createServerClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session) return { tenantId: null, isImpersonating: false, isPlatformAdmin: false };
+  if (!session) return { tenantId: null, isImpersonating: false, isPlatformAdmin: false, userId: null };
 
   // Check if they are platform admin
   const { data: adminRecord } = await supabase
@@ -50,7 +79,7 @@ export async function getResolvedTenantId() {
     const cookieStore = await cookies();
     const impersonatedId = cookieStore.get('didi_impersonate_tenant_id')?.value;
     if (impersonatedId) {
-      return { tenantId: impersonatedId, isImpersonating: true, isPlatformAdmin };
+      return { tenantId: impersonatedId, isImpersonating: true, isPlatformAdmin, userId: session.user.id };
     }
   }
 
@@ -61,5 +90,5 @@ export async function getResolvedTenantId() {
     .eq('user_id', session.user.id)
     .single();
 
-  return { tenantId: member?.tenant_id || null, isImpersonating: false, isPlatformAdmin };
+  return { tenantId: member?.tenant_id || null, isImpersonating: false, isPlatformAdmin, userId: session.user.id };
 }

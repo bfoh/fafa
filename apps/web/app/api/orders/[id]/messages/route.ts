@@ -1,21 +1,27 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getResolvedTenantId } from '@/lib/admin/guard';
+import { corsHeaders, preflight } from '@/lib/http/cors';
 import { sendOrderMessageNotification } from '@/lib/notifications/send';
 
 const MAX_BODY = 2000;
 const MAX_THREAD = 300;
 
+/** CORS preflight for the native app (capacitor:// origin). */
+export function OPTIONS(req: Request) {
+  return preflight(req);
+}
+
 /**
  * Resolve whether the caller is the restaurant (authenticated member of
  * the order's tenant) or the anonymous customer. Returns null tenant
- * match for customers.
+ * match for customers. Auth is the cookie session (web) or Bearer token (app).
  */
-async function resolveActor(orderTenantId: string): Promise<'restaurant' | 'customer'> {
+async function resolveActor(orderTenantId: string, req: Request): Promise<'restaurant' | 'customer'> {
   try {
     // Impersonation-aware: a platform admin managing this restaurant resolves to
     // the impersonated tenant. Returns null tenant for anonymous customers.
-    const { tenantId } = await getResolvedTenantId();
+    const { tenantId } = await getResolvedTenantId(req);
     return tenantId && tenantId === orderTenantId ? 'restaurant' : 'customer';
   } catch {
     return 'customer';
@@ -23,9 +29,10 @@ async function resolveActor(orderTenantId: string): Promise<'restaurant' | 'cust
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders(req.headers.get('origin'));
   try {
     const { id } = await params;
     const admin = createAdminClient();
@@ -35,9 +42,9 @@ export async function GET(
       .select('id, tenant_id')
       .eq('id', id)
       .single();
-    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: cors });
 
-    const actor = await resolveActor(order.tenant_id);
+    const actor = await resolveActor(order.tenant_id, req);
 
     const { data: messages } = await admin
       .from('order_messages')
@@ -62,10 +69,10 @@ export async function GET(
         .is('read_by_customer_at', null);
     }
 
-    return NextResponse.json({ messages: messages || [], actor });
+    return NextResponse.json({ messages: messages || [], actor }, { headers: cors });
   } catch (err) {
     console.error('Failed to load order messages:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: cors });
   }
 }
 
@@ -73,14 +80,15 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders(req.headers.get('origin'));
   try {
     const { id } = await params;
     const { body } = await req.json();
 
     const text = typeof body === 'string' ? body.trim() : '';
-    if (!text) return NextResponse.json({ error: 'Message is empty' }, { status: 400 });
+    if (!text) return NextResponse.json({ error: 'Message is empty' }, { status: 400, headers: cors });
     if (text.length > MAX_BODY) {
-      return NextResponse.json({ error: 'Message too long' }, { status: 400 });
+      return NextResponse.json({ error: 'Message too long' }, { status: 400, headers: cors });
     }
 
     const admin = createAdminClient();
@@ -90,7 +98,7 @@ export async function POST(
       .select('id, tenant_id, order_number, customer_name, customer_phone, customer_email')
       .eq('id', id)
       .single();
-    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: cors });
 
     // Guard against runaway threads (basic abuse protection).
     const { count } = await admin
@@ -98,10 +106,10 @@ export async function POST(
       .select('id', { count: 'exact', head: true })
       .eq('order_id', id);
     if ((count ?? 0) >= MAX_THREAD) {
-      return NextResponse.json({ error: 'This conversation is full' }, { status: 429 });
+      return NextResponse.json({ error: 'This conversation is full' }, { status: 429, headers: cors });
     }
 
-    const sender = await resolveActor(order.tenant_id);
+    const sender = await resolveActor(order.tenant_id, req);
 
     const { data: message, error } = await admin
       .from('order_messages')
@@ -150,9 +158,9 @@ export async function POST(
       }).catch((e) => console.error('Message notification failed:', e));
     }
 
-    return NextResponse.json({ message });
+    return NextResponse.json({ message }, { headers: cors });
   } catch (err) {
     console.error('Failed to send order message:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: cors });
   }
 }

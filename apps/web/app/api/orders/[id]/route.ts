@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendOrderNotifications } from '@/lib/notifications/send';
 import { reconcileExpressPayOrder } from '@/lib/expresspay/client';
 import { getResolvedTenantId } from '@/lib/admin/guard';
+import { corsHeaders, preflight } from '@/lib/http/cors';
 import type { OrderStatus, PaymentStatus } from '@fafa/types';
+
+/** CORS preflight for the native app (capacitor:// origin). */
+export function OPTIONS(req: Request) {
+  return preflight(req);
+}
 
 /* ── Public order tracking ──────────────────────────────────
    Lets the customer's browser poll live status without auth.
@@ -13,9 +18,10 @@ import type { OrderStatus, PaymentStatus } from '@fafa/types';
    what the customer themselves submitted). Uses the admin client
    so it works for anonymous visitors despite RLS. */
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders(req.headers.get('origin'));
   try {
     const { id } = await params;
     const supabase = createAdminClient();
@@ -33,7 +39,7 @@ export async function GET(
       .single();
 
     if (error || !order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: cors });
     }
 
     // Reconcile async online payments (e.g. mobile money that settles after the
@@ -54,10 +60,10 @@ export async function GET(
       .eq('order_id', id)
       .order('created_at', { ascending: true });
 
-    return NextResponse.json({ order, history: history || [] });
+    return NextResponse.json({ order, history: history || [] }, { headers: cors });
   } catch (err) {
     console.error('Failed to load order tracking:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: cors });
   }
 }
 
@@ -65,24 +71,17 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders(req.headers.get('origin'));
   try {
     const { id } = await params;
     const { status, cancellationReason, estimatedReadyMinutes } = await req.json();
 
-    const authClient = await createServerClient();
-    const { data: { session } } = await authClient.auth.getSession();
+    // Auth + active tenant. Web sends a cookie session (and honours platform-admin
+    // impersonation); the native app sends Authorization: Bearer <token>.
+    const { tenantId, userId } = await getResolvedTenantId(req);
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // 1. Resolve the active tenant — honours platform-admin impersonation, so an
-    //    admin managing a restaurant's orders resolves to the impersonated tenant
-    //    (not their own). Non-admins always resolve to their own membership.
-    const { tenantId } = await getResolvedTenantId();
-
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userId || !tenantId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: cors });
     }
 
     // Service-role client for the mutation, authorised by the resolved tenant and
@@ -98,7 +97,7 @@ export async function PATCH(
       .single();
 
     if (orderErr || !order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: cors });
     }
 
     const oldStatus = order.status;
@@ -183,7 +182,7 @@ export async function PATCH(
       order_id: id,
       from_status: oldStatus,
       to_status: status,
-      changed_by: session.user.id,
+      changed_by: userId,
       note: status === 'cancelled' ? cancellationReason : null,
     });
 
@@ -217,12 +216,12 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ order: updatedOrder });
+    return NextResponse.json({ order: updatedOrder }, { headers: cors });
   } catch (err) {
     console.error('Failed to transition order status:', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
 }

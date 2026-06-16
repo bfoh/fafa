@@ -29,7 +29,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   const allow = origin && isAllowed(origin) ? origin : 'https://www.ghdidi.com';
   return {
     'Access-Control-Allow-Origin': allow,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     Vary: 'Origin',
   };
