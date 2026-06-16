@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useOverlayLock } from '@fafa/storefront/overlay';
 
 interface BottomSheetProps {
   open: boolean;
@@ -23,6 +24,9 @@ export function BottomSheet({
   hideHeader = false,
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Hide the floating concierge while this sheet is open.
+  useOverlayLock(open);
 
   // Lock body scroll + close on Escape / Android back.
   useEffect(() => {

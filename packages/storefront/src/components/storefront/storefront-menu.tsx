@@ -7,6 +7,7 @@ import { Plus, Minus, ShoppingBag, X, ArrowRight, RotateCcw } from 'lucide-react
 import Link from 'next/link';
 import { createBrowserClient } from '../../lib/supabase/client';
 import { loadLastOrder, type LastOrder } from '../../lib/utils/customer-prefs';
+import { useOverlayLock } from '../../lib/ui/overlay';
 
 interface PriceTier {
   label: string;
@@ -107,6 +108,8 @@ function MenuContent({
   const { addItem, itemCount, subtotal } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const [activeChopBarItem, setActiveChopBarItem] = useState<MenuItemData | null>(null);
+  // Hide the floating concierge while the cart or chop-bar sheet is open.
+  useOverlayLock(cartOpen || activeChopBarItem !== null);
   const [categories, setCategories] = useState(initialCategories);
   const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);

@@ -10,6 +10,7 @@ import { addToCart, cartCount } from '../../lib/menu/cart-storage';
 import { loadLastOrder, loadCustomer } from '../../lib/utils/customer-prefs';
 import { getConversationId, setAttribution, pingOutcome } from '../../lib/adepa/session';
 import { correctFoodNames } from '../../lib/adepa/food-vocab';
+import { useAnyOverlayOpen } from '../../lib/ui/overlay';
 
 const QUICK_REPLIES = ["What's popular?", 'Build me a bowl', 'Are you open now?', 'Track my order'];
 
@@ -34,6 +35,10 @@ function getApiBaseUrl(): string {
 
 export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiBase?: string }) {
   const baseUrl = apiBase || getApiBaseUrl();
+
+  // Hide the floating button while a sheet/drawer is open (cart, chop-bar
+  // customiser, account/orders) so it never covers their controls.
+  const overlayOpen = useAnyOverlayOpen();
 
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
@@ -447,7 +452,7 @@ export function AdepaWidget({ tenantSlug, apiBase }: { tenantSlug?: string; apiB
 
   return (
     <>
-      {!open && (
+      {!open && !overlayOpen && (
         <button
           onClick={() => {
             setOpen(true);

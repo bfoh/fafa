@@ -57,3 +57,4 @@ export {
   takeAttribution,
   pingOutcome,
 } from './lib/adepa/session';
+export { useOverlayLock, useAnyOverlayOpen, subscribeOverlay } from './lib/ui/overlay';

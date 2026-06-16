@@ -12,6 +12,7 @@
     "./whatsapp": "./src/lib/utils/whatsapp.ts",
     "./phone": "./src/lib/utils/phone.ts",
     "./supabase-client": "./src/lib/supabase/client.ts",
+    "./overlay": "./src/lib/ui/overlay.ts",
     "./cart": "./src/hooks/use-cart.tsx",
     "./cart-storage": "./src/lib/menu/cart-storage.ts",
     "./food-vocab": "./src/lib/adepa/food-vocab.ts",
