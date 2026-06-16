@@ -1,26 +1,31 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * Didi native shell. The iOS/Android apps ARE the live platform: the WebView
- * loads https://ghdidi.com directly (server.url), so the apps always run the
- * real, fully-functional web app with zero UI divergence.
+ * Didi native shell. The app loads its UI from the static export bundled inside
+ * the binary (webDir: 'out') — NOT from a remote URL. This is required to pass
+ * App Store Guideline 4.2 (a remote-URL WebView reads as a repackaged website)
+ * and gives instant, offline-capable first render. All data still comes from the
+ * deployed API (NEXT_PUBLIC_API_BASE) and Supabase over HTTPS; native device
+ * APIs come via Capacitor plugins (push, geolocation) guarded by
+ * Capacitor.isNativePlatform().
  *
- * This is a genuine native app — native iOS/Android projects, store-distributed
- * binaries, and native device APIs via Capacitor plugins (push, geolocation,
- * etc., invoked from the web app guarded by Capacitor.isNativePlatform()).
+ * androidScheme/iosScheme serve the bundle over https://localhost /
+ * capacitor://localhost, which yields a real window.location.origin. A previous
+ * attempt loaded over file:// (origin "null") and broke Next.js App Router
+ * navigation; the custom scheme avoids that. next.config.ts pins
+ * NEXT_PUBLIC_URL so store/share links resolve to the real web origin.
  *
- * A real origin (https://ghdidi.com) is also what makes routing/auth reliable:
- * the earlier offline-bundle attempt served over capacitor://localhost, whose
- * window.location.origin is "null", which broke Next.js App Router navigation.
+ * Build the export and re-sync before testing: `npm run mobile:sync`.
+ * VERIFY on a real device before tagging a release — App Router navigation,
+ * Supabase auth/session, and deep links must all work from the bundled origin.
  */
 const config: CapacitorConfig = {
   appId: 'com.ghdidi.app',
   appName: 'Didi',
   webDir: 'out',
   server: {
-    url: 'https://ghdidi.com',
     androidScheme: 'https',
-    iosScheme: 'https',
+    iosScheme: 'capacitor',
   },
   plugins: {
     PushNotifications: {
