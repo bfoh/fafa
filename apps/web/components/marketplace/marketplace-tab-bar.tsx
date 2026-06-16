@@ -13,7 +13,13 @@ import {
   type SavedCustomer,
 } from '@/lib/utils/customer-prefs';
 
-export function MarketplaceTabBar() {
+export function MarketplaceTabBar({
+  // Recent-order link builder. Web uses path routing; the native app overrides
+  // this with its query-param order route (/order/?id=…&slug=…).
+  orderHref = (o: RecentOrder) => `/${o.slug}/order/${o.orderId}`,
+}: {
+  orderHref?: (o: RecentOrder) => string;
+} = {}) {
   const pathname = usePathname();
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -66,7 +72,7 @@ export function MarketplaceTabBar() {
           {orders.map((o) => (
             <Link
               key={o.orderId}
-              href={`/${o.slug}/order/${o.orderId}`}
+              href={orderHref(o)}
               onClick={() => setOrdersOpen(false)}
               className="flex items-center justify-between rounded-xl border border-surface-100 px-4 py-3 active:bg-surface-50"
             >

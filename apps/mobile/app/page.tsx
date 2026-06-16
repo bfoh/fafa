@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Star, MapPin, Compass, Clock, Sparkles, LogIn } from 'lucide-react';
 import { AdepaWidget } from '@fafa/storefront';
+import { MarketplaceTabBar } from '@/components/marketplace/marketplace-tab-bar';
 import { Geolocation } from '@capacitor/geolocation';
 
 const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
@@ -122,7 +123,7 @@ export default function MobileMarketplaceHome() {
         }}
       />
 
-      <div className="relative z-10 px-4 pt-safe pb-20 max-w-lg mx-auto">
+      <div className="relative z-10 px-4 pt-safe pb-[calc(env(safe-area-inset-bottom)+5rem)] max-w-lg mx-auto">
         {/* Top Header */}
         <header className="flex items-center justify-between py-5">
           <div className="flex items-center gap-2.5">
@@ -183,7 +184,7 @@ export default function MobileMarketplaceHome() {
         </section>
 
         {/* Search input & geolocation actions */}
-        <section className="my-5">
+        <section id="hero-search" className="my-5 scroll-mt-24">
           <form onSubmit={handleSearchSubmit} className="space-y-3">
             <div className="relative flex items-center rounded-full border border-white/12 bg-white/5 backdrop-blur-xl focus-within:border-brand-500/50 focus-within:bg-white/8 transition-all duration-300">
               <Search className="w-5 h-5 text-white/40 absolute left-4 pointer-events-none" />
@@ -416,6 +417,9 @@ export default function MobileMarketplaceHome() {
         </section>
       </div>
       <AdepaWidget apiBase={API} />
+      <MarketplaceTabBar
+        orderHref={(o) => `/order/?id=${o.orderId}&slug=${o.slug}`}
+      />
     </main>
   );
 }
