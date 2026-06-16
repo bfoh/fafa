@@ -100,11 +100,17 @@ export function OrderTracker({
   initialHistory,
   slug,
   tenant,
+  apiBase = '',
 }: {
   initialOrder: TrackedOrder;
   initialHistory: HistoryEntry[];
   slug: string;
   tenant: { name: string; phone: string | null; whatsapp?: string | null; primary_color: string };
+  // Backend origin for the order API. Empty (default) = same-origin relative
+  // URLs for the web app. The native app passes its NEXT_PUBLIC_API_BASE so
+  // polling/messaging/review/reorder reach the deployed backend (the bundle is
+  // served from capacitor://localhost, where relative /api has no server).
+  apiBase?: string;
 }) {
   const [order, setOrder] = useState<TrackedOrder>(initialOrder);
   const [history, setHistory] = useState<HistoryEntry[]>(initialHistory);
@@ -139,7 +145,7 @@ export function OrderTracker({
     let active = true;
     async function poll() {
       try {
-        const res = await fetch(`/api/orders/${order.id}`, { cache: 'no-store' });
+        const res = await fetch(`${apiBase}/api/orders/${order.id}`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (active && data.order) {
@@ -189,7 +195,7 @@ export function OrderTracker({
     let active = true;
     async function loadMessages() {
       try {
-        const res = await fetch(`/api/orders/${order.id}/messages`, { cache: 'no-store' });
+        const res = await fetch(`${apiBase}/api/orders/${order.id}/messages`, { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         if (active) setMessages((data.messages as ChatMessage[]) || []);
@@ -228,7 +234,7 @@ export function OrderTracker({
     setMessages((m) => [...m, optimistic]);
     setDraft('');
     try {
-      const res = await fetch(`/api/orders/${order.id}/messages`, {
+      const res = await fetch(`${apiBase}/api/orders/${order.id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body: text }),
@@ -258,7 +264,7 @@ export function OrderTracker({
   useEffect(() => {
     if (order.status !== 'delivered') return;
     let active = true;
-    fetch(`/api/orders/${order.id}/review`)
+    fetch(`${apiBase}/api/orders/${order.id}/review`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (active && d?.review) {
@@ -280,7 +286,7 @@ export function OrderTracker({
     setReordering(true);
     setReorderError(null);
     try {
-      const res = await fetch(`/api/orders/${order.id}/reorder`, { cache: 'no-store' });
+      const res = await fetch(`${apiBase}/api/orders/${order.id}/reorder`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Reorder unavailable');
       const data = (await res.json()) as { items: CartItem[]; skipped: string[] };
       if (!data.items.length) {
@@ -306,7 +312,7 @@ export function OrderTracker({
     if (!stars || reviewSubmitting) return;
     setReviewSubmitting(true);
     try {
-      const res = await fetch(`/api/orders/${order.id}/review`, {
+      const res = await fetch(`${apiBase}/api/orders/${order.id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating: stars, comment: reviewComment }),

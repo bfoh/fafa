@@ -12,6 +12,8 @@ import {
 import { useOrder, useVerifyOrder } from '@/app/hooks/use-storefront';
 import { RiderMap } from './rider-map';
 
+const API = process.env.NEXT_PUBLIC_API_BASE ?? 'https://ghdidi.com';
+
 /** Order tracking screen. orderId is a runtime query param (unbounded — never
  *  known at build), so this lives on a static route, not a [orderId] segment. */
 export function OrderScreen({ slug, orderId }: { slug: string; orderId: string }) {
@@ -64,6 +66,7 @@ export function OrderScreen({ slug, orderId }: { slug: string; orderId: string }
         initialHistory={(data.history as HistoryEntry[]) || []}
         slug={slug}
         tenant={data.tenant}
+        apiBase={API}
       />
       {(data.order as { status?: string }).status === 'out_for_delivery' && (
         <div className="px-4 pb-6">

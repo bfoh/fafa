@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { corsHeaders, preflight } from '@/lib/http/cors';
+
+/** CORS preflight for the native app (capacitor:// origin). */
+export function OPTIONS(req: Request) {
+  return preflight(req);
+}
 
 /* ── Reorder (public-by-UUID, same trust model as the tracker page) ──
    Rebuilds the order's items as cart entries validated against the CURRENT
@@ -16,9 +22,10 @@ interface StoredOption {
 }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const cors = corsHeaders(req.headers.get('origin'));
   try {
     const { id } = await params;
     const admin = createAdminClient();
@@ -31,7 +38,7 @@ export async function GET(
       .eq('id', id)
       .single();
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Order not found' }, { status: 404, headers: cors });
     }
 
     type OrderItemRow = {
@@ -87,9 +94,9 @@ export async function GET(
     }
 
     const tenant = order.tenant as unknown as { slug: string } | null;
-    return NextResponse.json({ slug: tenant?.slug || null, items, skipped });
+    return NextResponse.json({ slug: tenant?.slug || null, items, skipped }, { headers: cors });
   } catch (err) {
     console.error('Failed to build reorder cart:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: cors });
   }
 }
