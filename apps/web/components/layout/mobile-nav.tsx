@@ -42,11 +42,16 @@ export function MobileNav({
   logoUrl,
   primaryColor,
   tenantSlug,
+  onSignOut,
 }: {
   tenantName?: string;
   logoUrl?: string;
   primaryColor?: string;
   tenantSlug?: string;
+  /** Native (Capacitor) override: the web client's signOut can't clear the
+   *  session stored in Capacitor Preferences, so the mobile shell supplies its
+   *  own handler. When omitted, the default web sign-out runs. */
+  onSignOut?: () => void | Promise<void>;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -59,6 +64,10 @@ export function MobileNav({
   const moreActive = moreHrefs.some((h) => pathname.startsWith(h));
 
   async function handleSignOut() {
+    if (onSignOut) {
+      await onSignOut();
+      return;
+    }
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

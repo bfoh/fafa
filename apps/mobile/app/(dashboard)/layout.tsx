@@ -129,6 +129,20 @@ export default function MobileDashboardLayout({
     };
   }, [router]);
 
+  async function handleSignOut() {
+    try {
+      // Clears the session from Capacitor Preferences (the mobile client's
+      // storage). scope:'local' avoids depending on a network revoke call.
+      const supabase = createMobileSupabaseClient();
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // Navigate away regardless — a failed revoke must not trap the user.
+    }
+    // Hard nav to root reliably loads the bundled marketplace (Capacitor serves
+    // index.html for '/') and tears down any in-memory authed state.
+    window.location.href = '/';
+  }
+
   if (!ready) {
     return (
       <div className="min-h-[100dvh] bg-canvas grid place-items-center">
@@ -144,6 +158,7 @@ export default function MobileDashboardLayout({
         logoUrl={tenant.logoUrl}
         primaryColor={tenant.primaryColor}
         tenantSlug={tenant.slug}
+        onSignOut={handleSignOut}
       />
       <main className="min-h-[100dvh] flex flex-col">
         <div className="px-4 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] flex-1">
