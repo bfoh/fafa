@@ -133,6 +133,18 @@ export function OrderTracker({
   const [reordering, setReordering] = useState(false);
   const [reorderError, setReorderError] = useState<string | null>(null);
 
+  // Mirror fresher data from the parent. The native order screen polls the order
+  // via its own (working, absolute-URL) transport and passes it down as
+  // initialOrder/initialHistory, so the timeline updates live even if this
+  // component's own /api poll or the realtime socket is unavailable in the
+  // WebView. On the web initialOrder is stable, so this is a one-time no-op.
+  useEffect(() => {
+    setOrder(initialOrder);
+  }, [initialOrder]);
+  useEffect(() => {
+    setHistory(initialHistory);
+  }, [initialHistory]);
+
   // Remember this order on the device so it shows in the marketplace "Orders" sheet.
   useEffect(() => {
     saveRecentOrder(slug, initialOrder.id, initialOrder.order_number);
