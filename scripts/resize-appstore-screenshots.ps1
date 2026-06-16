@@ -33,8 +33,11 @@ foreach ($file in $files) {
     $nw = [int][Math]::Ceiling($src.Width * $scale)
     $nh = [int][Math]::Ceiling($src.Height * $scale)
 
-    $bmp = New-Object System.Drawing.Bitmap($W, $H)
+    # 24-bit RGB (NO alpha channel) — App Store Connect rejects screenshots that
+    # contain transparency. Clear to opaque black so any uncovered edge is solid.
+    $bmp = New-Object System.Drawing.Bitmap($W, $H, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
     $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.Clear([System.Drawing.Color]::Black)
     $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
     $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
     # Centre the oversized image; the canvas clips the overflow (centre-crop).
