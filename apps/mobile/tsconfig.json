@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/app/*": ["./app/*"],
+      "@/lib/supabase/client": ["./app/lib/supabase-browser.ts"],
       "@/lib/*": ["../web/lib/*"],
       "@/components/*": ["../web/components/*"],
       "@/hooks/*": ["../web/hooks/*"],
