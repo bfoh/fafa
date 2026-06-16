@@ -81,10 +81,13 @@ workflows:
         script: |
           set -e # Exit immediately if any command fails
           keychain initialize
-          # Fetch App Store provisioning profiles and signing certificates
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create
+          # Fetch App Store provisioning profiles and signing certificates.
+          # --verbose so any App Store Connect API failure prints the real cause
+          # (expired API key, certificate limit, unregistered bundle id, etc.)
+          # instead of the generic "failed unexpectedly".
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create --verbose
           # Widget extension needs its own bundle id + provisioning profile
-          app-store-connect fetch-signing-files "$BUNDLE_ID.DidiWidgets" --platform IOS --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID.DidiWidgets" --platform IOS --type IOS_APP_STORE --create --verbose
           keychain add-certificates
           xcode-project use-profiles --project apps/mobile/ios/App/App.xcodeproj
       - name: Set build number (timestamp — collision-proof)
