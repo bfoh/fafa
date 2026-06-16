@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { createMobileSupabaseClient } from '../lib/supabase';
 
@@ -21,6 +22,7 @@ export default function MobileLoginPage() {
   } | null>(null);
 
   const supabase = useMemo(() => createMobileSupabaseClient(), []);
+  const router = useRouter();
 
   useEffect(() => {
     async function checkExistingSession() {
@@ -33,14 +35,17 @@ export default function MobileLoginPage() {
           .maybeSingle();
 
         if (adminRecord) {
+          // Platform admin console lives only on the live web app.
           window.location.href = `${API}/admin`;
         } else {
-          window.location.href = '/dashboard/';
+          // Soft nav keeps us inside the bundled app (the capacitor:// origin
+          // turns a hard window.location nav into a marketplace-root fallback).
+          router.push('/dashboard');
         }
       }
     }
     checkExistingSession();
-  }, [supabase]);
+  }, [supabase, router]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -136,7 +141,14 @@ export default function MobileLoginPage() {
         return;
       }
 
-      window.location.href = data.redirect === 'admin' ? `${API}/admin` : '/dashboard/';
+      if (data.redirect === 'admin') {
+        window.location.href = `${API}/admin`;
+      } else {
+        // Soft nav into the bundled (dashboard) route group — a hard
+        // window.location nav falls back to the marketplace root under the
+        // capacitor:// origin.
+        router.push('/dashboard');
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(`Login error [${step}]: ${msg}`);

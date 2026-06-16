@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 import { createMobileSupabaseClient } from '../lib/supabase';
@@ -35,6 +36,7 @@ export default function MobileDashboardLayout({
     logoUrl?: string;
     primaryColor?: string;
   }>({});
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -65,7 +67,7 @@ export default function MobileDashboardLayout({
 
       if (!active) return;
       if (!session) {
-        window.location.href = '/login/';
+        router.push('/login');
         return;
       }
 
@@ -96,7 +98,7 @@ export default function MobileDashboardLayout({
       if (!active) return;
       // Only send to setup when we DEFINITIVELY know there is no tenant.
       if (!tenantId && !tenantResolveTimedOut) {
-        window.location.href = '/register/';
+        router.push('/register');
         return;
       }
 
@@ -125,7 +127,7 @@ export default function MobileDashboardLayout({
     return () => {
       active = false;
     };
-  }, []);
+  }, [router]);
 
   if (!ready) {
     return (
