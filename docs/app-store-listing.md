@@ -52,10 +52,10 @@ FOR EVERY CRAVING
 Whether it's a quick lunch from the chop bar down the road or a full family meal
 on the weekend, Didi makes ordering simple and getting it delivered effortless.
 
-Download Didi and order your next meal in minutes.
+Now live in Ghana — find kitchens near you and order in minutes.
 
-REPLACE_SUPPORT_NOTE: add a line about coverage areas (e.g. "Currently serving
-Accra and Kumasi") once confirmed.
+> Editor note: if you want to name specific coverage areas, add a line like
+> "Currently serving Accra and Kumasi." Only claim cities you actually cover.
 
 ---
 
@@ -67,9 +67,14 @@ food,delivery,ghana,jollof,restaurant,momo,mobile money,takeout,chop bar,waakye,
 
 ## URLs
 
-- **Support URL (required):** https://ghdidi.com/support  ← REPLACE if different
+- **Support URL (required):** https://ghdidi.com/support
+  (If that page doesn't exist yet, use the marketing URL below, or a simple page
+  with a contact email — App Store just needs a reachable support destination.)
 - **Marketing URL (optional):** https://ghdidi.com
-- **Privacy Policy URL (REQUIRED):** https://ghdidi.com/privacy  ← MUST exist and be live
+- **Privacy Policy URL (REQUIRED):** https://ghdidi.com/privacy
+  Ready-to-publish page content is in [privacy-policy.md](privacy-policy.md) —
+  publish it at this URL and confirm it loads before submitting.
+- **Support email:** ebenezer.barning@gmail.com  ← swap for a support@ address if you have one
 
 ---
 
@@ -131,23 +136,32 @@ website wrapper. The app uses native iOS capabilities, including:
 • Location services to set the delivery address and calculate delivery fees
 • Native payment via ExpressPay (Mobile Money + card) for Ghana
 
-DEMO ACCOUNT
-Email/phone: REPLACE_DEMO_LOGIN
-Password/OTP: REPLACE_DEMO_PASSWORD
-(If login uses phone OTP, provide a test number with a fixed code, or a
- pre-provisioned account that bypasses OTP for review.)
+Note: ordering as a customer does NOT require login — reviewers can browse
+kitchens and reach checkout without an account. A demo login is provided only so
+the reviewer can also see the restaurant-owner dashboard ("Login" on the home
+screen).
 
-HOW TO TEST A FULL ORDER
+DEMO OWNER ACCOUNT (for the dashboard)
+Email: <<FILL: a real test owner email you control>>
+Password: <<FILL: that account's password>>
+
+HOW TO TEST A FULL CUSTOMER ORDER (no login needed)
 1. Open the app — you'll see nearby kitchens/restaurants.
 2. Tap a restaurant, add an item to the cart, go to checkout.
-3. Set a delivery location (Accra works well, e.g. REPLACE_TEST_ADDRESS).
-4. At payment, use the ExpressPay sandbox/test details below:
-   REPLACE_PAYMENT_TEST_DETAILS
-5. After payment you'll receive an order confirmation and push update.
+3. Enter name + phone, set a delivery location (e.g. East Legon, Accra).
+4. Choose Mobile Money or card and place the order.
+   Payment test details (ExpressPay): <<FILL: sandbox card/MoMo, or note that
+   payments run in live mode and you'll refund the test charge>>
+5. After payment you'll receive an order confirmation and a push update.
 
 Payments are processed by ExpressPay, a licensed Ghanaian payment provider.
-For any access issues, contact REPLACE_CONTACT_EMAIL / REPLACE_CONTACT_PHONE.
+For any access issues, contact ebenezer.barning@gmail.com.
 ```
+
+> Only two things in this block are yours to supply: the **demo owner login**
+> and the **payment test details**. Everything else is ready. If you'd rather not
+> expose live payments to the reviewer, say so in the note and offer to refund
+> the test charge — that's acceptable to Apple.
 
 ---
 
